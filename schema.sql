@@ -8,6 +8,19 @@
 create extension if not exists "pgcrypto"; -- for gen_random_uuid()
 
 -- ----------------------------------------------------------------------------
+-- SAFETY PATCH — fixes things up if you already ran an earlier version of
+-- this schema (renamed column, in case app_users still has the old name)
+-- ----------------------------------------------------------------------------
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'app_users' and column_name = 'password_hash')
+     and not exists (select 1 from information_schema.columns where table_name = 'app_users' and column_name = 'password')
+  then
+    alter table app_users rename column password_hash to password;
+  end if;
+end $$;
+
+-- ----------------------------------------------------------------------------
 -- BUSINESS PROFILE  (single row — shown on every receipt/statement header)
 -- ----------------------------------------------------------------------------
 create table if not exists business_profile (
@@ -100,6 +113,42 @@ create index if not exists idx_purchases_invoice  on purchases (invoice_no);
 create index if not exists idx_purchases_due      on purchases (due) where due > 0;
 
 -- ----------------------------------------------------------------------------
+-- SALES ORDERS  (pre-invoice stage — order number ICB-YY-MM-####, converts
+-- into a Sale/Invoice with its own INV-YY-MM-#### number when billed)
+-- ----------------------------------------------------------------------------
+create table if not exists sales_orders (
+  id                uuid primary key default gen_random_uuid(),
+  order_no          text not null,
+  date              date not null default current_date,
+  company_id        uuid references companies(id) on delete set null,
+  company_name      text not null,
+  company_address   text,
+  company_phone     text,
+  total             numeric(14,2) not null default 0,
+  status            text not null default 'open' check (status in ('open','invoiced','cancelled')),
+  invoiced_sale_id  uuid references sales(id) on delete set null,
+  notes             text,
+  created_at        timestamptz default now()
+);
+create unique index if not exists idx_sales_orders_order_no on sales_orders (order_no);
+create index if not exists idx_sales_orders_company on sales_orders (company_id);
+create index if not exists idx_sales_orders_date    on sales_orders (date desc);
+create index if not exists idx_sales_orders_status  on sales_orders (status);
+
+create table if not exists sales_order_items (
+  id           uuid primary key default gen_random_uuid(),
+  order_id     uuid not null references sales_orders(id) on delete cascade,
+  product_id   uuid references products(id) on delete set null,
+  product_name text not null,
+  unit         text,
+  qty          numeric(14,3) not null default 0,
+  rate         numeric(14,2) not null default 0,
+  amount       numeric(14,2) not null default 0
+);
+create index if not exists idx_sales_order_items_order   on sales_order_items (order_id);
+create index if not exists idx_sales_order_items_product on sales_order_items (product_id);
+
+-- ----------------------------------------------------------------------------
 -- SALES  (invoice header — one row per invoice, can have many items)
 -- ----------------------------------------------------------------------------
 create table if not exists sales (
@@ -190,18 +239,49 @@ alter table app_users        enable row level security;
 alter table companies        enable row level security;
 alter table products         enable row level security;
 alter table purchases        enable row level security;
+alter table sales_orders     enable row level security;
+alter table sales_order_items enable row level security;
 alter table sales            enable row level security;
 alter table sale_items       enable row level security;
 alter table payments         enable row level security;
 
-create policy "anon full access" on business_profile for all using (true) with check (true);
-create policy "anon full access" on app_users        for all using (true) with check (true);
-create policy "anon full access" on companies        for all using (true) with check (true);
-create policy "anon full access" on products         for all using (true) with check (true);
-create policy "anon full access" on purchases        for all using (true) with check (true);
-create policy "anon full access" on sales            for all using (true) with check (true);
-create policy "anon full access" on sale_items       for all using (true) with check (true);
-create policy "anon full access" on payments         for all using (true) with check (true);
+-- Drop any policies from earlier versions of this script (safe no-ops if absent)
+drop policy if exists "authenticated read"       on business_profile;
+drop policy if exists "authenticated write"      on business_profile;
+drop policy if exists "authenticated read"       on companies;
+drop policy if exists "authenticated write"      on companies;
+drop policy if exists "authenticated read"       on products;
+drop policy if exists "authenticated write"      on products;
+drop policy if exists "authenticated read"       on purchases;
+drop policy if exists "authenticated write"      on purchases;
+drop policy if exists "authenticated read"       on sales;
+drop policy if exists "authenticated write"      on sales;
+drop policy if exists "authenticated read"       on sale_items;
+drop policy if exists "authenticated write"      on sale_items;
+drop policy if exists "authenticated read"       on payments;
+drop policy if exists "authenticated write"      on payments;
+drop policy if exists "no direct client access"  on app_users;
+drop policy if exists "anon full access" on business_profile;
+drop policy if exists "anon full access" on app_users;
+drop policy if exists "anon full access" on companies;
+drop policy if exists "anon full access" on products;
+drop policy if exists "anon full access" on purchases;
+drop policy if exists "anon full access" on sales;
+drop policy if exists "anon full access" on sale_items;
+drop policy if exists "anon full access" on sales_orders;
+drop policy if exists "anon full access" on sales_order_items;
+drop policy if exists "anon full access" on payments;
+
+create policy "anon full access" on business_profile   for all using (true) with check (true);
+create policy "anon full access" on app_users           for all using (true) with check (true);
+create policy "anon full access" on companies           for all using (true) with check (true);
+create policy "anon full access" on products            for all using (true) with check (true);
+create policy "anon full access" on purchases           for all using (true) with check (true);
+create policy "anon full access" on sales_orders        for all using (true) with check (true);
+create policy "anon full access" on sales_order_items   for all using (true) with check (true);
+create policy "anon full access" on sales               for all using (true) with check (true);
+create policy "anon full access" on sale_items          for all using (true) with check (true);
+create policy "anon full access" on payments            for all using (true) with check (true);
 
 -- ============================================================================
 -- HELPER VIEW: live inventory (optional, but saves you recomputing in JS)
