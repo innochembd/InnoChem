@@ -210,6 +210,31 @@ create index if not exists idx_payments_company on payments (company_id);
 create index if not exists idx_payments_date    on payments (date desc);
 create index if not exists idx_payments_applied on payments (applied_type, applied_id);
 
+-- ----------------------------------------------------------------------------
+-- AUDIT LOG  (who created / edited / deleted what, and when)
+-- ----------------------------------------------------------------------------
+-- One row per action. record_label is a human-readable snapshot (invoice no,
+-- company name, etc.) so the log still reads well even after the record
+-- itself is edited or deleted. old_data / new_data hold the full row as JSON
+-- so you can see exactly what changed (or restore it later if needed).
+-- ----------------------------------------------------------------------------
+create table if not exists audit_log (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references app_users(id) on delete set null,
+  username      text not null,                 -- snapshot, survives user deletion
+  action        text not null check (action in ('insert','update','delete')),
+  table_name    text not null,
+  record_id     uuid,
+  record_label  text,                           -- e.g. invoice no / company name
+  old_data      jsonb,                          -- null on insert
+  new_data      jsonb,                          -- null on delete
+  created_at    timestamptz default now()
+);
+create index if not exists idx_audit_log_user    on audit_log (user_id);
+create index if not exists idx_audit_log_table   on audit_log (table_name);
+create index if not exists idx_audit_log_record  on audit_log (record_id);
+create index if not exists idx_audit_log_date    on audit_log (created_at desc);
+
 -- ============================================================================
 -- ROW LEVEL SECURITY
 -- ============================================================================
@@ -244,6 +269,7 @@ alter table sales_order_items enable row level security;
 alter table sales            enable row level security;
 alter table sale_items       enable row level security;
 alter table payments         enable row level security;
+alter table audit_log        enable row level security;
 
 -- Drop any policies from earlier versions of this script (safe no-ops if absent)
 drop policy if exists "authenticated read"       on business_profile;
@@ -271,6 +297,9 @@ drop policy if exists "anon full access" on sale_items;
 drop policy if exists "anon full access" on sales_orders;
 drop policy if exists "anon full access" on sales_order_items;
 drop policy if exists "anon full access" on payments;
+drop policy if exists "anon full access" on audit_log;
+drop policy if exists "anon insert" on audit_log;
+drop policy if exists "anon select" on audit_log;
 
 create policy "anon full access" on business_profile   for all using (true) with check (true);
 create policy "anon full access" on app_users           for all using (true) with check (true);
@@ -282,6 +311,12 @@ create policy "anon full access" on sales_order_items   for all using (true) wit
 create policy "anon full access" on sales               for all using (true) with check (true);
 create policy "anon full access" on sale_items          for all using (true) with check (true);
 create policy "anon full access" on payments            for all using (true) with check (true);
+
+-- audit_log is read + insert only (no update/delete policy) so the history
+-- trail itself can't be edited or erased from the browser, even though the
+-- anon key otherwise has full access to the other tables.
+create policy "anon select" on audit_log for select using (true);
+create policy "anon insert" on audit_log for insert with check (true);
 
 -- ============================================================================
 -- HELPER VIEW: live inventory (optional, but saves you recomputing in JS)
