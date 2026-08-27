@@ -75,51 +75,49 @@
   }
   .login-card{
     width:100%;
-    max-width:400px;
-    background:rgba(255,255,255,0.94);
-    -webkit-backdrop-filter:blur(18px);
-    backdrop-filter:blur(18px);
-    border:1px solid rgba(255,255,255,0.5);
-    border-radius:20px;
-    box-shadow:0 24px 60px rgba(4,10,28,0.45), 0 2px 0 rgba(255,255,255,0.6) inset;
-    padding:40px 36px 32px;
+    max-width:380px;
     text-align:center;
-    animation:loginCardIn .55s cubic-bezier(.2,.9,.25,1) both;
+    animation:loginCardIn .6s cubic-bezier(.2,.9,.25,1) both;
   }
-  .login-logo{width:96px;height:96px;border-radius:20px;object-fit:cover;margin:0 auto 18px;display:block;box-shadow:0 4px 14px rgba(20,25,40,0.14);}
-  .login-title{font-size:20px;font-weight:800;letter-spacing:0.2px;margin:0;}
-  .login-title .t-green{color:var(--ic-green);}
-  .login-title .t-blue{color:var(--ic-blue);}
-  .login-sub{font-size:13px;color:var(--text-secondary);margin:4px 0 28px;font-style:italic;}
-  .field{text-align:left;margin-bottom:16px;}
-  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;}
+  .login-logo{
+    width:96px;height:96px;border-radius:20px;object-fit:cover;margin:0 auto 20px;display:block;
+    box-shadow:0 8px 28px rgba(0,0,0,0.45);
+  }
+  .login-title{font-size:24px;font-weight:800;letter-spacing:0.2px;margin:0;text-shadow:0 2px 16px rgba(0,0,0,0.5);}
+  .login-title .t-green{color:#5FE39B;}
+  .login-title .t-blue{color:#7FBFFF;}
+  .login-sub{font-size:13.5px;color:rgba(255,255,255,0.72);margin:6px 0 32px;font-style:italic;text-shadow:0 1px 8px rgba(0,0,0,0.4);}
+  .field{text-align:left;margin-bottom:18px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:7px;text-shadow:0 1px 6px rgba(0,0,0,0.4);}
   .field-input-wrap{position:relative;}
-  .field-input-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:17px;transition:color .15s;}
+  .field-input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.55);font-size:17px;transition:color .15s;}
   .field input{
-    width:100%;height:44px;padding:0 14px 0 40px;
-    border:1px solid var(--border-strong);border-radius:var(--radius);
-    font-size:14px;background:#FCFCFA;color:var(--text-primary);
+    width:100%;height:46px;padding:0 14px 0 42px;
+    border:1px solid rgba(255,255,255,0.28);border-radius:var(--radius);
+    font-size:14px;background:rgba(255,255,255,0.10);color:#fff;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
     transition:border-color .15s, box-shadow .15s, background .15s;
   }
-  .field input:focus{outline:none;border-color:var(--ic-green);box-shadow:0 0 0 3px var(--ic-green-light);background:#fff;}
+  .field input::placeholder{color:rgba(255,255,255,0.45);}
+  .field input:focus{outline:none;border-color:var(--ic-green);box-shadow:0 0 0 3px rgba(52,179,104,0.28);background:rgba(255,255,255,0.16);}
   .field input:focus + i, .field-input-wrap:focus-within i{color:var(--ic-green);}
   .btn-primary{
-    width:100%;height:46px;border:none;border-radius:var(--radius);
+    width:100%;height:47px;border:none;border-radius:var(--radius);
     background:linear-gradient(180deg, var(--ic-green), var(--ic-green-dark));
     color:#fff;font-weight:700;font-size:14.5px;letter-spacing:0.2px;
     display:flex;align-items:center;justify-content:center;gap:8px;
-    box-shadow:0 6px 18px rgba(31,138,69,0.4);
+    box-shadow:0 8px 24px rgba(31,138,69,0.5);
     transition:transform .12s, box-shadow .15s, filter .15s;
   }
-  .btn-primary:hover{box-shadow:0 8px 24px rgba(31,138,69,0.52);transform:translateY(-1px);filter:brightness(1.03);}
+  .btn-primary:hover{box-shadow:0 10px 30px rgba(31,138,69,0.62);transform:translateY(-1px);filter:brightness(1.05);}
   .btn-primary:active{transform:scale(0.98);}
   .login-error{
-    display:none;background:var(--danger-bg);color:var(--danger);
-    border:1px solid #F1C6C1;border-radius:8px;font-size:12.5px;
+    display:none;background:rgba(220,53,69,0.16);color:#ffb4bb;
+    border:1px solid rgba(255,120,130,0.4);border-radius:8px;font-size:12.5px;
     padding:9px 12px;margin-bottom:16px;text-align:left;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
   }
-  .login-hint{font-size:11.5px;color:var(--text-muted);margin-top:18px;line-height:1.6;}
-  .login-footer{margin-top:26px;font-size:11px;color:var(--text-muted);}
+  .login-footer{margin-top:30px;font-size:11px;color:rgba(255,255,255,0.5);text-shadow:0 1px 6px rgba(0,0,0,0.4);}
 
   /* ---------- APP SHELL ---------- */
   #app-shell{display:none;min-height:100vh;}
@@ -545,7 +543,6 @@
       <button type="submit" class="btn-primary"><i class="ti ti-login-2"></i> Sign in</button>
     </form>
 
-    <p class="login-hint" id="login-hint">First time here? Default login is <b class="mono">admin</b> / <b class="mono">admin123</b>. You can change this later from Settings.</p>
     <p class="login-footer">Powered by <b>Rahatul Ashikin Rizvi</b></p>
   </div>
 </div>
@@ -1741,6 +1738,82 @@
   };
   const TABLE_NAMES = { companies:'companies', products:'products', purchases:'purchases', payments:'payments', users:'app_users' };
 
+  /* ================= AUDIT LOG ================= */
+  // Tracks the last-known synced state per table so we can diff against the
+  // next save and know exactly which records were added / edited / removed.
+  let AUDIT_SNAPSHOTS = {};
+
+  function auditLabel(key, row){
+    if(!row) return '';
+    switch(key){
+      case 'companies': return row.name || '';
+      case 'products': return row.name || '';
+      case 'purchases': return row.invoiceNo || '';
+      case 'sales': return row.invoiceNo || '';
+      case 'salesOrders': return row.orderNo || '';
+      case 'payments': return row.receiptNo || '';
+      case 'users': return row.username || '';
+      default: return row.name || '';
+    }
+  }
+  // Never store plaintext passwords in the audit trail.
+  function sanitizeAuditRow(key, row){
+    if(!row) return row;
+    if(key === 'users'){
+      const copy = Object.assign({}, row);
+      if('password' in copy) copy.password = '(hidden)';
+      return copy;
+    }
+    return row;
+  }
+  async function writeAuditLog(action, tableKey, recordId, label, oldData, newData){
+    try{
+      await sbFetch('audit_log', {
+        method: 'POST',
+        headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify([{
+          user_id: currentUser ? currentUser.id : null,
+          username: currentUser ? currentUser.username : 'system',
+          action: action,
+          table_name: tableKey,
+          record_id: recordId || null,
+          record_label: label || null,
+          old_data: oldData || null,
+          new_data: newData || null
+        }])
+      });
+    }catch(e){ console.error('audit log write failed', e); }
+  }
+  function diffAgainstSnapshot(key, newArr){
+    const prevMap = AUDIT_SNAPSHOTS[key] || {};
+    const newMap = {};
+    (newArr || []).forEach(r => { if(r && r.id) newMap[r.id] = r; });
+    const changes = [];
+    Object.keys(newMap).forEach(id => {
+      if(!prevMap[id]){
+        changes.push({ action:'insert', id, ref:newMap[id], oldData:null, newData:newMap[id] });
+      }else if(JSON.stringify(prevMap[id]) !== JSON.stringify(newMap[id])){
+        changes.push({ action:'update', id, ref:newMap[id], oldData:prevMap[id], newData:newMap[id] });
+      }
+    });
+    Object.keys(prevMap).forEach(id => {
+      if(!newMap[id]) changes.push({ action:'delete', id, ref:prevMap[id], oldData:prevMap[id], newData:null });
+    });
+    AUDIT_SNAPSHOTS[key] = newMap;
+    return changes;
+  }
+  async function logAuditForList(key, newArr){
+    const changes = diffAgainstSnapshot(key, newArr);
+    for(const c of changes){
+      await writeAuditLog(c.action, key, c.id, auditLabel(key, c.ref), sanitizeAuditRow(key, c.oldData), sanitizeAuditRow(key, c.newData));
+    }
+  }
+  function seedAuditSnapshot(key, arr){
+    const map = {};
+    (arr || []).forEach(r => { if(r && r.id) map[r.id] = r; });
+    AUDIT_SNAPSHOTS[key] = map;
+  }
+
   async function fetchFlatTable(key){
     const rows = await sbFetch(TABLE_NAMES[key] + '?select=*&order=created_at.asc', { headers: sbHeaders() });
     return (rows || []).map(FIELD_MAPS[key].fromDb);
@@ -1868,17 +1941,21 @@
   }
   async function getList(key){
     try{
-      if(key === 'sales') return await fetchSalesTable();
-      if(key === 'salesOrders') return await fetchSalesOrdersTable();
-      if(TABLE_NAMES[key]) return await fetchFlatTable(key);
-      return [];
+      let arr;
+      if(key === 'sales') arr = await fetchSalesTable();
+      else if(key === 'salesOrders') arr = await fetchSalesOrdersTable();
+      else if(TABLE_NAMES[key]) arr = await fetchFlatTable(key);
+      else arr = [];
+      seedAuditSnapshot(key, arr);
+      return arr;
     }catch(e){ console.error('getList failed', key, e); showToast('Could not load ' + key + ' from Supabase'); return []; }
   }
   async function setList(key, arr){
     try{
-      if(key === 'sales') return await syncSalesTable(arr);
-      if(key === 'salesOrders') return await syncSalesOrdersTable(arr);
-      if(TABLE_NAMES[key]) return await syncFlatTable(key, arr);
+      if(key === 'sales') await syncSalesTable(arr);
+      else if(key === 'salesOrders') await syncSalesOrdersTable(arr);
+      else if(TABLE_NAMES[key]) await syncFlatTable(key, arr);
+      await logAuditForList(key, arr);
     }catch(e){ console.error('setList failed', key, e); showToast('Could not save ' + key + ' to Supabase — check your connection'); }
   }
 
