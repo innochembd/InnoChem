@@ -1387,8 +1387,30 @@
         <div class="field">
           <label>Finished product <span class="required-mark">*</span></label>
           <select id="recipe-product" required></select>
-          <div class="field-hint" id="recipe-no-product-hint" style="display:none;color:var(--danger);">No products yet — add one on the Products page first.</div>
-          <div class="field-hint">This is the product that gets made from the mix. Its stock increases by the qty produced whenever you log a production batch.</div>
+          <div class="field-hint" id="recipe-no-product-hint" style="display:none;color:var(--danger);">No products yet — add one below, or on the Products page.</div>
+          <div class="field-hint">Don't see it in the list? Pick "+ Create new product" above — it gets added to your Products list automatically.</div>
+          <div id="recipe-new-product-panel" style="display:none;background:var(--bg-page);border:1px dashed var(--border-strong);border-radius:10px;padding:12px;margin-top:8px;">
+            <div class="form-row">
+              <div class="field" style="margin-bottom:0;">
+                <label style="font-size:11px;">New product name <span class="required-mark">*</span></label>
+                <input type="text" id="recipe-new-product-name" placeholder="e.g. Softener Mix XL">
+              </div>
+              <div class="field" style="margin-bottom:0;max-width:120px;">
+                <label style="font-size:11px;">Unit</label>
+                <select id="recipe-new-product-unit">
+                  <option value="kg">kg</option>
+                  <option value="ltr">ltr</option>
+                  <option value="pcs">pcs</option>
+                  <option value="bag">bag</option>
+                  <option value="drum">drum</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button type="button" class="btn-primary sm" id="recipe-new-product-create-btn"><i class="ti ti-plus"></i> Create &amp; select</button>
+              <button type="button" class="btn-secondary sm" id="recipe-new-product-cancel-btn">Cancel</button>
+            </div>
+          </div>
         </div>
 
         <div class="field">
@@ -2904,7 +2926,7 @@
     if(sel){
       sel.innerHTML = '<option value="">Select product...</option>' + sorted.map(p =>
         `<option value="${p.id}" data-unit="${escapeHtml(p.unit)}">${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`
-      ).join('');
+      ).join('') + '<option value="__new__">+ Create new product...</option>';
       document.getElementById('recipe-no-product-hint').style.display = sorted.length ? 'none' : 'block';
     }
   }
@@ -2957,12 +2979,9 @@
   }
 
   function openRecipeModal(finishedProductId){
-    if(productsCache.length === 0){
-      showToast('Add at least one product first');
-      return;
-    }
     const form = document.getElementById('recipe-form');
     form.reset();
+    document.getElementById('recipe-new-product-panel').style.display = 'none';
     populateRecipeProductDropdown();
     if(finishedProductId){
       const g = recipesCache.find(x => x.finishedProductId === finishedProductId);
@@ -2991,6 +3010,42 @@
     document.getElementById('recipe-add-item-btn').addEventListener('click', () => {
       document.getElementById('recipe-items-wrap').insertAdjacentHTML('beforeend', createRecipeItemRow(null));
       wireRecipeItemRowEvents();
+    });
+
+    document.getElementById('recipe-product').addEventListener('change', function(){
+      const panel = document.getElementById('recipe-new-product-panel');
+      if(this.value === '__new__'){
+        this.value = '';
+        panel.style.display = 'block';
+        document.getElementById('recipe-new-product-name').value = '';
+        document.getElementById('recipe-new-product-name').focus();
+      } else {
+        panel.style.display = 'none';
+      }
+    });
+    document.getElementById('recipe-new-product-cancel-btn').addEventListener('click', () => {
+      document.getElementById('recipe-new-product-panel').style.display = 'none';
+    });
+    document.getElementById('recipe-new-product-create-btn').addEventListener('click', async () => {
+      const name = document.getElementById('recipe-new-product-name').value.trim();
+      if(!name){ showToast('Enter a name for the new product'); return; }
+      if(productsCache.some(p => p.name.toLowerCase() === name.toLowerCase())){
+        showToast('A product with this name already exists — select it from the list instead');
+        return;
+      }
+      const unit = document.getElementById('recipe-new-product-unit').value;
+      const newProduct = {
+        id: uid(), name, category: '', unit,
+        openingStock: 0, purchaseRate: 0, salesRate: 0, reorderLevel: 0, notes: '',
+        created_at: Date.now()
+      };
+      productsCache.push(newProduct);
+      await setList('products', productsCache);
+      if(typeof populateProductDropdowns === 'function') populateProductDropdowns();
+      populateRecipeProductDropdown();
+      document.getElementById('recipe-product').value = newProduct.id;
+      document.getElementById('recipe-new-product-panel').style.display = 'none';
+      showToast('Product "' + name + '" created — now add its components below');
     });
 
     document.getElementById('recipe-form').addEventListener('submit', async function(e){
