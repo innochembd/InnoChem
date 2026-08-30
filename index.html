@@ -486,6 +486,49 @@
     .sale-item-row{padding:12px;background:var(--bg-page);border-radius:10px;border-bottom:none;margin-bottom:8px;}
   }
 
+  .recipe-item-row{
+    display:grid;grid-template-columns:1fr 110px 32px;gap:8px;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--border);
+  }
+  .recipe-item-row:first-child{padding-top:0;}
+  .recipe-item-row select, .recipe-item-row input{
+    height:38px;border:1px solid var(--border-strong);border-radius:8px;padding:0 10px;font-size:12.5px;width:100%;
+  }
+  .recipe-item-row input:focus, .recipe-item-row select:focus{outline:none;border-color:var(--ic-green);box-shadow:0 0 0 2px var(--ic-green-light);}
+  .recipe-item-labels{display:grid;grid-template-columns:1fr 110px 32px;gap:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--text-muted);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .recipe-chip{display:inline-block;background:var(--ic-green-light);color:var(--ic-green-dark);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;margin:2px 4px 2px 0;}
+  @media (max-width:560px){
+    .recipe-item-row, .recipe-item-labels{grid-template-columns:1fr;gap:6px;}
+    .recipe-item-labels{display:none;}
+    .recipe-item-row{padding:12px;background:var(--bg-page);border-radius:10px;border-bottom:none;margin-bottom:8px;}
+  }
+
+  .prod-item-row{
+    display:grid;grid-template-columns:1.4fr 90px 90px 100px;gap:8px;align-items:center;
+    padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;
+  }
+  .prod-item-row:first-child{padding-top:0;}
+  .prod-item-row .prod-item-cost{font-weight:700;color:var(--ic-blue);text-align:right;}
+  .prod-item-labels{display:grid;grid-template-columns:1.4fr 90px 90px 100px;gap:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--text-muted);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .prod-total-row{display:flex;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:2px solid var(--ic-green);font-weight:800;font-size:13.5px;}
+  @media (max-width:560px){
+    .prod-item-row, .prod-item-labels{grid-template-columns:1fr 1fr;gap:4px 8px;}
+    .prod-item-labels{display:none;}
+    .prod-item-row{padding:10px;background:var(--bg-page);border-radius:10px;border-bottom:none;margin-bottom:8px;}
+  }
+
+  .prod-breakdown-labels{display:grid;grid-template-columns:1.4fr 90px 90px 100px;gap:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:var(--text-muted);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+  .prod-breakdown-row{display:grid;grid-template-columns:1.4fr 90px 90px 100px;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;align-items:center;}
+  .prod-breakdown-row:last-child{border-bottom:none;}
+  .prod-breakdown-row .pb-cost{font-weight:700;color:var(--ic-blue);text-align:right;}
+  .prod-breakdown-row .pb-num{text-align:right;color:var(--text-muted);}
+  .prod-breakdown-totals{display:flex;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:2px solid var(--ic-green);font-weight:800;font-size:13.5px;}
+  .prod-breakdown-empty{font-size:12.5px;color:var(--text-muted);padding:10px 0;}
+  @media (max-width:560px){
+    .prod-breakdown-labels{display:none;}
+    .prod-breakdown-row{grid-template-columns:1fr 1fr;gap:4px 10px;background:var(--bg-page);padding:10px;border-radius:10px;border-bottom:none;margin-bottom:8px;}
+  }
+
   .mobile-topbar-toggle{display:none;}
   @media (max-width:860px){
     .sidebar{position:fixed;left:-236px;z-index:50;transition:left .2s;box-shadow:var(--shadow-pop);}
@@ -589,6 +632,8 @@
       <div class="nav-section-label">Masters</div>
       <button class="nav-item" data-page="companies"><i class="ti ti-building-store"></i> Companies</button>
       <button class="nav-item" data-page="products"><i class="ti ti-flask"></i> Products</button>
+      <button class="nav-item" data-page="recipes"><i class="ti ti-atom-2"></i> Mix Recipes</button>
+      <button class="nav-item" data-page="production"><i class="ti ti-clipboard-list"></i> Production Log</button>
 
       <div class="nav-section-label">Transactions</div>
       <button class="nav-item" data-page="purchases"><i class="ti ti-shopping-cart"></i> Purchases</button>
@@ -669,6 +714,12 @@
             <div class="m-value" id="metric-receivable">৳0</div>
             <div class="m-sub">Unpaid sales dues</div>
           </div>
+          <div class="metric-card">
+            <div class="m-icon green"><i class="ti ti-trending-up"></i></div>
+            <div class="m-label">Total profit</div>
+            <div class="m-value" id="metric-total-profit">৳0</div>
+            <div class="m-sub">All sales, after cost</div>
+          </div>
         </div>
 
         <div class="two-col">
@@ -743,6 +794,66 @@
             <div class="p-icon"><i class="ti ti-flask"></i></div>
             <h3>No products yet</h3>
             <p>Add your chemical products so you can start recording purchases and sales against them.</p>
+          </div>
+        </div>
+      </div>
+      <!-- MIX RECIPES PAGE -->
+      <div class="page" id="page-recipes">
+        <div class="toolbar">
+          <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="recipe-search" placeholder="Search by finished product..."></div>
+          <div class="tb-filters">
+            <button class="btn-primary sm" id="recipe-add-btn"><i class="ti ti-plus"></i> Add recipe</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="recipe-table">
+              <thead><tr>
+                <th>Finished product</th><th>Output unit</th><th>Components</th><th style="width:90px;">Actions</th>
+              </tr></thead>
+              <tbody id="recipe-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-empty" id="recipe-empty" style="display:none;">
+            <div class="p-icon"><i class="ti ti-atom-2"></i></div>
+            <h3>No mix recipes yet</h3>
+            <p>Define which raw materials (and how much of each) go into 1 unit of a finished/mixed product. Once set, the Production Log can auto-calculate costs from it.</p>
+          </div>
+        </div>
+      </div>
+      <!-- PRODUCTION LOG PAGE -->
+        <div class="toolbar">
+          <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="production-search" placeholder="Search by product or batch no..."></div>
+          <div class="tb-filters">
+            <button class="btn-secondary" id="production-export-btn"><i class="ti ti-download"></i> Export CSV</button>
+            <button class="btn-primary sm" id="production-add-btn"><i class="ti ti-plus"></i> Log production</button>
+          </div>
+        </div>
+        <div class="metric-grid" style="margin-bottom:16px;">
+          <div class="metric-card">
+            <div class="m-icon green"><i class="ti ti-clipboard-list"></i></div>
+            <div class="m-label">Batches (filtered)</div>
+            <div class="m-value" id="production-summary-count">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-icon blue"><i class="ti ti-cash-banknote"></i></div>
+            <div class="m-label">Total material cost</div>
+            <div class="m-value" id="production-summary-cost">৳0</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="production-table">
+              <thead><tr>
+                <th>Date</th><th>Batch No</th><th>Product</th><th>Qty Produced</th><th>Total Material Cost</th><th>Unit Cost</th><th style="width:90px;">Actions</th>
+              </tr></thead>
+              <tbody id="production-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-empty" id="production-empty" style="display:none;">
+            <div class="p-icon"><i class="ti ti-clipboard-list"></i></div>
+            <h3>No production batches yet</h3>
+            <p>Log a mixing batch to auto-calculate material cost from its recipe — this deducts raw materials from stock and adds the finished product.</p>
           </div>
         </div>
       </div>
@@ -865,12 +976,17 @@
             <div class="m-label">Due</div>
             <div class="m-value" id="sale-summary-due">৳0</div>
           </div>
+          <div class="metric-card">
+            <div class="m-icon green"><i class="ti ti-trending-up"></i></div>
+            <div class="m-label">Profit (filtered)</div>
+            <div class="m-value" id="sale-summary-profit">৳0</div>
+          </div>
         </div>
         <div class="card">
           <div class="table-wrap">
             <table class="data-table" id="sale-table">
               <thead><tr>
-                <th>Date</th><th>Invoice</th><th>Company</th><th>Items</th><th>Total</th><th>Received</th><th>Due</th><th style="width:120px;">Actions</th>
+                <th>Date</th><th>Invoice</th><th>Company</th><th>Items</th><th>Total</th><th>Profit</th><th>Received</th><th>Due</th><th style="width:120px;">Actions</th>
               </tr></thead>
               <tbody id="sale-tbody"></tbody>
             </table>
@@ -1258,6 +1374,97 @@
   </div>
 </div>
 
+<!-- RECIPE MODAL -->
+<div class="modal-overlay" id="recipe-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="recipe-modal-title">Add recipe</h3>
+      <button class="modal-close" id="recipe-modal-close"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="recipe-form">
+      <div class="modal-body">
+        <input type="hidden" id="recipe-finished-id">
+        <div class="field">
+          <label>Finished product <span class="required-mark">*</span></label>
+          <select id="recipe-product" required></select>
+          <div class="field-hint" id="recipe-no-product-hint" style="display:none;color:var(--danger);">No products yet — add one on the Products page first.</div>
+          <div class="field-hint">This is the product that gets made from the mix. Its stock increases by the qty produced whenever you log a production batch.</div>
+        </div>
+
+        <div class="field">
+          <label>Components (2–6) <span class="required-mark">*</span></label>
+          <div class="field-hint" style="margin-bottom:8px;">Qty of each raw material needed to make <b>1 unit</b> of the finished product above.</div>
+          <div class="recipe-item-labels">
+            <span>Component</span><span>Qty / unit</span><span></span>
+          </div>
+          <div id="recipe-items-wrap"></div>
+          <button type="button" class="btn-secondary" id="recipe-add-item-btn" style="margin-top:8px;"><i class="ti ti-plus"></i> Add component</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" id="recipe-cancel-btn">Cancel</button>
+        <button type="submit" class="btn-primary sm"><i class="ti ti-device-floppy"></i> Save recipe</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PRODUCTION MODAL -->
+<!-- PRODUCTION MODAL -->
+<div class="modal-overlay" id="production-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="production-modal-title">Log production</h3>
+      <button class="modal-close" id="production-modal-close"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="production-form">
+      <div class="modal-body">
+        <input type="hidden" id="production-id">
+        <div class="form-row">
+          <div class="field">
+            <label>Date <span class="required-mark">*</span></label>
+            <div class="field-input-wrap"><i class="ti ti-calendar"></i><input type="date" id="production-date" required></div>
+          </div>
+          <div class="field">
+            <label>Batch No</label>
+            <div class="field-input-wrap"><i class="ti ti-hash"></i><input type="text" id="production-batch-no" placeholder="e.g. BATCH-001"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Finished product <span class="required-mark">*</span></label>
+          <select id="production-product" required></select>
+          <div class="field-hint" id="production-no-recipe-hint" style="display:none;color:var(--danger);">No products with a mix recipe yet — add one on the Mix Recipes page first.</div>
+        </div>
+        <div class="field">
+          <label>Qty produced <span class="required-mark">*</span></label>
+          <div class="field-input-wrap"><i class="ti ti-packages"></i><input type="number" id="production-qty" step="0.001" min="0" placeholder="0" required></div>
+        </div>
+
+        <div class="field">
+          <label>Component usage &amp; cost <span style="font-weight:400;color:var(--text-muted);">(auto-filled from recipe)</span></label>
+          <div class="prod-breakdown-labels">
+            <span>Component</span><span>Rate</span><span>Used qty</span><span>Cost</span>
+          </div>
+          <div id="production-breakdown-wrap"></div>
+          <div class="prod-breakdown-totals">
+            <span>Total material cost / Unit cost</span>
+            <span><span id="production-total-cost">৳0</span> &nbsp;/&nbsp; <span id="production-unit-cost">৳0</span></span>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label>Notes</label>
+          <textarea id="production-notes" placeholder="Any additional notes"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" id="production-cancel-btn">Cancel</button>
+        <button type="submit" class="btn-primary sm"><i class="ti ti-device-floppy"></i> Save batch</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- PURCHASE MODAL -->
 <div class="modal-overlay" id="purchase-modal">
   <div class="modal-box">
@@ -1422,7 +1629,8 @@
             <div class="field-input-wrap"><i class="ti ti-cash"></i><input type="number" id="sale-received" step="0.01" min="0" placeholder="0"></div>
           </div>
         </div>
-        <div class="field-hint" id="sale-due-hint" style="margin-bottom:14px;">Due: ৳0</div>
+        <div class="field-hint" id="sale-due-hint" style="margin-bottom:4px;">Due: ৳0</div>
+        <div class="field-hint" id="sale-profit-hint" style="margin-bottom:14px;">Estimated cost/profit: ৳0 / ৳0</div>
         <div class="field">
           <label>Notes</label>
           <textarea id="sale-notes" placeholder="Any additional notes for this sale"></textarea>
@@ -1677,7 +1885,7 @@
 <script>
 (function(){
   /* ================= USERS & PERMISSIONS ================= */
-  const MODULES = ['dashboard','companies','products','purchases','salesOrders','sales','payments','ledger','inventory','reports','settings'];
+  const MODULES = ['dashboard','companies','products','recipes','production','purchases','salesOrders','sales','payments','ledger','inventory','reports','settings'];
   const MODULE_LABELS = {
     dashboard:'Dashboard', companies:'Companies', products:'Products', purchases:'Purchases',
     salesOrders:'Sales Orders', sales:'Sales & Receipts', payments:'Payments', ledger:'Tally Book', inventory:'Inventory',
@@ -1770,6 +1978,8 @@
     switch(key){
       case 'companies': return row.name || '';
       case 'products': return row.name || '';
+      case 'recipes': return row.finishedProductName || '';
+      case 'production': return row.batchNo || row.productName || '';
       case 'purchases': return row.invoiceNo || '';
       case 'sales': return row.invoiceNo || '';
       case 'salesOrders': return row.orderNo || '';
@@ -1863,7 +2073,7 @@
       companyAddress:r.company_address||'', companyPhone:r.company_phone||'',
       total:Number(r.total)||0, received:Number(r.received)||0, due:Number(r.due)||0, notes:r.notes||'',
       created_at:epoch(r.created_at),
-      items:(r.sale_items||[]).map(it => ({ productId:it.product_id, productName:it.product_name, unit:it.unit||'', qty:Number(it.qty)||0, rate:Number(it.rate)||0, amount:Number(it.amount)||0 }))
+      items:(r.sale_items||[]).map(it => ({ productId:it.product_id, productName:it.product_name, unit:it.unit||'', qty:Number(it.qty)||0, rate:Number(it.rate)||0, amount:Number(it.amount)||0, cost:Number(it.cost)||0 }))
     }));
   }
   async function syncSalesTable(arr){
@@ -1884,7 +2094,7 @@
     for(const s of arr){
       await sbFetch('sale_items?sale_id=eq.' + s.id, { method:'DELETE', headers: sbHeaders() });
       const items = (s.items||[]).map(it => ({
-        sale_id: s.id, product_id: it.productId||null, product_name: it.productName, unit: it.unit, qty: it.qty, rate: it.rate, amount: it.amount
+        sale_id: s.id, product_id: it.productId||null, product_name: it.productName, unit: it.unit, qty: it.qty, rate: it.rate, amount: it.amount, cost: it.cost||0
       }));
       if(items.length > 0){
         await sbFetch('sale_items', { method:'POST', headers: sbHeaders({ 'Prefer':'return=minimal' }), body: JSON.stringify(items) });
@@ -1929,6 +2139,107 @@
     }
   }
 
+  /* ---- mix recipes: grouped by finished product, one group = its full component list ---- */
+  async function fetchRecipesTable(){
+    const rows = await sbFetch('product_recipes?select=*&order=finished_product_id.asc,sort_order.asc', { headers: sbHeaders() });
+    const groups = {};
+    (rows || []).forEach(r => {
+      if(!groups[r.finished_product_id]){
+        groups[r.finished_product_id] = { id: r.finished_product_id, finishedProductId: r.finished_product_id, finishedProductName: '', components: [] };
+      }
+      groups[r.finished_product_id].components.push({
+        id: r.id,
+        componentProductId: r.component_product_id,
+        qtyPerUnit: Number(r.qty_per_unit) || 0
+      });
+    });
+    return Object.values(groups);
+  }
+  async function syncRecipesTable(groups){
+    // Resync per finished product: delete its existing component rows, reinsert current ones.
+    for(const g of groups){
+      await sbFetch('product_recipes?finished_product_id=eq.' + g.finishedProductId, { method:'DELETE', headers: sbHeaders() });
+      const rows = (g.components||[]).map((c, idx) => ({
+        finished_product_id: g.finishedProductId,
+        component_product_id: c.componentProductId,
+        qty_per_unit: c.qtyPerUnit,
+        sort_order: idx
+      }));
+      if(rows.length > 0){
+        await sbFetch('product_recipes', { method:'POST', headers: sbHeaders({ 'Prefer':'return=minimal' }), body: JSON.stringify(rows) });
+      }
+    }
+    // Remove recipes for finished products no longer in the list at all
+    const keepIds = groups.map(g => g.finishedProductId).filter(Boolean);
+    const idList = keepIds.length ? keepIds.join(',') : '00000000-0000-0000-0000-000000000000';
+    await sbFetch('product_recipes?finished_product_id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() });
+  }
+
+  /* ---- production batches: header + component-consumption items ---- */
+  async function fetchProductionTable(){
+    const rows = await sbFetch('production_batches?select=*,production_batch_items(*)&order=created_at.asc', { headers: sbHeaders() });
+    return (rows || []).map(r => ({
+      id:r.id, date:r.date, batchNo:r.batch_no||'', productId:r.product_id, productName:r.product_name,
+      qtyProduced:Number(r.qty_produced)||0, totalMaterialCost:Number(r.total_material_cost)||0, unitCost:Number(r.unit_cost)||0,
+      notes:r.notes||'', created_at:epoch(r.created_at),
+      items:(r.production_batch_items||[]).map(it => ({
+        componentProductId:it.component_product_id, componentName:it.component_name,
+        rate:Number(it.rate)||0, usedQty:Number(it.used_qty)||0, cost:Number(it.cost)||0
+      }))
+    }));
+  }
+  async function syncProductionTable(arr){
+    const headers = arr.map(b => ({
+      id:b.id, date:b.date, batch_no:b.batchNo, product_id:b.productId||null, product_name:b.productName,
+      qty_produced:b.qtyProduced, total_material_cost:b.totalMaterialCost, unit_cost:b.unitCost, notes:b.notes
+    }));
+    if(headers.length > 0){
+      await sbFetch('production_batches?on_conflict=id', {
+        method:'POST', headers: sbHeaders({ 'Prefer':'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(headers)
+      });
+    }
+    const ids = arr.map(x => x.id).filter(Boolean);
+    const idList = ids.length ? ids.join(',') : '00000000-0000-0000-0000-000000000000';
+    await sbFetch('production_batches?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() });
+
+    for(const b of arr){
+      await sbFetch('production_batch_items?batch_id=eq.' + b.id, { method:'DELETE', headers: sbHeaders() });
+      const items = (b.items||[]).map(it => ({
+        batch_id: b.id, component_product_id: it.componentProductId||null, component_name: it.componentName,
+        rate: it.rate, used_qty: it.usedQty, cost: it.cost
+      }));
+      if(items.length > 0){
+        await sbFetch('production_batch_items', { method:'POST', headers: sbHeaders({ 'Prefer':'return=minimal' }), body: JSON.stringify(items) });
+      }
+    }
+  }
+
+  /* ---- live product stock summary (purchases + production − sales − consumption, and avg cost) ---- */
+  let stockSummaryCache = {};
+  async function loadStockSummary(){
+    try{
+      const rows = await sbFetch('product_stock_summary?select=*', { headers: sbHeaders() });
+      const map = {};
+      (rows || []).forEach(r => {
+        map[r.id] = {
+          netStockQty: Number(r.net_stock_qty)||0,
+          avgCost: Number(r.avg_cost)||0,
+          purchaseQty: Number(r.purchase_qty)||0,
+          producedQty: Number(r.produced_qty)||0,
+          salesQty: Number(r.sales_qty)||0,
+          consumedQty: Number(r.consumed_qty)||0
+        };
+      });
+      stockSummaryCache = map;
+    }catch(e){ console.error('loadStockSummary failed', e); }
+  }
+  function getAvgCost(productId){
+    const s = stockSummaryCache[productId];
+    if(s && s.avgCost > 0) return s.avgCost;
+    const p = productsCache.find(x => x.id === productId);
+    return p ? Number(p.purchaseRate)||0 : 0;
+  }
+
   /* ---- business profile: single row ---- */
   async function fetchProfile(){
     const rows = await sbFetch('business_profile?id=eq.1&select=*', { headers: sbHeaders() });
@@ -1966,6 +2277,8 @@
       let arr;
       if(key === 'sales') arr = await fetchSalesTable();
       else if(key === 'salesOrders') arr = await fetchSalesOrdersTable();
+      else if(key === 'recipes') arr = await fetchRecipesTable();
+      else if(key === 'production') arr = await fetchProductionTable();
       else if(TABLE_NAMES[key]) arr = await fetchFlatTable(key);
       else arr = [];
       seedAuditSnapshot(key, arr);
@@ -1976,6 +2289,8 @@
     try{
       if(key === 'sales') await syncSalesTable(arr);
       else if(key === 'salesOrders') await syncSalesOrdersTable(arr);
+      else if(key === 'recipes') await syncRecipesTable(arr);
+      else if(key === 'production') await syncProductionTable(arr);
       else if(TABLE_NAMES[key]) await syncFlatTable(key, arr);
       await logAuditForList(key, arr);
     }catch(e){ console.error('setList failed', key, e); showToast('Could not save ' + key + ' to Supabase — check your connection'); }
@@ -2031,6 +2346,8 @@
     // Module add-buttons
     setVis('company-add-btn', canEdit('companies'));
     setVis('product-add-btn', canEdit('products'));
+    setVis('recipe-add-btn', canEdit('recipes'));
+    setVis('production-add-btn', canEdit('production'));
     setVis('purchase-add-btn', canEdit('purchases'));
     setVis('sale-add-btn', canEdit('sales'));
     setVis('order-add-btn', canEdit('salesOrders'));
@@ -2045,6 +2362,8 @@
     // Re-render tables so row action buttons respect edit permission
     if(typeof renderCompanies === 'function' && companiesCache) renderCompanies();
     if(typeof renderProducts === 'function' && productsCache) renderProducts();
+    if(typeof renderRecipes === 'function' && recipesCache) renderRecipes();
+    if(typeof renderProductionLog === 'function' && productionCache) renderProductionLog();
     if(typeof renderPurchases === 'function' && purchasesCache) renderPurchases();
     if(typeof renderSales === 'function' && salesCache) renderSales();
     if(typeof renderSalesOrders === 'function' && salesOrdersCache) renderSalesOrders();
@@ -2511,6 +2830,408 @@
     });
   }
 
+  /* ================= MIX RECIPES ================= */
+  let recipesCache = [];
+
+  async function loadRecipes(){
+    recipesCache = await getList('recipes');
+    // attach display name from the current product list
+    recipesCache.forEach(g => {
+      const p = productsCache.find(x => x.id === g.finishedProductId);
+      g.finishedProductName = p ? p.name : '(deleted product)';
+    });
+    renderRecipes();
+  }
+
+  function renderRecipes(){
+    const search = document.getElementById('recipe-search').value.trim().toLowerCase();
+    let rows = recipesCache.slice().sort((a,b)=> (a.finishedProductName||'').localeCompare(b.finishedProductName||''));
+    if(search){
+      rows = rows.filter(g => (g.finishedProductName||'').toLowerCase().includes(search));
+    }
+
+    const tbody = document.getElementById('recipe-tbody');
+    const emptyBlock = document.getElementById('recipe-empty');
+    const table = document.getElementById('recipe-table');
+
+    if(rows.length === 0){
+      table.style.display = 'none';
+      emptyBlock.style.display = 'flex';
+      tbody.innerHTML = '';
+      return;
+    }
+    table.style.display = '';
+    emptyBlock.style.display = 'none';
+
+    tbody.innerHTML = rows.map(g => {
+      const product = productsCache.find(x => x.id === g.finishedProductId);
+      const unit = product ? product.unit : '';
+      const chips = (g.components||[]).map(c => {
+        const comp = productsCache.find(x => x.id === c.componentProductId);
+        const name = comp ? comp.name : '(deleted product)';
+        const cUnit = comp ? comp.unit : '';
+        return `<span class="recipe-chip">${escapeHtml(name)} — ${Number(c.qtyPerUnit||0)} ${escapeHtml(cUnit)}</span>`;
+      }).join('');
+      return `<tr>
+        <td><div class="cell-name">${escapeHtml(g.finishedProductName)}</div></td>
+        <td>${escapeHtml(unit)}</td>
+        <td>${chips || '<span class="cell-sub">—</span>'}</td>
+        <td>
+          ${canEdit('recipes') ? `<div class="row-actions">
+            <button data-id="${g.finishedProductId}" class="recipe-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${g.finishedProductId}" class="recipe-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+          </div>` : '<span class="cell-sub">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.recipe-edit-btn').forEach(b => b.addEventListener('click', () => openRecipeModal(b.getAttribute('data-id'))));
+    tbody.querySelectorAll('.recipe-delete-btn').forEach(b => b.addEventListener('click', () => {
+      const id = b.getAttribute('data-id');
+      const g = recipesCache.find(x => x.finishedProductId === id);
+      openConfirm('Delete recipe?', `This will remove the mix recipe for "${g ? g.finishedProductName : ''}". Past production batches already logged are not affected.`, async () => {
+        recipesCache = recipesCache.filter(x => x.finishedProductId !== id);
+        await setList('recipes', recipesCache);
+        renderRecipes();
+        showToast('Recipe deleted');
+      });
+    }));
+  }
+
+  function populateRecipeProductDropdown(){
+    const sorted = productsCache.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const sel = document.getElementById('recipe-product');
+    if(sel){
+      sel.innerHTML = '<option value="">Select product...</option>' + sorted.map(p =>
+        `<option value="${p.id}" data-unit="${escapeHtml(p.unit)}">${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`
+      ).join('');
+      document.getElementById('recipe-no-product-hint').style.display = sorted.length ? 'none' : 'block';
+    }
+  }
+
+  /* ---- dynamic component rows ---- */
+  function createRecipeItemRow(item){
+    item = item || { componentProductId:'', qtyPerUnit:'' };
+    const sortedP = productsCache.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const options = '<option value="">Select component...</option>' + sortedP.map(p =>
+      `<option value="${p.id}" data-unit="${escapeHtml(p.unit)}" ${p.id===item.componentProductId?'selected':''}>${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`
+    ).join('');
+    return `<div class="recipe-item-row">
+        <select class="recipe-item-component">${options}</select>
+        <input type="number" class="recipe-item-qty" step="0.0001" min="0" placeholder="Qty/unit" value="${item.qtyPerUnit || ''}">
+        <button type="button" class="sale-item-remove" aria-label="Remove component"><i class="ti ti-trash"></i></button>
+      </div>`;
+  }
+  function wireRecipeItemRowEvents(){
+    document.querySelectorAll('#recipe-items-wrap .recipe-item-row').forEach(row => {
+      const removeBtn = row.querySelector('.sale-item-remove');
+      removeBtn.onclick = function(){
+        const wrap = document.getElementById('recipe-items-wrap');
+        if(wrap.querySelectorAll('.recipe-item-row').length <= 2){
+          showToast('A recipe needs at least 2 components');
+          return;
+        }
+        row.remove();
+      };
+    });
+  }
+  function renderRecipeItemRows(components){
+    const wrap = document.getElementById('recipe-items-wrap');
+    wrap.innerHTML = '';
+    const list = (components && components.length ? components : [null, null]);
+    list.forEach(item => wrap.insertAdjacentHTML('beforeend', createRecipeItemRow(item)));
+    wireRecipeItemRowEvents();
+  }
+  function getRecipeItemsFromForm(){
+    const rows = document.querySelectorAll('#recipe-items-wrap .recipe-item-row');
+    const items = [];
+    rows.forEach(row => {
+      const sel = row.querySelector('.recipe-item-component');
+      const qty = parseFloat(row.querySelector('.recipe-item-qty').value) || 0;
+      const componentProductId = sel.value;
+      if(componentProductId && qty > 0){
+        items.push({ componentProductId, qtyPerUnit: qty });
+      }
+    });
+    return items;
+  }
+
+  function openRecipeModal(finishedProductId){
+    if(productsCache.length === 0){
+      showToast('Add at least one product first');
+      return;
+    }
+    const form = document.getElementById('recipe-form');
+    form.reset();
+    populateRecipeProductDropdown();
+    if(finishedProductId){
+      const g = recipesCache.find(x => x.finishedProductId === finishedProductId);
+      if(!g) return;
+      document.getElementById('recipe-modal-title').textContent = 'Edit recipe';
+      document.getElementById('recipe-finished-id').value = g.finishedProductId;
+      document.getElementById('recipe-product').value = g.finishedProductId;
+      document.getElementById('recipe-product').disabled = true;
+      renderRecipeItemRows(g.components);
+    } else {
+      document.getElementById('recipe-modal-title').textContent = 'Add recipe';
+      document.getElementById('recipe-finished-id').value = '';
+      document.getElementById('recipe-product').disabled = false;
+      renderRecipeItemRows(null);
+    }
+    document.getElementById('recipe-modal').classList.add('open');
+  }
+  function closeRecipeModal(){ document.getElementById('recipe-modal').classList.remove('open'); }
+
+  function initRecipes(){
+    document.getElementById('recipe-add-btn').addEventListener('click', () => openRecipeModal(null));
+    document.getElementById('recipe-modal-close').addEventListener('click', closeRecipeModal);
+    document.getElementById('recipe-cancel-btn').addEventListener('click', closeRecipeModal);
+    document.getElementById('recipe-modal').addEventListener('click', function(e){ if(e.target === this) closeRecipeModal(); });
+    document.getElementById('recipe-search').addEventListener('input', renderRecipes);
+    document.getElementById('recipe-add-item-btn').addEventListener('click', () => {
+      document.getElementById('recipe-items-wrap').insertAdjacentHTML('beforeend', createRecipeItemRow(null));
+      wireRecipeItemRowEvents();
+    });
+
+    document.getElementById('recipe-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const finishedProductId = document.getElementById('recipe-product').value;
+      if(!finishedProductId){ showToast('Select the finished product'); return; }
+      const components = getRecipeItemsFromForm();
+      if(components.length < 2){ showToast('Add at least 2 components with a qty/unit'); return; }
+      if(components.some(c => c.componentProductId === finishedProductId)){
+        showToast('A product cannot be a component of its own recipe'); return;
+      }
+      const seen = new Set();
+      for(const c of components){
+        if(seen.has(c.componentProductId)){ showToast('Each component can only appear once per recipe'); return; }
+        seen.add(c.componentProductId);
+      }
+      const product = productsCache.find(p => p.id === finishedProductId);
+      const existingId = document.getElementById('recipe-finished-id').value;
+      const data = { id: finishedProductId, finishedProductId, finishedProductName: product ? product.name : '', components };
+      if(existingId){
+        recipesCache = recipesCache.map(g => g.finishedProductId === existingId ? data : g);
+      } else {
+        if(recipesCache.some(g => g.finishedProductId === finishedProductId)){
+          showToast('This product already has a recipe — edit it instead'); return;
+        }
+        recipesCache.push(data);
+      }
+      await setList('recipes', recipesCache);
+      closeRecipeModal();
+      renderRecipes();
+      showToast(existingId ? 'Recipe updated' : 'Recipe added');
+    });
+  }
+
+  /* ================= PRODUCTION LOG ================= */
+  let productionCache = [];
+
+  async function loadProductionLog(){
+    productionCache = await getList('production');
+    productionCache.forEach(b => {
+      const p = productsCache.find(x => x.id === b.productId);
+      if(p) b.productName = p.name;
+    });
+    renderProductionLog();
+  }
+
+  function renderProductionLog(){
+    const search = document.getElementById('production-search').value.trim().toLowerCase();
+    let rows = productionCache.slice().sort((a,b)=> new Date(b.date) - new Date(a.date) || (b.created_at||0)-(a.created_at||0));
+    if(search){
+      rows = rows.filter(b =>
+        (b.productName||'').toLowerCase().includes(search) ||
+        (b.batchNo||'').toLowerCase().includes(search)
+      );
+    }
+
+    document.getElementById('production-summary-count').textContent = rows.length;
+    document.getElementById('production-summary-cost').textContent = fmtMoney(rows.reduce((s,b)=> s + (Number(b.totalMaterialCost)||0), 0));
+
+    const tbody = document.getElementById('production-tbody');
+    const emptyBlock = document.getElementById('production-empty');
+    const table = document.getElementById('production-table');
+
+    if(rows.length === 0){
+      table.style.display = 'none';
+      emptyBlock.style.display = 'flex';
+      tbody.innerHTML = '';
+      return;
+    }
+    table.style.display = '';
+    emptyBlock.style.display = 'none';
+
+    tbody.innerHTML = rows.map(b => {
+      const product = productsCache.find(x => x.id === b.productId);
+      const unit = product ? product.unit : '';
+      return `<tr>
+        <td>${escapeHtml(b.date)}</td>
+        <td>${escapeHtml(b.batchNo) || '<span class="cell-sub">—</span>'}</td>
+        <td><div class="cell-name">${escapeHtml(b.productName)}</div></td>
+        <td>${Number(b.qtyProduced||0).toLocaleString()} ${escapeHtml(unit)}</td>
+        <td>${fmtMoney(b.totalMaterialCost)}</td>
+        <td>${fmtMoney(b.unitCost)}</td>
+        <td>
+          ${canEdit('production') ? `<div class="row-actions">
+            <button data-id="${b.id}" class="production-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${b.id}" class="production-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+          </div>` : '<span class="cell-sub">—</span>'}
+        </td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.production-edit-btn').forEach(b => b.addEventListener('click', () => openProductionModal(b.getAttribute('data-id'))));
+    tbody.querySelectorAll('.production-delete-btn').forEach(b => b.addEventListener('click', () => {
+      const id = b.getAttribute('data-id');
+      const batch = productionCache.find(x => x.id === id);
+      openConfirm('Delete production batch?', `This will remove batch "${batch ? (batch.batchNo || batch.productName) : ''}" and reverse its effect on stock (raw materials will no longer be shown as consumed, and the finished product's produced qty will drop).`, async () => {
+        productionCache = productionCache.filter(x => x.id !== id);
+        await setList('production', productionCache);
+        renderProductionLog();
+        showToast('Production batch deleted');
+      });
+    }));
+  }
+
+  function populateProductionProductDropdown(){
+    const recipeProductIds = new Set(recipesCache.map(g => g.finishedProductId));
+    const sorted = productsCache.filter(p => recipeProductIds.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+    const sel = document.getElementById('production-product');
+    if(sel){
+      sel.innerHTML = '<option value="">Select product...</option>' + sorted.map(p =>
+        `<option value="${p.id}" data-unit="${escapeHtml(p.unit)}">${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`
+      ).join('');
+      document.getElementById('production-no-recipe-hint').style.display = sorted.length ? 'none' : 'block';
+    }
+  }
+
+  /* Computes component usage/cost live from the recipe + each component's current average cost. */
+  function getProductionBreakdown(productId, qtyProduced){
+    const recipe = recipesCache.find(g => g.finishedProductId === productId);
+    if(!recipe || !qtyProduced || qtyProduced <= 0) return { items: [], totalCost: 0, unitCost: 0 };
+    const items = (recipe.components||[]).map(c => {
+      const comp = productsCache.find(x => x.id === c.componentProductId);
+      const rate = getAvgCost(c.componentProductId);
+      const usedQty = (Number(c.qtyPerUnit)||0) * qtyProduced;
+      const cost = rate * usedQty;
+      return {
+        componentProductId: c.componentProductId,
+        componentName: comp ? comp.name : '(deleted product)',
+        componentUnit: comp ? comp.unit : '',
+        rate, usedQty, cost
+      };
+    });
+    const totalCost = items.reduce((s,it)=> s + it.cost, 0);
+    const unitCost = qtyProduced > 0 ? totalCost / qtyProduced : 0;
+    return { items, totalCost, unitCost };
+  }
+
+  function renderProductionBreakdown(){
+    const productId = document.getElementById('production-product').value;
+    const qty = parseFloat(document.getElementById('production-qty').value) || 0;
+    const wrap = document.getElementById('production-breakdown-wrap');
+    if(!productId){
+      wrap.innerHTML = '<div class="prod-breakdown-empty">Select a finished product to see its recipe breakdown.</div>';
+      document.getElementById('production-total-cost').textContent = fmtMoney(0);
+      document.getElementById('production-unit-cost').textContent = fmtMoney(0);
+      return;
+    }
+    const { items, totalCost, unitCost } = getProductionBreakdown(productId, qty);
+    if(items.length === 0){
+      wrap.innerHTML = '<div class="prod-breakdown-empty">This product has no mix recipe yet.</div>';
+    } else {
+      wrap.innerHTML = items.map(it => `<div class="prod-breakdown-row">
+          <span>${escapeHtml(it.componentName)}</span>
+          <span class="pb-num">${fmtMoney(it.rate)}</span>
+          <span class="pb-num">${it.usedQty.toLocaleString()} ${escapeHtml(it.componentUnit)}</span>
+          <span class="pb-cost">${fmtMoney(it.cost)}</span>
+        </div>`).join('');
+    }
+    document.getElementById('production-total-cost').textContent = fmtMoney(totalCost);
+    document.getElementById('production-unit-cost').textContent = fmtMoney(unitCost);
+  }
+
+  function openProductionModal(id){
+    if(recipesCache.length === 0){
+      showToast('Set up a mix recipe first, on the Mix Recipes page');
+      return;
+    }
+    const form = document.getElementById('production-form');
+    form.reset();
+    populateProductionProductDropdown();
+    if(id){
+      const b = productionCache.find(x => x.id === id);
+      if(!b) return;
+      document.getElementById('production-modal-title').textContent = 'Edit production batch';
+      document.getElementById('production-id').value = b.id;
+      document.getElementById('production-date').value = b.date;
+      document.getElementById('production-batch-no').value = b.batchNo || '';
+      document.getElementById('production-product').value = b.productId;
+      document.getElementById('production-qty').value = b.qtyProduced;
+      document.getElementById('production-notes').value = b.notes || '';
+    } else {
+      document.getElementById('production-modal-title').textContent = 'Log production';
+      document.getElementById('production-id').value = '';
+      document.getElementById('production-date').value = todayStr();
+      document.getElementById('production-batch-no').value = '';
+    }
+    renderProductionBreakdown();
+    document.getElementById('production-modal').classList.add('open');
+  }
+  function closeProductionModal(){ document.getElementById('production-modal').classList.remove('open'); }
+
+  function initProductionLog(){
+    document.getElementById('production-add-btn').addEventListener('click', () => openProductionModal(null));
+    document.getElementById('production-modal-close').addEventListener('click', closeProductionModal);
+    document.getElementById('production-cancel-btn').addEventListener('click', closeProductionModal);
+    document.getElementById('production-modal').addEventListener('click', function(e){ if(e.target === this) closeProductionModal(); });
+    document.getElementById('production-search').addEventListener('input', renderProductionLog);
+    document.getElementById('production-product').addEventListener('change', renderProductionBreakdown);
+    document.getElementById('production-qty').addEventListener('input', renderProductionBreakdown);
+
+    document.getElementById('production-export-btn').addEventListener('click', () => {
+      if(productionCache.length === 0){ showToast('No production batches to export'); return; }
+      const rows = [['Date','Batch No','Product','Qty produced','Total material cost','Unit cost','Notes']];
+      productionCache.forEach(b => rows.push([b.date,b.batchNo,b.productName,b.qtyProduced,b.totalMaterialCost,b.unitCost,b.notes]));
+      downloadCsv('innochem-production.csv', rows);
+      showToast('Production log exported');
+    });
+
+    document.getElementById('production-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const productId = document.getElementById('production-product').value;
+      const qtyProduced = parseFloat(document.getElementById('production-qty').value) || 0;
+      if(!productId){ showToast('Select the finished product'); return; }
+      if(qtyProduced <= 0){ showToast('Enter a qty produced greater than 0'); return; }
+      const { items, totalCost, unitCost } = getProductionBreakdown(productId, qtyProduced);
+      if(items.length === 0){ showToast('This product has no mix recipe — set one up first'); return; }
+      const product = productsCache.find(p => p.id === productId);
+      const id = document.getElementById('production-id').value;
+      const data = {
+        id: id || uid(),
+        date: document.getElementById('production-date').value,
+        batchNo: document.getElementById('production-batch-no').value.trim(),
+        productId, productName: product ? product.name : '',
+        qtyProduced, totalMaterialCost: totalCost, unitCost,
+        notes: document.getElementById('production-notes').value.trim(),
+        created_at: id ? (productionCache.find(x=>x.id===id)||{}).created_at || Date.now() : Date.now(),
+        items: items.map(it => ({ componentProductId: it.componentProductId, componentName: it.componentName, rate: it.rate, usedQty: it.usedQty, cost: it.cost }))
+      };
+      if(id){
+        productionCache = productionCache.map(b => b.id === id ? data : b);
+      } else {
+        productionCache.push(data);
+      }
+      await setList('production', productionCache);
+      await loadStockSummary();
+      closeProductionModal();
+      renderProductionLog();
+      showToast(id ? 'Production batch updated' : 'Production batch logged');
+    });
+  }
+
   /* ================= PURCHASES ================= */
   let purchasesCache = [];
 
@@ -2734,6 +3455,8 @@
     const elPay = document.getElementById('metric-payable');
     const elS = document.getElementById('metric-total-sales');
     const elRec = document.getElementById('metric-receivable');
+    const elProfit = document.getElementById('metric-total-profit');
+    if(elProfit) elProfit.textContent = fmtMoney(salesCache.reduce((s,x)=> s + saleProfit(x), 0));
     if(elP) elP.textContent = fmtMoney(totalPurchases);
     if(elPay) elPay.textContent = fmtMoney(payable);
     if(elS) elS.textContent = fmtMoney(totalSales);
@@ -2911,6 +3634,10 @@
     return `${escapeHtml(items[0].productName)} <span class="cell-sub">+${items.length - 1} more item${items.length - 1 > 1 ? 's' : ''}</span>`;
   }
 
+  function saleProfit(s){
+    return (s.items||[]).reduce((sum, it) => sum + ((Number(it.amount)||0) - (Number(it.cost)||0) * (Number(it.qty)||0)), 0);
+  }
+
   function renderSales(){
     const search = document.getElementById('sale-search').value.trim().toLowerCase();
     const companyFilter = document.getElementById('sale-company-filter').value;
@@ -2928,11 +3655,15 @@
     const emptyBlock = document.getElementById('sale-empty');
     const table = document.getElementById('sale-table');
 
-    let sumTotal = 0, sumReceived = 0, sumDue = 0;
-    rows.forEach(s => { sumTotal += Number(s.total)||0; sumReceived += Number(s.received)||0; sumDue += Number(s.due)||0; });
+    let sumTotal = 0, sumReceived = 0, sumDue = 0, sumProfit = 0;
+    rows.forEach(s => {
+      sumTotal += Number(s.total)||0; sumReceived += Number(s.received)||0; sumDue += Number(s.due)||0;
+      sumProfit += saleProfit(s);
+    });
     document.getElementById('sale-summary-total').textContent = fmtMoney(sumTotal);
     document.getElementById('sale-summary-received').textContent = fmtMoney(sumReceived);
     document.getElementById('sale-summary-due').textContent = fmtMoney(sumDue);
+    document.getElementById('sale-summary-profit').textContent = fmtMoney(sumProfit);
 
     if(rows.length === 0){
       table.style.display = 'none';
@@ -2943,12 +3674,15 @@
     table.style.display = '';
     emptyBlock.style.display = 'none';
 
-    tbody.innerHTML = rows.map(s => `<tr>
+    tbody.innerHTML = rows.map(s => {
+      const profit = saleProfit(s);
+      return `<tr>
         <td>${escapeHtml(s.date)}</td>
         <td><b>${escapeHtml(s.invoiceNo)}</b></td>
         <td><div class="cell-name">${escapeHtml(s.companyName)}</div></td>
         <td>${summarizeItems(s.items)}</td>
         <td><b>${fmtMoney(s.total)}</b></td>
+        <td style="color:${profit>=0 ? 'var(--success)' : 'var(--danger)'};font-weight:700;">${fmtMoney(profit)}</td>
         <td>${fmtMoney(s.received)}</td>
         <td style="color:${Number(s.due)>0 ? 'var(--danger)' : 'var(--success)'};font-weight:700;">${fmtMoney(s.due)}</td>
         <td>
@@ -2958,7 +3692,8 @@
             <button data-id="${s.id}" class="sale-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>` : ''}
           </div>
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
 
     tbody.querySelectorAll('.sale-edit-btn').forEach(b => b.addEventListener('click', () => openSaleModal(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.sale-receipt-btn').forEach(b => b.addEventListener('click', () => openReceiptModal(b.getAttribute('data-id'))));
@@ -3044,7 +3779,8 @@
           productId,
           productName: product ? product.name : (opt ? opt.textContent : '(deleted product)'),
           unit: product ? product.unit : (opt ? opt.getAttribute('data-unit') || '' : ''),
-          qty, rate, amount: qty * rate
+          qty, rate, amount: qty * rate,
+          cost: getAvgCost(productId)
         });
       }
     });
@@ -3052,18 +3788,26 @@
   }
 
   function recalcSaleTotals(){
-    let total = 0;
+    let total = 0, totalCost = 0;
     document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => {
+      const productSel = row.querySelector('.sale-item-product');
       const qty = parseFloat(row.querySelector('.sale-item-qty').value) || 0;
       const rate = parseFloat(row.querySelector('.sale-item-rate').value) || 0;
       const amount = qty * rate;
       row.querySelector('.sale-item-amount').value = amount ? fmtMoney(amount) : '';
       total += amount;
+      if(productSel.value && qty > 0){
+        totalCost += getAvgCost(productSel.value) * qty;
+      }
     });
     const received = parseFloat(document.getElementById('sale-received').value) || 0;
     const due = Math.max(total - received, 0);
     document.getElementById('sale-total-display').value = fmtMoney(total);
     document.getElementById('sale-due-hint').textContent = 'Due: ' + fmtMoney(due) + (received > total ? '  (received exceeds total)' : '');
+    const profit = total - totalCost;
+    const profitHint = document.getElementById('sale-profit-hint');
+    profitHint.textContent = 'Estimated cost/profit: ' + fmtMoney(totalCost) + ' / ' + fmtMoney(profit);
+    profitHint.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
   function openSaleModal(id){
@@ -3112,13 +3856,15 @@
 
     document.getElementById('sale-export-btn').addEventListener('click', () => {
       if(salesCache.length === 0){ showToast('No sales to export'); return; }
-      const rows = [['Date','Invoice','Company','Product','Qty','Rate','Item amount','Invoice total','Received','Due','Notes']];
+      const rows = [['Date','Invoice','Company','Product','Qty','Cost/unit','Rate','Item amount','Item profit','Invoice total','Invoice profit','Received','Due','Notes']];
       salesCache.forEach(s => {
+        const invoiceProfit = saleProfit(s);
         (s.items && s.items.length ? s.items : [{}]).forEach((it, idx) => {
+          const itemProfit = (Number(it.amount)||0) - (Number(it.cost)||0) * (Number(it.qty)||0);
           rows.push([
             idx === 0 ? s.date : '', idx === 0 ? s.invoiceNo : '', idx === 0 ? s.companyName : '',
-            it.productName || '', it.qty || '', it.rate || '', it.amount || '',
-            idx === 0 ? s.total : '', idx === 0 ? s.received : '', idx === 0 ? s.due : '', idx === 0 ? s.notes : ''
+            it.productName || '', it.qty || '', it.cost || '', it.rate || '', it.amount || '', it.productName ? itemProfit : '',
+            idx === 0 ? s.total : '', idx === 0 ? invoiceProfit : '', idx === 0 ? s.received : '', idx === 0 ? s.due : '', idx === 0 ? s.notes : ''
           ]);
         });
       });
@@ -4272,17 +5018,27 @@
         const itemsForProduct = (x.items||[]).filter(it => it.productId === p.id);
         return s + itemsForProduct.reduce((s2,it)=> s2 + (Number(it.qty)||0), 0);
       }, 0);
+      const producedQty = (productionCache||[]).filter(x => x.productId === p.id).reduce((s,x)=> s + (Number(x.qtyProduced)||0), 0);
+      const producedCost = (productionCache||[]).filter(x => x.productId === p.id).reduce((s,x)=> s + (Number(x.totalMaterialCost)||0), 0);
+      const consumedQty = (productionCache||[]).reduce((s,batch)=> {
+        const itemsForProduct = (batch.items||[]).filter(it => it.componentProductId === p.id);
+        return s + itemsForProduct.reduce((s2,it)=> s2 + (Number(it.usedQty)||0), 0);
+      }, 0);
       const openingQty = Number(p.openingStock) || 0;
       const openingCost = openingQty * (Number(p.purchaseRate) || 0);
-      const currentStock = openingQty + purchasedQty - soldQty;
-      const totalInQty = openingQty + purchasedQty;
-      const avgCost = totalInQty > 0 ? (openingCost + purchasedCost) / totalInQty : (Number(p.purchaseRate) || 0);
+      const currentStock = openingQty + purchasedQty + producedQty - soldQty - consumedQty;
+      const totalInQty = openingQty + purchasedQty + producedQty;
+      const avgCost = totalInQty > 0 ? (openingCost + purchasedCost + producedCost) / totalInQty : (Number(p.purchaseRate) || 0);
       const stockValue = Math.max(currentStock, 0) * avgCost;
       let status = 'instock';
       if(currentStock <= 0) status = 'outstock';
       else if(p.reorderLevel && currentStock <= Number(p.reorderLevel)) status = 'lowstock';
-      return { product: p, purchasedQty, soldQty, openingQty, currentStock, avgCost, stockValue, status };
+      return { product: p, purchasedQty, soldQty, producedQty, consumedQty, openingQty, currentStock, avgCost, stockValue, status };
     });
+  }
+  function avgCostForProduct(productId){
+    const row = computeInventory().find(i => i.product.id === productId);
+    return row ? row.avgCost : 0;
   }
 
   function renderInventory(){
@@ -4956,6 +5712,8 @@
   initConfirmModal();
   initCompanies();
   initProducts();
+  initRecipes();
+  initProductionLog();
   initPurchases();
   initSales();
   initOrders();
@@ -4971,8 +5729,9 @@
   initUsers();
   document.getElementById('report-from-date').value = '';
   document.getElementById('report-to-date').value = todayStr();
+  loadStockSummary();
   loadCompanies().then(populateCompanyDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(populatePaymentDropdowns).then(refreshLedger).then(refreshReports);
-  loadProducts().then(populateProductDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(renderInventory).then(refreshReports);
+  loadProducts().then(populateProductDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(renderInventory).then(refreshReports).then(loadRecipes).then(loadProductionLog);
   loadPurchases().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
   loadSales().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
   loadSalesOrders();
