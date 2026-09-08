@@ -541,50 +541,51 @@
     .content{padding:18px;}
   }
 
-  /* ---------- RECEIPT ---------- */
-  #receipt-print-area{background:#fff;border:1px solid var(--border);border-radius:10px;padding:26px 26px 20px;font-size:13px;color:#20201D;}
-  .rc-head{display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:2px solid var(--ic-green);margin-bottom:16px;}
-  .rc-head img{width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;}
-  .rc-head-text{flex:1;}
-  .rc-head-text .rc-biz-name{font-size:17px;font-weight:800;margin:0;}
-  .rc-head-text .rc-biz-name .t-green{color:#E8590C;}
-  .rc-head-text .rc-biz-name .t-blue{color:#3E7BFA;}
-  .rc-head-text .rc-tagline{font-size:11px;color:var(--text-secondary);font-style:italic;margin:1px 0 5px;}
-  .rc-head-text .rc-contact{font-size:10.5px;color:var(--text-muted);line-height:1.5;}
-  .rc-meta{text-align:right;flex-shrink:0;}
-  .rc-meta .rc-label{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;}
-  .rc-meta .rc-inv{font-size:14px;font-weight:800;color:var(--ic-green-dark);margin:1px 0 6px;}
-  .rc-meta .rc-date{font-size:11.5px;color:var(--text-secondary);}
-  .rc-billto{margin-bottom:16px;}
-  .rc-billto .rc-label{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin-bottom:4px;}
-  .rc-billto .rc-cname{font-size:14px;font-weight:700;}
-  .rc-billto .rc-cmeta{font-size:11.5px;color:var(--text-secondary);line-height:1.6;}
-  .rc-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
-  .rc-table th{background:var(--bg-page);font-size:10px;text-transform:uppercase;letter-spacing:0.3px;color:var(--text-secondary);font-weight:700;text-align:left;padding:9px 10px;}
-  .rc-table th.rc-num, .rc-table td.rc-num{text-align:right;}
-  .rc-table td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:13px;}
-  .rc-totals{margin-left:auto;width:230px;}
-  .rc-totals .rc-trow{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;color:var(--text-secondary);}
-  .rc-totals .rc-trow.rc-grand{border-top:2px solid var(--ic-green);margin-top:4px;padding-top:10px;font-size:15px;font-weight:800;color:var(--text-primary);}
-  .rc-totals .rc-trow.rc-due{color:var(--danger);font-weight:700;}
-  .rc-totals .rc-trow.rc-paid-full{color:var(--success);font-weight:700;}
-  .rc-notes{margin-top:14px;font-size:11.5px;color:var(--text-secondary);background:var(--bg-page);border-radius:8px;padding:10px 12px;}
-  .rc-foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--border);text-align:center;font-size:10.5px;color:var(--text-muted);}
-  .rc-foot b{color:var(--text-secondary);}
-  .rc-thanks{text-align:center;font-size:12px;font-weight:700;color:var(--ic-blue);margin-top:2px;margin-bottom:10px;}
-
-  /* ---------- INVOICE / CHALLAN: brand-fixed orange/blue, independent of app theme ---------- */
-  .rc-doc-pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:0.3px;padding:4px 13px;border-radius:20px;margin:8px 0 12px;}
+  /* ---------- RECEIPT / INVOICE / CHALLAN ---------- */
+  #receipt-print-area, #challan-print-area{background:#fff;border:1px solid var(--border);border-radius:10px;padding:26px 26px 20px;font-size:13px;color:#20201D;}
+  .rc-head{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+  .rc-head img{width:52px;height:52px;border-radius:11px;object-fit:cover;flex-shrink:0;}
+  .rc-head-text .rc-biz-name{font-size:22px;font-weight:800;margin:0;line-height:1.15;}
+  .rc-head-text .rc-biz-name .t-green{color:#B8590A;}
+  .rc-head-text .rc-biz-name .t-blue{color:#14458C;}
+  .rc-head-text .rc-tagline{font-size:12px;color:var(--text-secondary);font-style:italic;margin:2px 0 0;}
+  .rc-pill-row{margin:10px 0 12px;}
+  .rc-pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.3px;padding:4px 13px;border-radius:20px;}
+  .doc-invoice .rc-pill{background:#FDF0E4;color:#B8590A;border:1px solid #F3D3AC;}
+  .doc-challan .rc-pill{background:#E9F0FA;color:#14458C;border:1px solid #C7D8EF;}
+  .rc-contact-line{font-size:11.5px;color:var(--text-muted);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 0;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:3px 16px;}
+  .rc-doctitle-row{display:flex;justify-content:center;margin-bottom:18px;}
+  .rc-doc-pill{font-size:12.5px;font-weight:800;letter-spacing:1px;padding:6px 22px;border-radius:20px;}
   .doc-invoice .rc-doc-pill{background:#FDF0E4;color:#B8590A;border:1px solid #F3D3AC;}
   .doc-challan .rc-doc-pill{background:#E9F0FA;color:#14458C;border:1px solid #C7D8EF;}
-  .doc-invoice .rc-head{border-bottom-color:#E8720A;}
-  .doc-challan .rc-head{border-bottom-color:#14458C;}
-  .doc-invoice .rc-meta .rc-inv{color:#B8590A;}
-  .doc-challan .rc-meta .rc-inv{color:#14458C;}
+  .rc-meta-row{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
+  .rc-billto{flex:1;min-width:180px;}
+  .rc-billto .rc-label{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin-bottom:4px;}
+  .rc-billto .rc-cname{font-size:14px;font-weight:700;margin:0 0 2px;}
+  .rc-billto .rc-cmeta{font-size:11.5px;color:var(--text-secondary);line-height:1.6;}
+  .rc-meta-table{font-size:12px;flex-shrink:0;}
+  .rc-meta-table tr td{padding:2px 0;}
+  .rc-meta-table tr td:first-child{color:var(--text-muted);padding-right:14px;white-space:nowrap;}
+  .rc-meta-table tr td:last-child{font-weight:700;font-family:monospace;font-size:11.5px;text-align:right;}
+  .rc-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+  .rc-table th{font-size:10px;text-transform:uppercase;letter-spacing:0.3px;font-weight:800;text-align:left;padding:9px 10px;}
   .doc-invoice .rc-table th{background:#FDF0E4;color:#B8590A;}
   .doc-challan .rc-table th{background:#E9F0FA;color:#14458C;}
-  .doc-invoice .rc-totals .rc-trow.rc-grand{border-top-color:#E8720A;}
-  .doc-challan .rc-totals .rc-trow.rc-grand{border-top-color:#14458C;}
+  .rc-table th.rc-num, .rc-table td.rc-num{text-align:right;}
+  .rc-table td{padding:11px 10px;border-bottom:1px solid var(--border);font-size:13px;}
+  .rc-totals{margin-left:auto;width:230px;}
+  .rc-totals .rc-trow{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;color:var(--text-secondary);}
+  .rc-totals .rc-trow.rc-grand{margin-top:4px;padding-top:10px;font-size:15px;font-weight:800;color:var(--text-primary);}
+  .doc-invoice .rc-totals .rc-trow.rc-grand{border-top:2px solid #E8720A;}
+  .doc-challan .rc-totals .rc-trow.rc-grand{border-top:2px solid #14458C;}
+  .rc-totals .rc-trow.rc-due{color:var(--danger);font-weight:700;}
+  .rc-totals .rc-trow.rc-paid-full{color:var(--success);font-weight:700;}
+  .rc-words-box{background:var(--bg-page);border:1px solid var(--border);border-radius:8px;padding:11px 15px;font-size:12.5px;margin-bottom:6px;}
+  .rc-words-box .rc-label{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin-bottom:3px;}
+  .rc-words-box .rc-words-value{font-weight:700;}
+  .rc-notes{margin-top:14px;font-size:11.5px;color:var(--text-secondary);background:var(--bg-page);border-radius:8px;padding:10px 12px;}
+  .rc-thanks{text-align:center;font-size:12px;font-weight:700;color:var(--ic-blue);margin-top:2px;margin-bottom:10px;}
+  .rc-note-line{font-size:11.5px;color:var(--text-muted);font-style:italic;margin:14px 0;}
   .rc-sig-spacer{height:52px;}
   .rc-sig-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
   .rc-sig-box{text-align:center;}
@@ -4535,6 +4536,41 @@
     return img ? img.src : '';
   }
 
+  function numberToWordsIndian(num){
+    num = Math.floor(Math.abs(Number(num) || 0));
+    if(num === 0) return 'Zero';
+    const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+      'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    function twoDigits(n){
+      if(n < 20) return ones[n];
+      return tens[Math.floor(n/10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+    }
+    function threeDigits(n){
+      let str = '';
+      if(n >= 100){
+        str += ones[Math.floor(n/100)] + ' Hundred';
+        n = n % 100;
+        if(n) str += ' ';
+      }
+      if(n > 0) str += twoDigits(n);
+      return str;
+    }
+    const crore = Math.floor(num / 10000000); num %= 10000000;
+    const lac = Math.floor(num / 100000); num %= 100000;
+    const thousand = Math.floor(num / 1000); num %= 1000;
+    const hundred = num;
+    const parts = [];
+    if(crore) parts.push(threeDigits(crore) + ' Crore');
+    if(lac) parts.push(threeDigits(lac) + ' Lac');
+    if(thousand) parts.push(threeDigits(thousand) + ' Thousand');
+    if(hundred) parts.push(threeDigits(hundred));
+    return parts.join(' ');
+  }
+  function amountInWordsTaka(amount){
+    return numberToWordsIndian(amount) + ' Taka Only';
+  }
+
   function buildReceiptHtml(sale){
     const logoSrc = getAppLogoSrc();
     const isPaid = Number(sale.due) <= 0;
@@ -4544,34 +4580,41 @@
             <td class="rc-num">${fmtMoney(it.rate)}</td>
             <td class="rc-num"><b>${fmtMoney(it.amount)}</b></td>
           </tr>`).join('');
+    const nameParts = (profileCache.name || 'Inno Chem Bangladesh').trim().split(/\s+/);
+    const nameLast = nameParts.length > 1 ? nameParts.pop() : '';
+    const nameFirst = nameParts.join(' ');
     return `
       <div class="rc-head">
         <img src="${logoSrc}" alt="logo">
         <div class="rc-head-text">
-          <p class="rc-biz-name"><span class="t-green">${escapeHtml((profileCache.name||'Inno Chem').split(' ')[0])}</span> ${escapeHtml((profileCache.name||'Inno Chem Bangladesh').split(' ').slice(1).join(' '))}</p>
+          <p class="rc-biz-name"><span class="t-green">${escapeHtml(nameFirst)}</span>${nameLast ? ' <span class="t-blue">' + escapeHtml(nameLast) + '</span>' : ''}</p>
           <p class="rc-tagline">${escapeHtml(profileCache.tagline || '')}</p>
-          <p class="rc-contact">
-            ${profileCache.address ? escapeHtml(profileCache.address) + '<br>' : ''}
-            ${profileCache.phone ? 'Phone: ' + escapeHtml(profileCache.phone) + '  ' : ''}${profileCache.email ? 'Email: ' + escapeHtml(profileCache.email) : ''}
-            ${profileCache.bin ? '<br>BIN/TIN: ' + escapeHtml(profileCache.bin) : ''}
-          </p>
-        </div>
-        <div class="rc-meta">
-          <div class="rc-label">Invoice</div>
-          <div class="rc-inv">${escapeHtml(sale.invoiceNo)}</div>
-          <div class="rc-date">${escapeHtml(sale.date)}</div>
         </div>
       </div>
-      <span class="rc-doc-pill">Commercial invoice</span>
-      <div class="rc-billto">
-        <div class="rc-label">Bill to</div>
-        <div class="rc-cname">${escapeHtml(sale.companyName)}</div>
-        <div class="rc-cmeta">
-          ${sale.companyAddress ? escapeHtml(sale.companyAddress) + '<br>' : ''}
-          ${sale.companyPhone ? 'Phone: ' + escapeHtml(sale.companyPhone) + '<br>' : ''}
-          ${sale.challanNo ? 'Challan no: <b>' + escapeHtml(sale.challanNo) + '</b>' : ''}
-        </div>
+      <div class="rc-pill-row"><span class="rc-pill">All kinds of textile chemical supplier</span></div>
+      <div class="rc-contact-line">
+        ${profileCache.address ? `<span>${escapeHtml(profileCache.address)}</span>` : ''}
+        ${profileCache.phone ? `<span>${escapeHtml(profileCache.phone)}</span>` : ''}
+        ${profileCache.email ? `<span>${escapeHtml(profileCache.email)}</span>` : ''}
+        ${profileCache.bin ? `<span>BIN/TIN: ${escapeHtml(profileCache.bin)}</span>` : ''}
       </div>
+
+      <div class="rc-doctitle-row"><span class="rc-doc-pill">Commercial invoice</span></div>
+
+      <div class="rc-meta-row">
+        <div class="rc-billto">
+          <div class="rc-label">Bill to</div>
+          <p class="rc-cname">${escapeHtml(sale.companyName)}</p>
+          <p class="rc-cmeta">${sale.companyAddress ? escapeHtml(sale.companyAddress) : ''}${sale.companyPhone ? '<br>Phone: ' + escapeHtml(sale.companyPhone) : ''}</p>
+        </div>
+        <table class="rc-meta-table">
+          <tr><td>Date</td><td>${escapeHtml(sale.date)}</td></tr>
+          <tr><td>Invoice no</td><td>${escapeHtml(sale.invoiceNo)}</td></tr>
+          <tr><td>Challan no</td><td>${sale.challanNo ? escapeHtml(sale.challanNo) : '—'}</td></tr>
+          <tr><td>Terms</td><td>—</td></tr>
+        </table>
+      </div>
+
       <table class="rc-table">
         <thead><tr><th>Product</th><th class="rc-num">Qty</th><th class="rc-num">Rate</th><th class="rc-num">Amount</th></tr></thead>
         <tbody>${itemRows}</tbody>
@@ -4581,7 +4624,13 @@
         <div class="rc-trow"><span>Received</span><span>${fmtMoney(sale.received)}</span></div>
         <div class="rc-trow rc-grand"><span>Total due</span><span>${fmtMoney(sale.due)}</span></div>
       </div>
-      ${isPaid ? '<p class="rc-thanks" style="margin-top:16px;"><i class="ti ti-circle-check"></i> Paid in full — thank you</p>' : ''}
+
+      <div class="rc-words-box">
+        <div class="rc-label">Amount in words</div>
+        <div class="rc-words-value">${escapeHtml(amountInWordsTaka(sale.total))}</div>
+      </div>
+
+      ${isPaid ? '<p class="rc-thanks"><i class="ti ti-circle-check"></i> Paid in full — thank you</p>' : ''}
       ${sale.notes ? `<div class="rc-notes"><b>Notes:</b> ${escapeHtml(sale.notes)}</div>` : ''}
       <div class="rc-sig-spacer"></div>
       <div class="rc-sig-row">
@@ -4641,34 +4690,40 @@
             <td class="rc-num">${Number(it.qty).toLocaleString()} ${escapeHtml(it.unit||'')}</td>
             <td class="rc-num">${escapeHtml(it.remarks || '—')}</td>
           </tr>`).join('');
+    const nameParts = (profileCache.name || 'Inno Chem Bangladesh').trim().split(/\s+/);
+    const nameLast = nameParts.length > 1 ? nameParts.pop() : '';
+    const nameFirst = nameParts.join(' ');
     return `
       <div class="rc-head">
         <img src="${logoSrc}" alt="logo">
         <div class="rc-head-text">
-          <p class="rc-biz-name"><span class="t-green">${escapeHtml((profileCache.name||'Inno Chem').split(' ')[0])}</span> ${escapeHtml((profileCache.name||'Inno Chem Bangladesh').split(' ').slice(1).join(' '))}</p>
+          <p class="rc-biz-name"><span class="t-green">${escapeHtml(nameFirst)}</span>${nameLast ? ' <span class="t-blue">' + escapeHtml(nameLast) + '</span>' : ''}</p>
           <p class="rc-tagline">${escapeHtml(profileCache.tagline || '')}</p>
-          <p class="rc-contact">
-            ${profileCache.address ? escapeHtml(profileCache.address) + '<br>' : ''}
-            ${profileCache.phone ? 'Phone: ' + escapeHtml(profileCache.phone) + '  ' : ''}${profileCache.email ? 'Email: ' + escapeHtml(profileCache.email) : ''}
-          </p>
-        </div>
-        <div class="rc-meta">
-          <div class="rc-label">Challan</div>
-          <div class="rc-inv">${escapeHtml(sale.challanNo || '—')}</div>
-          <div class="rc-date">${escapeHtml(sale.deliveryDate || sale.date)}</div>
         </div>
       </div>
-      <span class="rc-doc-pill">Delivery challan</span>
-      <div class="rc-billto">
-        <div class="rc-label">Deliver to</div>
-        <div class="rc-cname">${escapeHtml(sale.companyName)}</div>
-        <div class="rc-cmeta">
-          ${sale.companyAddress ? escapeHtml(sale.companyAddress) + '<br>' : ''}
-          ${sale.companyPhone ? 'Phone: ' + escapeHtml(sale.companyPhone) + '<br>' : ''}
-          Ref. invoice: <b>${escapeHtml(sale.invoiceNo)}</b>
-          ${sale.deliveryVehicle ? '<br>Transport: ' + escapeHtml(sale.deliveryVehicle) : ''}
-        </div>
+      <div class="rc-pill-row"><span class="rc-pill">All kinds of textile chemical supplier</span></div>
+      <div class="rc-contact-line">
+        ${profileCache.address ? `<span>${escapeHtml(profileCache.address)}</span>` : ''}
+        ${profileCache.phone ? `<span>${escapeHtml(profileCache.phone)}</span>` : ''}
+        ${profileCache.email ? `<span>${escapeHtml(profileCache.email)}</span>` : ''}
       </div>
+
+      <div class="rc-doctitle-row"><span class="rc-doc-pill">Delivery challan</span></div>
+
+      <div class="rc-meta-row">
+        <div class="rc-billto">
+          <div class="rc-label">Deliver to</div>
+          <p class="rc-cname">${escapeHtml(sale.companyName)}</p>
+          <p class="rc-cmeta">${sale.companyAddress ? escapeHtml(sale.companyAddress) : ''}${sale.companyPhone ? '<br>Phone: ' + escapeHtml(sale.companyPhone) : ''}</p>
+        </div>
+        <table class="rc-meta-table">
+          <tr><td>Date</td><td>${escapeHtml(sale.deliveryDate || sale.date)}</td></tr>
+          <tr><td>Challan no</td><td>${sale.challanNo ? escapeHtml(sale.challanNo) : '—'}</td></tr>
+          <tr><td>Ref. invoice</td><td>${escapeHtml(sale.invoiceNo)}</td></tr>
+          ${sale.deliveryVehicle ? `<tr><td>Transport</td><td>${escapeHtml(sale.deliveryVehicle)}</td></tr>` : ''}
+        </table>
+      </div>
+
       <table class="rc-table">
         <thead><tr><th>Product</th><th class="rc-num">Quantity</th><th class="rc-num">Remarks</th></tr></thead>
         <tbody>${itemRows}</tbody>
