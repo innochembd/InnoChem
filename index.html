@@ -312,21 +312,23 @@
   .data-table tbody tr:hover{background:var(--bg-page);}
   .data-table .cell-name{font-weight:700;}
   .data-table .cell-sub{font-size:11.5px;color:var(--text-muted);font-weight:500;}
-  .row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .row-actions{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;}
   .row-actions button{
     width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:#fff;
     display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;
+    flex-shrink:0;
   }
   .row-actions button:hover{background:var(--bg-page);}
   .row-actions button.danger:hover{background:var(--danger-bg);color:var(--danger);border-color:#F1C6C1;}
   .icon-inline{
     width:22px;height:22px;border-radius:6px;border:none;background:none;color:var(--text-muted);
     display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px;font-size:12px;
+    flex-shrink:0;
   }
   .icon-inline:hover{background:var(--bg-page);color:var(--text-secondary);}
-  .action-pill{
-    display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:20px;
-    border:none;font-size:12px;font-weight:700;white-space:nowrap;color:#fff;
+  .row-actions button.action-pill{
+    width:auto;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:20px;
+    border:none;font-size:12px;font-weight:700;white-space:nowrap;color:#fff;flex-shrink:0;
   }
   .action-pill.pill-blue{background:var(--ic-blue);}
   .action-pill.pill-blue:hover{background:var(--ic-blue-dark);}
@@ -2797,8 +2799,8 @@
         <td>
           <div class="row-actions">
             ${canView('ledger') ? `<button data-id="${c.id}" class="company-statement-btn" aria-label="Statement"><i class="ti ti-file-invoice"></i></button>` : ''}
-            ${canEdit('companies') ? `<button data-id="${c.id}" class="company-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${c.id}" class="company-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>` : ''}
+            ${canEdit('companies') ? `<button data-id="${c.id}" class="company-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${c.id}" class="company-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -2933,8 +2935,8 @@
         <td>${fmtMoney(p.salesRate)}</td>
         <td>
           ${canEdit('products') ? `<div class="row-actions">
-            <button data-id="${p.id}" class="product-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${p.id}" class="product-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+            <button data-id="${p.id}" class="product-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${p.id}" class="product-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>
           </div>` : '<span class="cell-sub">—</span>'}
         </td>
       </tr>`).join('');
@@ -3070,8 +3072,8 @@
         <td>${chips || '<span class="cell-sub">—</span>'}</td>
         <td>
           ${canEdit('recipes') ? `<div class="row-actions">
-            <button data-id="${g.finishedProductId}" class="recipe-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${g.finishedProductId}" class="recipe-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+            <button data-id="${g.finishedProductId}" class="recipe-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${g.finishedProductId}" class="recipe-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>
           </div>` : '<span class="cell-sub">—</span>'}
         </td>
       </tr>`;
@@ -3300,8 +3302,8 @@
         <td>${fmtMoney(b.unitCost)}</td>
         <td>
           ${canEdit('production') ? `<div class="row-actions">
-            <button data-id="${b.id}" class="production-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${b.id}" class="production-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+            <button data-id="${b.id}" class="production-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${b.id}" class="production-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>
           </div>` : '<span class="cell-sub">—</span>'}
         </td>
       </tr>`;
@@ -3540,8 +3542,8 @@
         <td style="color:${Number(p.due)>0 ? 'var(--danger)' : 'var(--success)'};font-weight:700;">${fmtMoney(p.due)}</td>
         <td>
           ${canEdit('purchases') ? `<div class="row-actions">
-            <button data-id="${p.id}" class="purchase-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${p.id}" class="purchase-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+            <button data-id="${p.id}" class="purchase-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${p.id}" class="purchase-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>
           </div>` : '<span class="cell-sub">—</span>'}
         </td>
       </tr>`).join('');
@@ -3920,8 +3922,8 @@
           <div class="row-actions">
             <button data-id="${s.id}" class="sale-receipt-btn" aria-label="View receipt" title="View invoice"><i class="ti ti-receipt"></i></button>
             <button data-id="${s.id}" class="sale-challan-btn" aria-label="View challan" title="View delivery challan"><i class="ti ti-truck-delivery"></i></button>
-            ${canEdit('sales') ? `<button data-id="${s.id}" class="sale-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${s.id}" class="sale-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>` : ''}
+            ${canEdit('sales') ? `<button data-id="${s.id}" class="sale-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${s.id}" class="sale-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -4358,8 +4360,8 @@
       if(o.status === 'open'){
         if(canEdit('salesOrders')){
           actions += `<button data-id="${o.id}" class="action-pill pill-green order-convert-btn" aria-label="Convert to invoice" title="Convert to invoice"><i class="ti ti-receipt"></i> Convert</button>`;
-          actions += `<button data-id="${o.id}" class="order-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>`;
-          actions += `<button data-id="${o.id}" class="order-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>`;
+          actions += `<button data-id="${o.id}" class="order-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>`;
+          actions += `<button data-id="${o.id}" class="order-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>`;
         }
       } else if(o.status === 'invoiced' && o.invoicedSaleId){
         actions += `<button data-id="${o.invoicedSaleId}" class="order-view-invoice-btn" aria-label="View invoice" title="View invoice receipt"><i class="ti ti-receipt"></i></button>`;
@@ -4976,8 +4978,8 @@
         <td>
           <div class="row-actions">
             <button data-id="${p.id}" class="payment-receipt-btn" aria-label="View receipt"><i class="ti ti-receipt"></i></button>
-            ${canEdit('payments') ? `<button data-id="${p.id}" class="payment-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${p.id}" class="payment-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>` : ''}
+            ${canEdit('payments') ? `<button data-id="${p.id}" class="payment-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${p.id}" class="payment-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : ''}
           </div>
         </td>
       </tr>`).join('');
@@ -6100,8 +6102,8 @@
         <td>${escapeHtml(accessSummary)}</td>
         <td>
           <div class="row-actions">
-            <button data-id="${u.id}" class="user-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${u.id}" class="user-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>
+            <button data-id="${u.id}" class="user-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${u.id}" class="user-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>
           </div>
         </td>
       </tr>`;
