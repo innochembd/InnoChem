@@ -312,13 +312,26 @@
   .data-table tbody tr:hover{background:var(--bg-page);}
   .data-table .cell-name{font-weight:700;}
   .data-table .cell-sub{font-size:11.5px;color:var(--text-muted);font-weight:500;}
-  .row-actions{display:flex;gap:6px;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .row-actions button{
     width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:#fff;
     display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;
   }
   .row-actions button:hover{background:var(--bg-page);}
   .row-actions button.danger:hover{background:var(--danger-bg);color:var(--danger);border-color:#F1C6C1;}
+  .icon-inline{
+    width:22px;height:22px;border-radius:6px;border:none;background:none;color:var(--text-muted);
+    display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px;font-size:12px;
+  }
+  .icon-inline:hover{background:var(--bg-page);color:var(--text-secondary);}
+  .action-pill{
+    display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:20px;
+    border:none;font-size:12px;font-weight:700;white-space:nowrap;color:#fff;
+  }
+  .action-pill.pill-blue{background:var(--ic-blue);}
+  .action-pill.pill-blue:hover{background:var(--ic-blue-dark);}
+  .action-pill.pill-green{background:var(--ic-green);}
+  .action-pill.pill-green:hover{background:var(--ic-green-dark);}
   .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.2px;}
   .badge.supplier{background:var(--ic-blue-light);color:var(--ic-blue);}
   .badge.buyer{background:var(--ic-green-light);color:var(--ic-green-dark);}
@@ -962,7 +975,7 @@
           <div class="table-wrap">
             <table class="data-table" id="order-table">
               <thead><tr>
-                <th>Date</th><th>Order No</th><th>Company</th><th>Items</th><th>Total</th><th>Status</th><th style="width:150px;">Actions</th>
+                <th>Date</th><th>Order No</th><th>Company</th><th>Items</th><th>Total</th><th>Status</th><th style="width:190px;">Actions</th>
               </tr></thead>
               <tbody id="order-tbody"></tbody>
             </table>
@@ -1060,7 +1073,7 @@
           <div class="table-wrap">
             <table class="data-table" id="delivery-table">
               <thead><tr>
-                <th>Invoice</th><th>Challan</th><th>Company</th><th>Items</th><th>Invoice date</th><th>Status</th><th>Delivery date</th><th style="width:160px;">Actions</th>
+                <th>Invoice</th><th>Challan</th><th>Company</th><th>Items</th><th>Invoice date</th><th>Status</th><th>Delivery date</th><th style="width:150px;">Actions</th>
               </tr></thead>
               <tbody id="delivery-tbody"></tbody>
             </table>
@@ -1789,6 +1802,30 @@
       <button type="button" class="btn-secondary" id="receipt-print-btn"><i class="ti ti-printer"></i> Print</button>
       <button type="button" class="btn-primary sm" id="receipt-download-btn"><i class="ti ti-download"></i> Download PDF</button>
     </div>
+  </div>
+</div>
+
+<!-- QUICK ADD/EDIT CHALLAN NUMBER MODAL -->
+<div class="modal-overlay" id="challan-quick-modal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-head">
+      <h3><i class="ti ti-file-invoice" style="margin-right:6px;vertical-align:-2px;color:var(--ic-blue);"></i>Challan number</h3>
+      <button class="modal-close" id="challan-quick-close"><i class="ti ti-x"></i></button>
+    </div>
+    <form id="challan-quick-form">
+      <div class="modal-body">
+        <input type="hidden" id="challan-quick-sale-id">
+        <div class="field">
+          <label>Challan no</label>
+          <div class="field-input-wrap"><i class="ti ti-file-invoice"></i><input type="text" id="challan-quick-input" required></div>
+          <div class="field-hint">Auto-suggested — edit if you already wrote a number on paper.</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-secondary" id="challan-quick-cancel-btn">Cancel</button>
+        <button type="submit" class="btn-primary sm"><i class="ti ti-device-floppy"></i> Save</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -4124,12 +4161,15 @@
     const sale = salesCache.find(s => s.id === saleId);
     if(!sale) return;
     sale.deliveryStatus = newStatus;
+    if(newStatus === 'dispatched' && !sale.challanNo){ sale.challanNo = nextChallanNo(); }
     if(newStatus === 'delivered' && !sale.deliveryDate){ sale.deliveryDate = todayStr(); }
     salesCache = salesCache.map(s => s.id === saleId ? sale : s);
     await setList('sales', salesCache);
     renderDeliveries();
     renderSales();
-    showToast(newStatus === 'dispatched' ? 'Marked as dispatched' : 'Marked as delivered');
+    showToast(newStatus === 'dispatched'
+      ? (sale.challanNo ? 'Dispatched — challan ' + sale.challanNo + ' created' : 'Marked as dispatched')
+      : 'Marked as delivered');
   }
 
   function renderDeliveries(){
@@ -4176,14 +4216,18 @@
       let actions = `<button data-id="${s.id}" class="delivery-challan-btn" aria-label="View challan" title="View delivery challan"><i class="ti ti-file-invoice"></i></button>`;
       if(canEdit('deliveries')){
         if(status === 'pending'){
-          actions += `<button data-id="${s.id}" class="delivery-dispatch-btn" title="Mark dispatched"><i class="ti ti-truck-delivery"></i></button>`;
+          actions += `<button data-id="${s.id}" class="action-pill pill-blue delivery-dispatch-btn" title="Mark dispatched"><i class="ti ti-truck-delivery"></i> Dispatch</button>`;
         } else if(status === 'dispatched'){
-          actions += `<button data-id="${s.id}" class="delivery-deliver-btn" title="Mark delivered"><i class="ti ti-circle-check"></i></button>`;
+          actions += `<button data-id="${s.id}" class="action-pill pill-green delivery-deliver-btn" title="Mark delivered"><i class="ti ti-circle-check"></i> Deliver</button>`;
         }
       }
       return `<tr>
         <td><b>${escapeHtml(s.invoiceNo)}</b></td>
-        <td>${s.challanNo ? escapeHtml(s.challanNo) : '<span class="cell-sub">—</span>'}</td>
+        <td>
+          ${s.challanNo
+            ? `${escapeHtml(s.challanNo)} ${canEdit('deliveries') ? `<button data-id="${s.id}" class="delivery-challan-edit-btn icon-inline" title="Edit challan number"><i class="ti ti-edit"></i></button>` : ''}`
+            : (canEdit('deliveries') ? `<button data-id="${s.id}" class="btn-secondary sm delivery-challan-add-btn"><i class="ti ti-plus"></i> Add challan</button>` : '<span class="cell-sub">—</span>')}
+        </td>
         <td><div class="cell-name">${escapeHtml(s.companyName)}</div></td>
         <td>${summarizeItems(s.items)}</td>
         <td>${escapeHtml(s.date)}</td>
@@ -4196,6 +4240,39 @@
     tbody.querySelectorAll('.delivery-challan-btn').forEach(b => b.addEventListener('click', () => openChallanModal(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.delivery-dispatch-btn').forEach(b => b.addEventListener('click', () => markDeliveryStatus(b.getAttribute('data-id'), 'dispatched')));
     tbody.querySelectorAll('.delivery-deliver-btn').forEach(b => b.addEventListener('click', () => markDeliveryStatus(b.getAttribute('data-id'), 'delivered')));
+    tbody.querySelectorAll('.delivery-challan-add-btn').forEach(b => b.addEventListener('click', () => openChallanQuickModal(b.getAttribute('data-id'))));
+    tbody.querySelectorAll('.delivery-challan-edit-btn').forEach(b => b.addEventListener('click', () => openChallanQuickModal(b.getAttribute('data-id'))));
+  }
+
+  /* ---- Quick add/edit challan number, without opening the full Sale form ---- */
+  function openChallanQuickModal(saleId){
+    const sale = salesCache.find(s => s.id === saleId);
+    if(!sale) return;
+    document.getElementById('challan-quick-sale-id').value = sale.id;
+    document.getElementById('challan-quick-input').value = sale.challanNo || nextChallanNo();
+    document.getElementById('challan-quick-modal').classList.add('open');
+  }
+  function closeChallanQuickModal(){ document.getElementById('challan-quick-modal').classList.remove('open'); }
+
+  function initChallanQuick(){
+    document.getElementById('challan-quick-close').addEventListener('click', closeChallanQuickModal);
+    document.getElementById('challan-quick-cancel-btn').addEventListener('click', closeChallanQuickModal);
+    document.getElementById('challan-quick-modal').addEventListener('click', function(e){ if(e.target === this) closeChallanQuickModal(); });
+    document.getElementById('challan-quick-form').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const saleId = document.getElementById('challan-quick-sale-id').value;
+      const value = document.getElementById('challan-quick-input').value.trim();
+      if(!value){ showToast('Enter a challan number'); return; }
+      const sale = salesCache.find(s => s.id === saleId);
+      if(!sale) return;
+      sale.challanNo = value;
+      salesCache = salesCache.map(s => s.id === saleId ? sale : s);
+      await setList('sales', salesCache);
+      closeChallanQuickModal();
+      renderDeliveries();
+      renderSales();
+      showToast('Challan number saved');
+    });
   }
 
   function initDeliveries(){
@@ -4280,7 +4357,7 @@
       let actions = '';
       if(o.status === 'open'){
         if(canEdit('salesOrders')){
-          actions += `<button data-id="${o.id}" class="order-convert-btn" aria-label="Convert to invoice" title="Convert to invoice"><i class="ti ti-receipt"></i></button>`;
+          actions += `<button data-id="${o.id}" class="action-pill pill-green order-convert-btn" aria-label="Convert to invoice" title="Convert to invoice"><i class="ti ti-receipt"></i> Convert</button>`;
           actions += `<button data-id="${o.id}" class="order-edit-btn" aria-label="Edit"><i class="ti ti-edit"></i></button>`;
           actions += `<button data-id="${o.id}" class="order-delete-btn danger" aria-label="Delete"><i class="ti ti-trash"></i></button>`;
         }
@@ -6177,6 +6254,7 @@
   initReceipt();
   initChallan();
   initDeliveries();
+  initChallanQuick();
   initProfile();
   initPayments();
   initPaymentReceipt();
