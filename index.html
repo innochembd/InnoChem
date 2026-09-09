@@ -1651,6 +1651,7 @@
     <form id="order-form">
       <div class="modal-body">
         <input type="hidden" id="order-id">
+        <div id="order-status-warning" style="display:none;background:#FFF9E8;border:1px solid #F0DFA8;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#6B5A17;margin-bottom:16px;line-height:1.6;"></div>
         <div class="form-row">
           <div class="field">
             <label>Date <span class="required-mark">*</span></label>
@@ -4357,14 +4358,16 @@
 
     tbody.innerHTML = rows.map(o => {
       let actions = '';
-      if(o.status === 'open'){
-        if(canEdit('salesOrders')){
-          actions += `<button data-id="${o.id}" class="action-pill pill-green order-convert-btn" aria-label="Convert to invoice" title="Convert to invoice"><i class="ti ti-receipt"></i> Convert</button>`;
-          actions += `<button data-id="${o.id}" class="order-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>`;
-          actions += `<button data-id="${o.id}" class="order-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>`;
-        }
-      } else if(o.status === 'invoiced' && o.invoicedSaleId){
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      if(o.status === 'invoiced' && o.invoicedSaleId){
         actions += `<button data-id="${o.invoicedSaleId}" class="order-view-invoice-btn" aria-label="View invoice" title="View invoice receipt"><i class="ti ti-receipt"></i></button>`;
+      }
+      if(o.status === 'open' && canEdit('salesOrders')){
+        actions += `<button data-id="${o.id}" class="action-pill pill-green order-convert-btn" aria-label="Convert to invoice" title="Convert to invoice"><i class="ti ti-receipt"></i> Convert</button>`;
+      }
+      if((o.status === 'open' && canEdit('salesOrders')) || (o.status !== 'open' && isAdmin)){
+        actions += `<button data-id="${o.id}" class="order-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>`;
+        actions += `<button data-id="${o.id}" class="order-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>`;
       }
       return `<tr>
         <td>${escapeHtml(o.date)}</td>
@@ -4383,7 +4386,10 @@
     tbody.querySelectorAll('.order-delete-btn').forEach(b => b.addEventListener('click', () => {
       const id = b.getAttribute('data-id');
       const o = salesOrdersCache.find(x => x.id === id);
-      openConfirm('Delete sales order?', `This will permanently remove order "${o ? o.orderNo : ''}" from your records.`, async () => {
+      const msg = o && o.status === 'invoiced'
+        ? `Order "${o.orderNo}" was already converted to invoice ${(salesCache.find(s=>s.id===o.invoicedSaleId)||{}).invoiceNo || ''}. Deleting the order will NOT delete that invoice — only the order record itself.`
+        : `This will permanently remove order "${o ? o.orderNo : ''}" from your records.`;
+      openConfirm('Delete sales order?', msg, async () => {
         salesOrdersCache = salesOrdersCache.filter(x => x.id !== id);
         await setList('salesOrders', salesOrdersCache);
         renderSalesOrders();
@@ -4524,7 +4530,9 @@
     populateOrderDropdowns();
     if(id){
       const o = salesOrdersCache.find(x => x.id === id);
-      if(!o || o.status !== 'open') return;
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      if(!o) return;
+      if(o.status !== 'open' && !isAdmin){ showToast("This order has already been processed — only an administrator can edit it now"); return; }
       document.getElementById('order-modal-title').textContent = 'Edit sales order';
       document.getElementById('order-id').value = o.id;
       document.getElementById('order-date').value = o.date;
@@ -4532,12 +4540,22 @@
       document.getElementById('order-company').value = o.companyId;
       document.getElementById('order-notes').value = o.notes || '';
       renderOrderItemRows(o.items);
+      const warnBox = document.getElementById('order-status-warning');
+      if(o.status !== 'open'){
+        warnBox.style.display = 'block';
+        warnBox.textContent = o.status === 'invoiced'
+          ? 'This order was already converted to invoice ' + (salesCache.find(s=>s.id===o.invoicedSaleId)||{}).invoiceNo + '. Changes here update the order record only — the invoice already issued will not change.'
+          : 'This order is cancelled. Saving will keep it cancelled but update its details.';
+      } else {
+        warnBox.style.display = 'none';
+      }
     } else {
       document.getElementById('order-modal-title').textContent = 'New sales order';
       document.getElementById('order-id').value = '';
       document.getElementById('order-date').value = todayStr();
       document.getElementById('order-number').value = nextOrderNo();
       renderOrderItemRows(null);
+      document.getElementById('order-status-warning').style.display = 'none';
     }
     document.getElementById('order-modal').classList.add('open');
   }
