@@ -435,6 +435,7 @@
   .badge.delivery-dispatched{background:var(--ic-blue-light);color:var(--ic-blue);}
   .badge.delivery-delivered{background:var(--success-bg);color:var(--success);}
   .badge.admin-role{background:var(--ic-blue-light);color:var(--ic-blue);}
+  .badge.management-role{background:#FCE9DC;color:#C4600A;}
   .badge.staff-role{background:var(--bg-page);color:var(--text-secondary);border:1px solid var(--border-strong);}
   .perm-checkbox{width:16px;height:16px;accent-color:var(--ic-green);cursor:pointer;}
   #user-permissions-tbody td{text-align:center;}
@@ -2027,9 +2028,10 @@
           <label>Role</label>
           <select id="user-role">
             <option value="staff">Staff (custom access)</option>
+            <option value="management">Management (full business access)</option>
             <option value="admin">Administrator (full access)</option>
           </select>
-          <div class="field-hint">Administrators always have full view, edit &amp; delete access to every page, including user management.</div>
+          <div class="field-hint" id="user-role-hint">Administrators always have full view, edit &amp; delete access to every page, including user management.</div>
         </div>
         <div class="field" id="user-permissions-wrap">
           <label>Page access for this staff member</label>
@@ -2503,17 +2505,17 @@
 
   function canView(mod){
     if(!currentUser) return false;
-    if(currentUser.role === 'admin') return true;
+    if(currentUser.role === 'admin' || currentUser.role === 'management') return true;
     return !!(currentUser.permissions && currentUser.permissions[mod] && currentUser.permissions[mod].view);
   }
   function canEdit(mod){
     if(!currentUser) return false;
-    if(currentUser.role === 'admin') return true;
+    if(currentUser.role === 'admin' || currentUser.role === 'management') return true;
     return !!(currentUser.permissions && currentUser.permissions[mod] && currentUser.permissions[mod].edit);
   }
   function canDelete(mod){
     if(!currentUser) return false;
-    if(currentUser.role === 'admin') return true;
+    if(currentUser.role === 'admin' || currentUser.role === 'management') return true;
     return !!(currentUser.permissions && currentUser.permissions[mod] && currentUser.permissions[mod].delete);
   }
   function setVis(id, visible){
@@ -2550,9 +2552,9 @@
 
     // Settings sub-sections
     setVis('profile-form-wrap', canEdit('settings'));
-    setVis('backup-section', currentUser.role === 'admin');
-    setVis('user-mgmt-section', currentUser.role === 'admin');
-    setVis('quick-backup-btn', currentUser.role === 'admin');
+    setVis('backup-section', currentUser.role === 'admin' || currentUser.role === 'management');
+    setVis('user-mgmt-section', currentUser.role === 'admin' || currentUser.role === 'management');
+    setVis('quick-backup-btn', currentUser.role === 'admin' || currentUser.role === 'management');
 
     // Re-render tables so row action buttons respect edit permission
     if(typeof renderCompanies === 'function' && companiesCache) renderCompanies();
@@ -2567,7 +2569,11 @@
     if(typeof renderUsers === 'function') renderUsers();
   }
 
-  function roleLabel(user){ return user.role === 'admin' ? 'Administrator' : 'Staff'; }
+  function roleLabel(user){
+    if(user.role === 'admin') return 'Administrator';
+    if(user.role === 'management') return 'Management';
+    return 'Staff';
+  }
 
   async function initLogin(){
     const form = document.getElementById('login-form');
@@ -6116,19 +6122,22 @@
   function renderUsers(){
     const tbody = document.getElementById('user-tbody');
     if(!tbody || !currentUser) return;
+    const isManagement = currentUser.role === 'management';
     const sorted = usersCache.slice().sort((a,b)=> a.username.localeCompare(b.username));
     tbody.innerHTML = sorted.map(u => {
-      const accessSummary = u.role === 'admin'
+      const accessSummary = (u.role === 'admin' || u.role === 'management')
         ? 'Full access'
         : MODULES.filter(m => u.permissions && u.permissions[m] && u.permissions[m].view).length + ' of ' + MODULES.length + ' pages';
+      const roleClass = u.role === 'admin' ? 'admin-role' : (u.role === 'management' ? 'management-role' : 'staff-role');
+      const canManageThisRow = !isManagement || u.role === 'staff';
       return `<tr>
         <td><div class="cell-name">${escapeHtml(u.username)}</div>${u.id === currentUser.id ? '<div class="cell-sub">This is you</div>' : ''}</td>
-        <td><span class="badge ${u.role === 'admin' ? 'admin-role' : 'staff-role'}">${roleLabel(u)}</span></td>
+        <td><span class="badge ${roleClass}">${roleLabel(u)}</span></td>
         <td>${escapeHtml(accessSummary)}</td>
         <td>
           <div class="row-actions">
-            <button data-id="${u.id}" class="user-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
-            <button data-id="${u.id}" class="user-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>
+            ${canManageThisRow ? `<button data-id="${u.id}" class="user-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            <button data-id="${u.id}" class="user-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : '<span class="cell-sub">—</span>'}
           </div>
         </td>
       </tr>`;
@@ -6140,6 +6149,7 @@
       const u = usersCache.find(x => x.id === id);
       if(!u) return;
       if(u.id === currentUser.id){ showToast("You can't delete your own account while logged in"); return; }
+      if(isManagement && u.role !== 'staff'){ showToast("You don't have permission to delete this account"); return; }
       const otherAdmins = usersCache.filter(x => x.role === 'admin' && x.id !== id);
       if(u.role === 'admin' && otherAdmins.length === 0){ showToast('At least one administrator must remain'); return; }
       openConfirm('Delete this user?', `"${u.username}" will no longer be able to log in.`, async () => {
@@ -6199,15 +6209,27 @@
 
   function toggleUserPermissionsVisibility(){
     const role = document.getElementById('user-role').value;
-    setVis('user-permissions-wrap', role !== 'admin');
+    setVis('user-permissions-wrap', role === 'staff');
+    document.getElementById('user-role-hint').textContent = role === 'admin'
+      ? 'Administrators always have full view, edit & delete access to every page, including user management.'
+      : role === 'management'
+        ? 'Management gets full view, edit & delete access to every business page automatically, and can create/edit Staff accounts — but not other Management or Administrator accounts.'
+        : 'Set exactly which pages this person can view, edit, and delete below.';
   }
 
   function openUserModal(id){
     const form = document.getElementById('user-form');
     form.reset();
+
+    const isManagement = currentUser.role === 'management';
+    document.getElementById('user-role').querySelectorAll('option').forEach(opt => {
+      opt.style.display = (isManagement && opt.value !== 'staff') ? 'none' : '';
+    });
+
     if(id){
       const u = usersCache.find(x => x.id === id);
       if(!u) return;
+      if(isManagement && u.role !== 'staff'){ showToast("You don't have permission to edit this account"); return; }
       document.getElementById('user-modal-title').textContent = 'Edit user';
       document.getElementById('user-id').value = u.id;
       document.getElementById('user-username').value = u.username;
@@ -6246,7 +6268,13 @@
       if(!id && !password){ showToast('Password is required for a new user'); return; }
 
       const existing = id ? usersCache.find(u => u.id === id) : null;
-      const permissions = role === 'admin' ? fullPermissions() : readUserPermissionsGrid();
+
+      if(currentUser.role === 'management'){
+        if(role !== 'staff'){ showToast('Management accounts can only create or edit Staff accounts'); return; }
+        if(existing && existing.role !== 'staff'){ showToast("You don't have permission to edit this account"); return; }
+      }
+
+      const permissions = (role === 'admin' || role === 'management') ? fullPermissions() : readUserPermissionsGrid();
 
       const data = {
         id: id || uid(),
