@@ -1,22 +1,28 @@
 {
-  "name": "Inno Chem Bangladesh ERP",
-  "short_name": "InnoChem ERP",
+  "name": "RAR ERP",
+  "short_name": "RAR ERP",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#F5F4F1",
-  "theme_color": "#E8720A",
+  "background_color": "#017885",
+  "theme_color": "#017885",
   "icons": [
     {
       "src": "icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "id": ".",
-  "scope": "."
+  "scope": ".",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ]
 }
