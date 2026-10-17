@@ -263,6 +263,14 @@
     padding:5px 12px;border-radius:20px;letter-spacing:0.3px;
   }
 
+  .three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media (max-width:1100px){.three-col{grid-template-columns:1fr;}}
+  .dash-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .dash-row:last-child{border-bottom:none;}
+  .dash-row .dr-name{font-weight:700;color:var(--text-primary);}
+  .dash-row .dr-sub{font-size:11.5px;color:var(--text-muted);}
+  .dash-row .dr-val{font-weight:800;white-space:nowrap;}
+  .dash-row .dr-val.late{color:var(--danger);}
   .two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
   @media (max-width:900px){.two-col{grid-template-columns:1fr;}}
 
@@ -759,6 +767,33 @@
             <div class="m-label">Total profit</div>
             <div class="m-value" id="metric-total-profit">৳0</div>
             <div class="m-sub">All sales, after cost</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-icon blue"><i class="ti ti-calendar"></i></div>
+            <div class="m-label">Today's sales</div>
+            <div class="m-value" id="metric-today-sales">৳0</div>
+            <div class="m-sub" id="metric-today-sub">No sales today</div>
+          </div>
+          <div class="metric-card">
+            <div class="m-icon blue"><i class="ti ti-calendar-stats"></i></div>
+            <div class="m-label">This month's sales</div>
+            <div class="m-value" id="metric-month-sales">৳0</div>
+            <div class="m-sub" id="metric-month-sub">vs last month</div>
+          </div>
+        </div>
+
+        <div class="three-col" style="margin-bottom:16px;">
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-alert-triangle" style="color:var(--danger);"></i> Money to collect — top customers</div>
+            <div id="dash-collect-list"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-tag"></i> Top selling products — this month</div>
+            <div id="dash-top-products"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-packages"></i> Low stock alerts</div>
+            <div id="dash-low-stock"></div>
           </div>
         </div>
 
@@ -1803,6 +1838,7 @@
       <div id="receipt-print-area" class="print-area"></div>
     </div>
     <div class="modal-foot no-print">
+      <button type="button" class="btn-secondary" id="receipt-whatsapp-btn" title="Send to customer on WhatsApp"><i class="ti ti-send"></i> WhatsApp</button>
       <button type="button" class="btn-secondary" id="receipt-print-btn"><i class="ti ti-printer"></i> Print</button>
       <button type="button" class="btn-primary sm" id="receipt-download-btn"><i class="ti ti-download"></i> Download PDF</button>
     </div>
@@ -1861,6 +1897,7 @@
       <div id="payment-receipt-print-area" class="print-area"></div>
     </div>
     <div class="modal-foot no-print">
+      <button type="button" class="btn-secondary" id="payment-receipt-whatsapp-btn" title="Send to customer on WhatsApp"><i class="ti ti-send"></i> WhatsApp</button>
       <button type="button" class="btn-secondary" id="payment-receipt-print-btn"><i class="ti ti-printer"></i> Print</button>
       <button type="button" class="btn-primary sm" id="payment-receipt-download-btn"><i class="ti ti-download"></i> Download PDF</button>
     </div>
@@ -2093,6 +2130,7 @@
   }
 
   let usersCache = [];
+  let dataLoadStarted = false;
   let currentUser = null;
 
   function uid(){
@@ -2114,22 +2152,81 @@
   const SUPABASE_URL = 'https://iyebirclmvrafcvvgpey.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5ZWJpcmNsbXZyYWZjdnZncGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1Mjg1NTEsImV4cCI6MjEwMzEwNDU1MX0.Lb7hwkonMMeeXs5em4rzZ9tLdTsAPdUZykXMlgEJiFs';
 
+  /* ---- Supabase Auth session (JWT). Falls back to the anon key only before login. ---- */
+  const AUTH_KEY = 'innochem_auth';
+  let authState = null;
+  try{ authState = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); }catch(e){ authState = null; }
+  function saveAuth(a){
+    authState = a;
+    try{ if(a) localStorage.setItem(AUTH_KEY, JSON.stringify(a)); else localStorage.removeItem(AUTH_KEY); }catch(e){}
+  }
+  function usernameToEmail(u){
+    return String(u || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '_') + '@innochem.app';
+  }
   function sbHeaders(extra){
+    const token = (authState && authState.access_token) || SUPABASE_ANON_KEY;
     return Object.assign({
       'apikey': SUPABASE_ANON_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json'
     }, extra || {});
   }
+  function applyTokenResponse(j){
+    saveAuth({ access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + (j.expires_in||3600)*1000, user_id: j.user && j.user.id });
+  }
+  async function authLogin(username, password){
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({ email: usernameToEmail(username), password })
+    });
+    const j = await res.json().catch(() => ({}));
+    if(!res.ok){ const err = new Error(j.error_description || j.msg || 'Login failed'); err.status = res.status; throw err; }
+    applyTokenResponse(j);
+    return j.user;
+  }
+  let refreshPromise = null;
+  // Returns 'ok' | 'denied' (refresh token rejected) | 'offline' (network problem)
+  function authRefresh(){
+    if(refreshPromise) return refreshPromise;
+    if(!authState || !authState.refresh_token) return Promise.resolve('denied');
+    refreshPromise = (async () => {
+      try{
+        const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+          method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Content-Type':'application/json' },
+          body: JSON.stringify({ refresh_token: authState.refresh_token })
+        });
+        const j = await res.json().catch(() => ({}));
+        if(res.ok){ applyTokenResponse(j); return 'ok'; }
+        if(res.status >= 500) return 'offline';
+        saveAuth(null); return 'denied';
+      }catch(e){ return 'offline'; }
+      finally{ setTimeout(() => { refreshPromise = null; }, 0); }
+    })();
+    return refreshPromise;
+  }
+  setInterval(() => { if(authState && navigator.onLine) authRefresh(); }, 40 * 60 * 1000);
+
   async function sbFetch(path, options){
-    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, options);
+    let res = await fetch(SUPABASE_URL + '/rest/v1/' + path, options);
+    if(res.status === 401 && authState && authState.refresh_token){
+      if(await authRefresh() === 'ok'){
+        const o = Object.assign({}, options, { headers: Object.assign({}, options && options.headers, { 'Authorization': 'Bearer ' + authState.access_token }) });
+        res = await fetch(SUPABASE_URL + '/rest/v1/' + path, o);
+      }
+    }
     if(!res.ok){
       let detail = '';
       try{ detail = await res.text(); }catch(e){}
-      throw new Error('Supabase ' + res.status + ': ' + detail);
+      const err = new Error('Supabase ' + res.status + ': ' + detail);
+      err.status = res.status;
+      try{ err.friendly = JSON.parse(detail).message; }catch(e){}
+      throw err;
     }
     const text = await res.text();
     return text ? JSON.parse(text) : null;
+  }
+  function sbRpc(name, args){
+    return sbFetch('rpc/' + name, { method:'POST', headers: sbHeaders(), body: JSON.stringify(args || {}) });
   }
   function epoch(ts){ return ts ? new Date(ts).getTime() : Date.now(); }
 
@@ -2464,6 +2561,150 @@
       return null;
     }catch(e){ console.error('safeSet failed', key, e); return null; }
   }
+  /* ================= OFFLINE SUPPORT =================
+     - Every successful load is mirrored to localStorage (read-only fallback when offline).
+     - If any load fails, the app enters STALE_MODE: all writes are blocked EXCEPT new/edited
+       sales, which go to a local outbox. This guarantees stale data is never written back
+       (the sync is upsert+prune, so saving stale lists would delete other devices' records).
+     - On reconnect the outbox is merged into a FRESH copy from the server, then saved. */
+  const CACHE_PREFIX = 'ic_cache_v1_';
+  const OUTBOX_KEY = 'ic_outbox_sales';
+  let STALE_MODE = false;
+  function cacheWrite(key, arr){
+    try{
+      const a = key === 'users' ? arr.map(u => Object.assign({}, u, { password:'' })) : arr; // never keep password hashes in the cache
+      localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(a));
+    }catch(e){}
+  }
+  function cacheRead(key){
+    try{ const r = localStorage.getItem(CACHE_PREFIX + key); return r ? JSON.parse(r) : null; }catch(e){ return null; }
+  }
+  function outboxRead(){ try{ return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); }catch(e){ return []; } }
+  function outboxWrite(a){
+    try{ localStorage.setItem(OUTBOX_KEY, JSON.stringify(a)); }
+    catch(e){ showToast('Device storage is full — could not queue this sale'); return false; }
+    updateOfflinePill();
+    return true;
+  }
+  function queueOfflineSale(sale){
+    const q = outboxRead().filter(x => x.id !== sale.id);
+    q.push(sale);
+    return outboxWrite(q);
+  }
+  function updateOfflinePill(){
+    let el = document.getElementById('offline-pill');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'offline-pill';
+      el.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9999;padding:8px 14px;border-radius:999px;font-size:12.5px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.2);display:none;max-width:92vw;text-align:center;';
+      document.body.appendChild(el);
+    }
+    const n = outboxRead().length + payOutboxRead().length;
+    const offline = !navigator.onLine || STALE_MODE;
+    if(flushing){ el.textContent = 'Syncing ' + n + ' item' + (n===1?'':'s') + '…'; el.style.background = '#E8F1FB'; el.style.color = '#1F4E8C'; el.style.display = 'block'; }
+    else if(offline){ el.textContent = 'Offline' + (n ? ' — ' + n + ' item' + (n===1?'':'s') + ' waiting to sync' : ' — you can still record sales & payments'); el.style.background = '#FCE9DC'; el.style.color = '#C4600A'; el.style.display = 'block'; }
+    else if(n){ el.textContent = n + ' item' + (n===1?'':'s') + ' waiting to sync'; el.style.background = '#FCE9DC'; el.style.color = '#C4600A'; el.style.display = 'block'; }
+    else el.style.display = 'none';
+  }
+  function bumpNumber(str, taken){
+    const m = /^(.*?)(\d+)$/.exec(str || '');
+    if(!m) return str;
+    let n = parseInt(m[2], 10), out = str;
+    while(taken.has(out)){ n++; out = m[1] + String(n).padStart(m[2].length, '0'); }
+    return out;
+  }
+  const PAY_OUTBOX_KEY = 'ic_outbox_payments';
+  function payOutboxRead(){ try{ return JSON.parse(localStorage.getItem(PAY_OUTBOX_KEY) || '[]'); }catch(e){ return []; } }
+  function payOutboxWrite(a){
+    try{ localStorage.setItem(PAY_OUTBOX_KEY, JSON.stringify(a)); }
+    catch(e){ showToast('Device storage is full — could not queue this payment'); return false; }
+    updateOfflinePill();
+    return true;
+  }
+  function queueOfflinePayment(pay){
+    const q = payOutboxRead().filter(x => x.id !== pay.id);
+    q.push(pay);
+    return payOutboxWrite(q);
+  }
+  async function flushPayOutbox(){
+    const q = payOutboxRead();
+    if(!q.length) return true;
+    try{
+      const fresh = await fetchFlatTable('payments');   // throws if unreachable -> queue stays intact
+      seedAuditSnapshot('payments', fresh);
+      const merged = fresh.slice();
+      const taken = new Set(merged.map(x => x.receiptNo).filter(Boolean));
+      q.forEach(pay => {
+        if(merged.some(x => x.id === pay.id)) return;     // already synced earlier
+        pay.receiptNo = bumpNumber(pay.receiptNo, taken);
+        taken.add(pay.receiptNo);
+        merged.push(pay);
+      });
+      await syncFlatTable('payments', merged);
+      try{ await logAuditForList('payments', merged); }catch(e){}
+      cacheWrite('payments', merged);
+      payOutboxWrite([]);
+      paymentsCache = merged;
+      renderPayments(); refreshDashboard();
+      showToast(q.length + ' offline payment' + (q.length===1?'':'s') + ' synced');
+      return true;
+    }catch(e){ console.error('flushPayOutbox failed', e); return false; }
+  }
+  let flushing = false;
+  async function flushOutbox(){
+    const q = outboxRead();
+    if(flushing || !navigator.onLine) return false;
+    if(!q.length){
+      if(payOutboxRead().length){ flushing = true; updateOfflinePill(); try{ return await flushPayOutbox(); } finally { flushing = false; updateOfflinePill(); } }
+      return false;
+    }
+    flushing = true; updateOfflinePill();
+    try{
+      const fresh = await fetchSalesTable();            // throws if still unreachable -> queue stays intact
+      seedAuditSnapshot('sales', fresh);
+      const merged = fresh.slice();
+      const invTaken = new Set(merged.map(x => x.invoiceNo));
+      const chTaken = new Set(merged.map(x => x.challanNo).filter(Boolean));
+      let renumbered = 0;
+      q.forEach(sale => {
+        const idx = merged.findIndex(x => x.id === sale.id);
+        if(idx >= 0){ merged[idx] = sale; return; }      // an edit of an existing sale
+        const inv = bumpNumber(sale.invoiceNo, invTaken);
+        if(inv !== sale.invoiceNo){ sale.invoiceNo = inv; renumbered++; }
+        invTaken.add(sale.invoiceNo);
+        if(sale.challanNo){ sale.challanNo = bumpNumber(sale.challanNo, chTaken); chTaken.add(sale.challanNo); }
+        merged.push(sale);
+      });
+      await syncSalesTable(merged);
+      try{ await logAuditForList('sales', merged); }catch(e){}
+      cacheWrite('sales', merged);
+      outboxWrite([]);
+      salesCache = merged.map(migrateSaleRecord);
+      renderSales(); refreshDashboard();
+      loadStockSummary();
+      showToast(q.length + ' offline sale' + (q.length===1?'':'s') + ' synced' + (renumbered ? ' (' + renumbered + ' invoice no. changed to avoid a clash)' : ''));
+      await flushPayOutbox();
+      return true;
+    }catch(e){
+      console.error('flushOutbox failed', e);
+      return false;
+    }finally{
+      flushing = false; updateOfflinePill();
+    }
+  }
+  async function tryReconnect(){
+    updateOfflinePill();
+    if(!navigator.onLine) return;
+    if(outboxRead().length || payOutboxRead().length) await flushOutbox();
+    if(STALE_MODE && navigator.onLine && outboxRead().length === 0 && payOutboxRead().length === 0){
+      const last = Number(sessionStorage.getItem('ic_last_reload') || 0);
+      if(Date.now() - last > 60000){ sessionStorage.setItem('ic_last_reload', String(Date.now())); location.reload(); }
+    }
+  }
+  window.addEventListener('online', tryReconnect);
+  window.addEventListener('offline', updateOfflinePill);
+  setInterval(() => { if(STALE_MODE || outboxRead().length || payOutboxRead().length) tryReconnect(); }, 30000);
+
   async function getList(key){
     try{
       let arr;
@@ -2474,10 +2715,22 @@
       else if(TABLE_NAMES[key]) arr = await fetchFlatTable(key);
       else arr = [];
       seedAuditSnapshot(key, arr);
+      cacheWrite(key, arr);
       return arr;
-    }catch(e){ console.error('getList failed', key, e); showToast('Could not load ' + key + ' from Supabase'); return []; }
+    }catch(e){
+      console.error('getList failed', key, e);
+      STALE_MODE = true;                       // never write back anything loaded after a failure
+      const cached = cacheRead(key);
+      updateOfflinePill();
+      if(cached){ showToast('Offline — showing last saved ' + key); return cached; }
+      showToast('Could not load ' + key + ' from Supabase');
+      return [];
+    }
   }
   async function setList(key, arr){
+    // User accounts are managed only through the admin_* RPC functions (Supabase Auth); never bulk-sync them.
+    if(key === 'users') return true;
+    if(STALE_MODE){ showToast('Offline — reconnect to save changes'); return false; }
     try{
       if(key === 'sales') await syncSalesTable(arr);
       else if(key === 'salesOrders') await syncSalesOrdersTable(arr);
@@ -2485,23 +2738,32 @@
       else if(key === 'production') await syncProductionTable(arr);
       else if(TABLE_NAMES[key]) await syncFlatTable(key, arr);
       await logAuditForList(key, arr);
-    }catch(e){ console.error('setList failed', key, e); showToast('Could not save ' + key + ' to Supabase — check your connection'); }
+      cacheWrite(key, arr);
+      return true;
+    }catch(e){ console.error('setList failed', key, e); showToast('Could not save ' + key + ' to Supabase — check your connection'); return false; }
   }
 
-  async function loadUsers(){
-    usersCache = await getList('users');
-    if(usersCache.length === 0){
-      // Migrate from the old single-credential login if present, otherwise seed a default admin
-      let username = 'admin', password = 'admin123';
-      const oldRaw = await safeGet('auth:credentials', true);
-      if(oldRaw){
-        try{ const c = JSON.parse(oldRaw); username = c.username || username; password = c.password || password; }catch(e){}
-      }
-      const adminUser = { id: uid(), username, password, role:'admin', permissions: fullPermissions(), created_at: Date.now() };
-      usersCache = [adminUser];
-      await setList('users', usersCache);
-    }
+  /* ---- Password hashing (salted SHA-256 via Web Crypto). Stored as "sha256$salt$hash".
+     Old plaintext passwords keep working and are upgraded automatically on next login. ---- */
+  function bytesToHex(buf){ return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+  function isHashedPassword(s){ return typeof s === 'string' && s.indexOf('sha256$') === 0; }
+  async function sha256Hex(text){
+    const data = new TextEncoder().encode(text);
+    return bytesToHex(await crypto.subtle.digest('SHA-256', data));
   }
+  async function hashPassword(plain){
+    if(!(window.crypto && crypto.subtle)) return plain; // insecure context fallback: keep working
+    const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    return 'sha256$' + salt + '$' + await sha256Hex(salt + plain);
+  }
+  async function verifyPassword(plain, stored){
+    if(!isHashedPassword(stored)) return stored === plain; // legacy plaintext
+    if(!(window.crypto && crypto.subtle)) return false;
+    const parts = stored.split('$');
+    return parts.length === 3 && (await sha256Hex(parts[1] + plain)) === parts[2];
+  }
+
+  async function loadUsers(){ usersCache = await getList('users'); }
 
   function canView(mod){
     if(!currentUser) return false;
@@ -2580,17 +2842,20 @@
     const errBox = document.getElementById('login-error');
     const errText = document.getElementById('login-error-text');
 
-    await loadUsers();
-
-    const session = await safeGet('session:current', false);
-    if(session){
-      try{
-        const s = JSON.parse(session);
-        if(s && s.loggedIn && s.userId){
-          const u = usersCache.find(x => x.id === s.userId);
-          if(u){ enterApp(u); return; }
-        }
-      }catch(e){}
+    // Resume an existing Supabase session
+    if(authState && authState.refresh_token){
+      const st = await authRefresh();
+      if(st === 'ok'){
+        await loadUsers();
+        const u = usersCache.find(x => x.id === authState.user_id);
+        if(u && !STALE_MODE){ enterApp(u); return; }
+      } else if(st === 'offline'){
+        // No connection: reopen with the last saved view (read-only except new sales/payments)
+        STALE_MODE = true;
+        usersCache = cacheRead('users') || [];
+        const u = usersCache.find(x => x.id === authState.user_id);
+        if(u){ updateOfflinePill(); enterApp(u); return; }
+      }
     }
 
     form.addEventListener('submit', async function(e){
@@ -2603,12 +2868,23 @@
         errBox.style.display = 'block';
         return;
       }
-      const user = usersCache.find(x => x.username === u && x.password === p);
-      if(user){
+      try{
+        const authUser = await authLogin(u, p);
+        STALE_MODE = false;
+        await loadUsers();
+        const user = usersCache.find(x => x.id === authUser.id);
+        if(!user){
+          saveAuth(null);
+          errText.textContent = 'This account has no ERP profile. Ask an administrator.';
+          errBox.style.display = 'block';
+          return;
+        }
         await safeSet('session:current', JSON.stringify({loggedIn:true, userId:user.id}), false);
         enterApp(user);
-      } else {
-        errText.textContent = 'Incorrect username or password. Please try again.';
+      }catch(err){
+        errText.textContent = (err.status === 400 || err.status === 401 || err.status === 422)
+          ? 'Incorrect username or password. Please try again.'
+          : 'Could not reach the server. Check your internet connection.';
         errBox.style.display = 'block';
       }
     });
@@ -2624,11 +2900,15 @@
     if(roleEl) roleEl.textContent = roleLabel(user);
     document.getElementById('settings-username').value = user.username;
     applyPermissionsUI();
+    startDataLoad();
   }
 
   async function initLogout(){
     document.getElementById('logout-btn').addEventListener('click', async function(){
       await safeSet('session:current', JSON.stringify({loggedIn:false}), false);
+      try{ if(authState) fetch(SUPABASE_URL + '/auth/v1/logout', { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + authState.access_token } }); }catch(e){}
+      saveAuth(null);
+      try{ Object.keys(localStorage).filter(k => k.indexOf(CACHE_PREFIX) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){}
       location.reload();
     });
   }
@@ -2696,16 +2976,31 @@
         errBox.style.display = 'block';
         return;
       }
-      const clash = usersCache.find(u => u.username === newUser && u.id !== currentUser.id);
+      const clash = usersCache.find(u => u.username.toLowerCase() === newUser.toLowerCase() && u.id !== currentUser.id);
       if(clash){
         errText.textContent = 'That username is already taken.';
         errBox.style.display = 'block';
         return;
       }
+      if(newPass && newPass.length < 6){
+        errText.textContent = 'Password must be at least 6 characters.';
+        errBox.style.display = 'block';
+        return;
+      }
+      if(STALE_MODE || !navigator.onLine){
+        errText.textContent = 'You are offline. Reconnect to change login details.';
+        errBox.style.display = 'block';
+        return;
+      }
+      try{
+        await sbRpc('update_own_login', { p_username:newUser, p_email:usernameToEmail(newUser), p_password:newPass || null });
+      }catch(err){
+        errText.textContent = err.friendly || 'Could not update login details.';
+        errBox.style.display = 'block';
+        return;
+      }
       currentUser.username = newUser;
-      if(newPass) currentUser.password = newPass;
       usersCache = usersCache.map(u => u.id === currentUser.id ? currentUser : u);
-      await setList('users', usersCache);
       document.getElementById('user-name').textContent = newUser.charAt(0).toUpperCase() + newUser.slice(1);
       document.getElementById('user-avatar').textContent = newUser.charAt(0).toUpperCase();
       document.getElementById('settings-password').value = '';
@@ -3687,9 +3982,15 @@
   /* ================= DASHBOARD ================= */
   async function refreshDashboard(){
     const totalPurchases = purchasesCache.reduce((s,p) => s + (Number(p.total)||0), 0);
-    const payable = purchasesCache.reduce((s,p) => s + (Number(p.due)||0), 0);
     const totalSales = salesCache.reduce((s,p) => s + (Number(p.total)||0), 0);
-    const receivable = salesCache.reduce((s,p) => s + (Number(p.due)||0), 0);
+    // Receivable / payable come from each company's ledger (sales, purchases AND payments),
+    // so they stay correct even when payments are recorded separately from invoices.
+    const ledgerRows = companiesCache.map(c => {
+      const l = computeCompanyLedger(c.id);
+      return l ? { company:c, balance:l.closingBalance } : null;
+    }).filter(Boolean);
+    const receivable = ledgerRows.filter(r => r.balance > 0).reduce((s,r) => s + r.balance, 0);
+    const payable = ledgerRows.filter(r => r.balance < 0).reduce((s,r) => s - r.balance, 0);
     const elP = document.getElementById('metric-total-purchases');
     const elPay = document.getElementById('metric-payable');
     const elS = document.getElementById('metric-total-sales');
@@ -3736,6 +4037,83 @@
     const chartWrap = document.getElementById('dashboard-chart-wrap');
     if(chartWrap){
       chartWrap.innerHTML = buildDualBarChart(computeBusinessMonthlyTrend());
+    }
+
+    refreshDashboardInsights(ledgerRows);
+  }
+
+  /* Owner insights: today/month sales, who owes money (with overdue flag), top products, low stock */
+  function refreshDashboardInsights(ledgerRows){
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const todayKey = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());
+    const monthKey = todayKey.slice(0,7);
+    const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const prevKey = prev.getFullYear() + '-' + pad(prev.getMonth()+1);
+
+    const sumSales = pred => salesCache.filter(pred).reduce((s,x) => s + (Number(x.total)||0), 0);
+    const today = salesCache.filter(s => s.date === todayKey);
+    const todayTotal = today.reduce((s,x) => s + (Number(x.total)||0), 0);
+    const monthTotal = sumSales(s => (s.date||'').slice(0,7) === monthKey);
+    const prevTotal = sumSales(s => (s.date||'').slice(0,7) === prevKey);
+
+    const setText = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+    setText('metric-today-sales', fmtMoney(todayTotal));
+    setText('metric-today-sub', today.length ? today.length + ' invoice' + (today.length>1?'s':'') + ' today' : 'No sales today');
+    setText('metric-month-sales', fmtMoney(monthTotal));
+    if(prevTotal > 0){
+      const pct = Math.round(((monthTotal - prevTotal) / prevTotal) * 100);
+      setText('metric-month-sub', (pct >= 0 ? '▲ ' : '▼ ') + Math.abs(pct) + '% vs last month');
+    } else {
+      setText('metric-month-sub', 'No sales last month');
+    }
+
+    // Money to collect: customers with a positive balance, biggest first, flag if no payment for 30+ days
+    const collectEl = document.getElementById('dash-collect-list');
+    if(collectEl){
+      const owing = ledgerRows.filter(r => r.balance > 0).sort((a,b) => b.balance - a.balance).slice(0,5);
+      if(!owing.length){
+        collectEl.innerHTML = '<div class="empty-row"><i class="ti ti-circle-check" style="color:var(--success);"></i> No customer owes you money.</div>';
+      } else {
+        collectEl.innerHTML = owing.map(r => {
+          const pays = paymentsCache.filter(p => p.companyId === r.company.id && p.type === 'received' && p.date).map(p => p.date).sort();
+          const last = pays.length ? pays[pays.length-1] : null;
+          let sub = 'No payment received yet', late = true;
+          if(last){
+            const days = Math.floor((now - new Date(last + 'T00:00:00')) / 86400000);
+            sub = 'Last payment ' + days + ' day' + (days===1?'':'s') + ' ago';
+            late = days > 30;
+          }
+          return `<div class="dash-row"><div><div class="dr-name">${escapeHtml(r.company.name)}</div><div class="dr-sub">${escapeHtml(sub)}${late ? ' · overdue' : ''}</div></div><div class="dr-val ${late?'late':''}">${fmtMoney(r.balance)}</div></div>`;
+        }).join('');
+      }
+    }
+
+    // Top selling products this month (by sales amount)
+    const topEl = document.getElementById('dash-top-products');
+    if(topEl){
+      const totals = {};
+      salesCache.filter(s => (s.date||'').slice(0,7) === monthKey).forEach(s => {
+        (s.items||[]).forEach(it => {
+          if(!it.productName || !(Number(it.qty) > 0)) return;
+          const t = totals[it.productName] || (totals[it.productName] = { qty:0, amount:0, unit:it.unit||'' });
+          t.qty += Number(it.qty)||0; t.amount += Number(it.amount)||0;
+        });
+      });
+      const top = Object.entries(totals).sort((a,b) => b[1].amount - a[1].amount).slice(0,5);
+      topEl.innerHTML = top.length
+        ? top.map(([name,t]) => `<div class="dash-row"><div><div class="dr-name">${escapeHtml(name)}</div><div class="dr-sub">${t.qty.toLocaleString()} ${escapeHtml(t.unit||'kg')} sold</div></div><div class="dr-val">${fmtMoney(t.amount)}</div></div>`).join('')
+        : '<div class="empty-row"><i class="ti ti-info-circle"></i> No sales recorded this month yet.</div>';
+    }
+
+    // Low stock: only products where a reorder level has been set (avoids false alarms)
+    const lowEl = document.getElementById('dash-low-stock');
+    if(lowEl){
+      const low = computeInventory().filter(r => Number(r.product.reorderLevel) > 0 && (r.status === 'lowstock' || r.status === 'outstock'))
+        .sort((a,b) => a.currentStock - b.currentStock).slice(0,5);
+      lowEl.innerHTML = low.length
+        ? low.map(r => `<div class="dash-row"><div><div class="dr-name">${escapeHtml(r.product.name)}</div><div class="dr-sub">Reorder at ${Number(r.product.reorderLevel).toLocaleString()} ${escapeHtml(r.product.unit)}</div></div><div class="dr-val late">${r.currentStock.toLocaleString()} ${escapeHtml(r.product.unit)}</div></div>`).join('')
+        : '<div class="empty-row"><i class="ti ti-circle-check" style="color:var(--success);"></i> Nothing running low (set a reorder level on products to get alerts).</div>';
     }
   }
 
@@ -3844,13 +4222,18 @@
   }
 
   async function loadSales(){
-    const raw = await getList('sales');
+    await flushOutbox();
+    let raw = await getList('sales');
+    const pending = outboxRead();
+    if(pending.length){            // still unsynced: show them locally
+      raw = raw.filter(x => !pending.some(p => p.id === x.id)).concat(pending);
+    }
     let migrated = false;
     salesCache = raw.map(s => {
       if(!s.items){ migrated = true; }
       return migrateSaleRecord(s);
     });
-    if(migrated) await setList('sales', salesCache);
+    if(migrated && !pending.length) await setList('sales', salesCache);
     renderSales();
     refreshDashboard();
   }
@@ -3958,19 +4341,39 @@
   }
 
   /* ---- Multi-item line management ---- */
+  function productLabel(p){ return p.name + ' (' + p.unit + ')'; }
+  function ensureProductDatalist(sortedP){
+    let dl = document.getElementById('sale-product-list');
+    if(!dl){ dl = document.createElement('datalist'); dl.id = 'sale-product-list'; document.body.appendChild(dl); }
+    dl.innerHTML = sortedP.map(p => `<option value="${escapeHtml(productLabel(p))}"></option>`).join('');
+  }
   function createSaleItemRow(item){
     item = item || { productId:'', qty:'', rate:'', amount:0 };
     const sortedP = productsCache.slice().sort((a,b)=>a.name.localeCompare(b.name));
     const options = '<option value="">Select product...</option>' + sortedP.map(p =>
       `<option value="${p.id}" data-rate="${p.salesRate||0}" data-unit="${escapeHtml(p.unit)}" ${p.id===item.productId?'selected':''}>${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`
     ).join('');
+    ensureProductDatalist(sortedP);
+    const selP = productsCache.find(p => p.id === item.productId);
     return `<div class="sale-item-row">
-        <select class="sale-item-product">${options}</select>
+        <input type="text" class="sale-item-search" list="sale-product-list" autocomplete="off" placeholder="Type to search product..." value="${selP ? escapeHtml(productLabel(selP)) : ''}">
+        <select class="sale-item-product" tabindex="-1" aria-hidden="true" style="display:none">${options}</select>
         <input type="number" class="sale-item-qty" step="0.01" min="0" placeholder="Qty" value="${item.qty || ''}">
         <input type="number" class="sale-item-rate" step="0.01" min="0" placeholder="Rate" value="${item.rate || ''}">
         <input type="text" class="sale-item-amount" readonly placeholder="৳0" value="${item.amount ? fmtMoney(item.amount) : ''}">
         <button type="button" class="sale-item-remove" aria-label="Remove item"><i class="ti ti-trash"></i></button>
       </div>`;
+  }
+
+  /* The rate this customer was last charged for a product (most recent sale first). */
+  function lastRateForCustomer(companyId, productId){
+    if(!companyId || !productId) return 0;
+    const sales = salesCache.filter(s => s.companyId === companyId).sort((a,b) => (b.date||'').localeCompare(a.date||'') || (b.created_at||0) - (a.created_at||0));
+    for(const s of sales){
+      const it = (s.items||[]).find(i => i.productId === productId && Number(i.rate) > 0 && Number(i.qty) > 0);
+      if(it) return Number(it.rate);
+    }
+    return 0;
   }
 
   function wireSaleItemRowEvents(){
@@ -3980,15 +4383,42 @@
       const rateInput = row.querySelector('.sale-item-rate');
       const removeBtn = row.querySelector('.sale-item-remove');
 
+      const searchInput = row.querySelector('.sale-item-search');
+      if(searchInput){
+        const matchProduct = () => {
+          const t = searchInput.value.trim().toLowerCase();
+          if(!t) return null;
+          return productsCache.find(p => productLabel(p).toLowerCase() === t) || null;
+        };
+        const apply = () => {
+          const p = matchProduct();
+          const newId = p ? p.id : '';
+          if(productSel.value !== newId){ productSel.value = newId; productSel.onchange(); }
+        };
+        searchInput.addEventListener('input', apply);
+        searchInput.addEventListener('change', apply);
+        searchInput.addEventListener('focus', () => searchInput.select());
+        searchInput.addEventListener('blur', () => {
+          apply();
+          const p = productsCache.find(x => x.id === productSel.value);
+          if(p) searchInput.value = productLabel(p);
+          else if(searchInput.value.trim()){ searchInput.value = ''; showToast('Pick a product from the list'); }
+        });
+        searchInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); apply(); qtyInput.focus(); } });
+      }
       productSel.onchange = function(){
         const opt = this.options[this.selectedIndex];
-        if(opt && !rateInput.value){
-          rateInput.value = opt.getAttribute('data-rate') || '';
+        // Fill the rate only if it's empty or was auto-filled earlier (never overwrite a rate typed by hand).
+        if(opt && (!rateInput.value || rateInput.dataset.auto === '1')){
+          const last = lastRateForCustomer(document.getElementById('sale-company').value, this.value);
+          rateInput.value = last || opt.getAttribute('data-rate') || '';
+          rateInput.dataset.auto = '1';
+          if(last) rateInput.title = 'Last rate charged to this customer';
         }
         recalcSaleTotals();
       };
       qtyInput.oninput = recalcSaleTotals;
-      rateInput.oninput = recalcSaleTotals;
+      rateInput.oninput = function(){ rateInput.dataset.auto = ''; recalcSaleTotals(); };
       removeBtn.onclick = function(){
         const wrap = document.getElementById('sale-items-wrap');
         if(wrap.querySelectorAll('.sale-item-row').length <= 1){
@@ -4106,6 +4536,9 @@
       document.getElementById('sale-items-wrap').insertAdjacentHTML('beforeend', createSaleItemRow(null));
       wireSaleItemRowEvents();
       recalcSaleTotals();
+      const rows = document.querySelectorAll('#sale-items-wrap .sale-item-row');
+      const sel = rows[rows.length-1].querySelector('.sale-item-search');
+      if(sel) sel.focus();
     });
 
     document.getElementById('sale-export-btn').addEventListener('click', () => {
@@ -4160,11 +4593,17 @@
       } else {
         salesCache.push(data);
       }
-      await setList('sales', salesCache);
+      let saved = false;
+      if(!STALE_MODE && navigator.onLine) saved = await setList('sales', salesCache);
+      if(saved){
+        if(outboxRead().length) outboxWrite(outboxRead().filter(o => !salesCache.some(x => x.id === o.id)));
+      } else {
+        if(!queueOfflineSale(data)){ return; }
+      }
       closeSaleModal();
       renderSales();
       refreshDashboard();
-      showToast(id ? 'Sale updated' : 'Sale recorded');
+      showToast(saved ? (id ? 'Sale updated' : 'Sale recorded') : 'Saved offline — will sync when internet returns');
       openReceiptModal(data.id);
     });
   }
@@ -4768,7 +5207,47 @@
     area.className = 'print-area doc-invoice';
     area.innerHTML = buildReceiptHtml(sale);
     area.setAttribute('data-invoice', sale.invoiceNo);
+    area.setAttribute('data-sale-id', sale.id);
     document.getElementById('receipt-modal').classList.add('open');
+  }
+
+  /* ---- WhatsApp sharing ----
+     On phones that support it, the real PDF is handed to the share sheet (pick WhatsApp + the customer).
+     Elsewhere (desktop), WhatsApp opens on the customer's number with a ready-written summary message. */
+  function whatsappNumber(raw){
+    let d = String(raw || '').replace(/\D/g, '');
+    if(!d) return '';
+    if(d.indexOf('880') === 0) return d;
+    if(d.charAt(0) === '0') return '88' + d;
+    return d;
+  }
+  async function elementToPdfFile(el, widthMm, filename){
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    const { jsPDF } = window.jspdf;
+    const h = (canvas.height * widthMm) / canvas.width;
+    const pdf = new jsPDF('p', 'mm', [widthMm, Math.max(h, 100)]);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, widthMm, h);
+    return new File([pdf.output('blob')], filename, { type: 'application/pdf' });
+  }
+  async function shareDocOnWhatsApp(btn, el, widthMm, filename, phone, message){
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="ti ti-loader-2"></i> Preparing...';
+    btn.disabled = true;
+    try{
+      let file = null;
+      try{ file = await elementToPdfFile(el, widthMm, filename); }catch(e){ console.error(e); }
+      if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+        await navigator.share({ files:[file], text: message });
+      } else {
+        const num = whatsappNumber(phone);
+        window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(message), '_blank');
+        showToast(num ? 'WhatsApp opened — use Download PDF to attach the file' : 'No phone number saved for this customer — pick a contact in WhatsApp');
+      }
+    }catch(err){
+      if(err && err.name !== 'AbortError'){ console.error(err); showToast('Could not share — try Download PDF'); }
+    }
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
   }
   function closeReceiptModal(){ document.getElementById('receipt-modal').classList.remove('open'); }
 
@@ -4776,6 +5255,17 @@
     document.getElementById('receipt-modal-close').addEventListener('click', closeReceiptModal);
     document.getElementById('receipt-modal').addEventListener('click', function(e){ if(e.target === this) closeReceiptModal(); });
     document.getElementById('receipt-print-btn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('receipt-whatsapp-btn').addEventListener('click', function(){
+      const el = document.getElementById('receipt-print-area');
+      const sale = salesCache.find(s => s.id === el.getAttribute('data-sale-id'));
+      if(!sale) return;
+      const co = companiesCache.find(c => c.id === sale.companyId);
+      const phone = sale.companyPhone || (co && co.phone) || '';
+      const msg = 'Dear ' + sale.companyName + ',\nInvoice ' + sale.invoiceNo + ' (' + sale.date + ')\n'
+        + 'Total: ' + fmtMoney(sale.total) + '\nReceived: ' + fmtMoney(sale.received) + '\nDue: ' + fmtMoney(sale.due)
+        + '\n\nThank you,\n' + (profileCache.name || 'Inno Chem Bangladesh');
+      shareDocOnWhatsApp(this, el, 210, 'innochem-' + sale.invoiceNo + '.pdf', phone, msg);
+    });
     document.getElementById('receipt-download-btn').addEventListener('click', async function(){
       const el = document.getElementById('receipt-print-area');
       const invoiceNo = el.getAttribute('data-invoice') || 'receipt';
@@ -4949,7 +5439,11 @@
   }
 
   async function loadPayments(){
-    paymentsCache = await getList('payments');
+    await flushOutbox();
+    let rawPay = await getList('payments');
+    const payPending = payOutboxRead();
+    if(payPending.length) rawPay = rawPay.filter(x => !payPending.some(p => p.id === x.id)).concat(payPending);
+    paymentsCache = rawPay;
     renderPayments();
     refreshDashboard();
   }
@@ -5137,9 +5631,11 @@
       const company = companiesCache.find(c => c.id === companyId);
       const id = document.getElementById('payment-id').value;
       const oldPayment = id ? paymentsCache.find(x => x.id === id) : null;
+      const offlineNow = STALE_MODE || !navigator.onLine;
+      if(offlineNow && id){ showToast('Offline — existing payments can only be edited when online'); return; }
 
       // Reverse the old payment's effect before applying the new one (covers both add & edit cleanly)
-      if(oldPayment) await reversePaymentApplication(oldPayment);
+      if(oldPayment && !offlineNow) await reversePaymentApplication(oldPayment);
 
       const data = {
         id: id || uid(),
@@ -5151,26 +5647,28 @@
         companyPhone: company ? company.phone : '',
         amount,
         method: document.getElementById('payment-method').value,
-        appliedId: document.getElementById('payment-apply-to').value || null,
-        appliedLabel: document.getElementById('payment-apply-to').selectedOptions[0] ? document.getElementById('payment-apply-to').selectedOptions[0].textContent : '',
+        appliedId: offlineNow ? null : (document.getElementById('payment-apply-to').value || null),
+        appliedLabel: offlineNow ? 'General / advance' : (document.getElementById('payment-apply-to').selectedOptions[0] ? document.getElementById('payment-apply-to').selectedOptions[0].textContent : ''),
         notes: document.getElementById('payment-notes').value.trim(),
         created_at: oldPayment ? oldPayment.created_at : Date.now()
       };
 
-      await applyPaymentToInvoice(data);
+      if(!offlineNow) await applyPaymentToInvoice(data);
 
       if(id){
         paymentsCache = paymentsCache.map(p => p.id === id ? data : p);
       } else {
         paymentsCache.push(data);
       }
-      await setList('payments', paymentsCache);
+      let paySaved = false;
+      if(!offlineNow) paySaved = await setList('payments', paymentsCache);
+      if(!paySaved){ if(!queueOfflinePayment(data)) return; }
       closePaymentModal();
       renderPayments();
       renderPurchases();
       renderSales();
       refreshDashboard();
-      showToast(id ? 'Payment updated' : 'Payment recorded');
+      showToast(paySaved ? (id ? 'Payment updated' : 'Payment recorded') : 'Saved offline — will sync when internet returns');
       openPaymentReceiptModal(data.id);
     });
   }
@@ -5243,6 +5741,7 @@
     if(!payment) return;
     document.getElementById('payment-receipt-print-area').innerHTML = buildPaymentReceiptHtml(payment);
     document.getElementById('payment-receipt-print-area').setAttribute('data-receipt', payment.receiptNo || payment.id);
+    document.getElementById('payment-receipt-print-area').setAttribute('data-payment-id', payment.id);
     document.getElementById('payment-receipt-modal').classList.add('open');
   }
   function closePaymentReceiptModal(){ document.getElementById('payment-receipt-modal').classList.remove('open'); }
@@ -5251,6 +5750,18 @@
     document.getElementById('payment-receipt-modal-close').addEventListener('click', closePaymentReceiptModal);
     document.getElementById('payment-receipt-modal').addEventListener('click', function(e){ if(e.target === this) closePaymentReceiptModal(); });
     document.getElementById('payment-receipt-print-btn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('payment-receipt-whatsapp-btn').addEventListener('click', function(){
+      const el = document.getElementById('payment-receipt-print-area');
+      const pay = paymentsCache.find(p => p.id === el.getAttribute('data-payment-id'));
+      if(!pay) return;
+      const co = companiesCache.find(c => c.id === pay.companyId);
+      const phone = pay.companyPhone || (co && co.phone) || '';
+      const received = pay.type === 'received';
+      const msg = 'Dear ' + pay.companyName + ',\n' + (received ? 'We have received your payment of ' : 'We have paid you ')
+        + fmtMoney(pay.amount) + ' on ' + pay.date + (pay.receiptNo ? ' (Receipt ' + pay.receiptNo + ')' : '')
+        + '.\n\nThank you,\n' + (profileCache.name || 'Inno Chem Bangladesh');
+      shareDocOnWhatsApp(this, el, 148, 'innochem-' + String(el.getAttribute('data-receipt') || 'receipt').toLowerCase() + '.pdf', phone, msg);
+    });
     document.getElementById('payment-receipt-download-btn').addEventListener('click', async function(){
       const el = document.getElementById('payment-receipt-print-area');
       const receiptNo = el.getAttribute('data-receipt') || 'payment-receipt';
@@ -5969,7 +6480,7 @@
       exportedAt: new Date().toISOString(),
       app: 'Inno Chem Bangladesh ERP',
       profile: profileCache,
-      users: usersCache.map(u => ({ id:u.id, username:u.username, password:u.password, role:u.role, permissions:u.permissions, created_at:u.created_at })),
+      users: usersCache.map(u => ({ id:u.id, username:u.username, role:u.role, permissions:u.permissions, created_at:u.created_at })),
       companies: companiesCache,
       products: productsCache,
       purchases: purchasesCache,
@@ -6153,10 +6664,12 @@
       const otherAdmins = usersCache.filter(x => x.role === 'admin' && x.id !== id);
       if(u.role === 'admin' && otherAdmins.length === 0){ showToast('At least one administrator must remain'); return; }
       openConfirm('Delete this user?', `"${u.username}" will no longer be able to log in.`, async () => {
-        usersCache = usersCache.filter(x => x.id !== id);
-        await setList('users', usersCache);
-        renderUsers();
-        showToast('User deleted');
+        try{
+          await sbRpc('admin_delete_user', { p_id:id });
+          await loadUsers();
+          renderUsers();
+          showToast('User deleted');
+        }catch(err){ showToast(err.friendly || 'Could not delete user'); }
       });
     }));
   }
@@ -6276,22 +6789,16 @@
 
       const permissions = (role === 'admin' || role === 'management') ? fullPermissions() : readUserPermissionsGrid();
 
-      const data = {
-        id: id || uid(),
-        username,
-        password: password ? password : (existing ? existing.password : ''),
-        role,
-        permissions,
-        created_at: existing ? existing.created_at : Date.now()
-      };
-
-      if(id){
-        usersCache = usersCache.map(u => u.id === id ? data : u);
-        if(currentUser.id === id){ currentUser = data; }
-      } else {
-        usersCache.push(data);
-      }
-      await setList('users', usersCache);
+      if(password && password.length < 6){ showToast('Password must be at least 6 characters'); return; }
+      if(STALE_MODE || !navigator.onLine){ showToast('You are offline. Reconnect to manage users.'); return; }
+      try{
+        await sbRpc('admin_save_user', {
+          p_id: id || null, p_username: username, p_email: usernameToEmail(username),
+          p_password: password || null, p_role: role, p_permissions: permissions
+        });
+        await loadUsers();
+        if(id && currentUser.id === id){ currentUser = usersCache.find(u => u.id === id) || currentUser; }
+      }catch(err){ showToast(err.friendly || 'Could not save user'); return; }
       closeUserModal();
       renderUsers();
       showToast(id ? 'User updated' : 'User added');
@@ -6334,14 +6841,19 @@
   initUsers();
   document.getElementById('report-from-date').value = '';
   document.getElementById('report-to-date').value = todayStr();
-  loadStockSummary();
-  loadCompanies().then(populateCompanyDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(populatePaymentDropdowns).then(refreshLedger).then(refreshReports);
-  loadProducts().then(populateProductDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(renderInventory).then(refreshReports).then(loadRecipes).then(loadProductionLog);
-  loadPurchases().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
-  loadSales().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
-  loadSalesOrders();
-  loadPayments().then(refreshLedger).then(refreshReports);
-  loadProfile();
+  function startDataLoad(){
+    if(dataLoadStarted) return;
+    dataLoadStarted = true;
+    flushOutbox();
+    loadStockSummary();
+    loadCompanies().then(populateCompanyDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(populatePaymentDropdowns).then(refreshLedger).then(refreshReports);
+    loadProducts().then(populateProductDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(renderInventory).then(refreshReports).then(loadRecipes).then(loadProductionLog);
+    loadPurchases().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
+    loadSales().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
+    loadSalesOrders();
+    loadPayments().then(refreshLedger).then(refreshReports);
+    loadProfile();
+  }
 })();
 </script>
 </body>
