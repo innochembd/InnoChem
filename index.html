@@ -765,6 +765,38 @@
   #wco-bar button, #wco-bar a{-webkit-app-region:no-drag;app-region:no-drag;}
 }
 </style>
+<style id="p1-approvals-css">
+.bell-wrap{position:relative;}
+.bell-count{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#E5484D;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg-card,#fff);}
+.bell-panel{display:none;position:absolute;right:0;top:44px;width:min(380px,92vw);max-height:70vh;overflow:auto;background:var(--bg-card,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:60;}
+.bell-panel.open{display:block;}
+.bell-head{padding:12px 14px;font-weight:800;font-size:13.5px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.bell-item{padding:11px 14px;border-bottom:1px solid var(--border);font-size:12.5px;line-height:1.5;}
+.bell-item:last-child{border-bottom:0;}
+.bell-item .bi-top{display:flex;justify-content:space-between;gap:8px;font-weight:700;}
+.bell-item .bi-sub{color:var(--text-secondary);font-size:11.5px;}
+.bell-item .bi-act{display:flex;gap:8px;margin-top:8px;}
+.bell-empty{padding:26px 14px;text-align:center;color:var(--text-secondary);font-size:12.5px;}
+.bell-foot{padding:10px 14px;border-top:1px solid var(--border);text-align:center;}
+.bell-foot a{color:var(--ic-green-dark,#017885);font-weight:700;font-size:12.5px;cursor:pointer;}
+.appr-btn{border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.appr-btn.ok{background:#1F9D55;color:#fff;} .appr-btn.no{background:var(--danger-bg);color:var(--danger);}
+.appr-btn:disabled{opacity:.5;cursor:default;}
+.st-badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle;white-space:nowrap;}
+.st-badge.pending{background:#FFF1CC;color:#9A6700;}
+.st-badge.rejected{background:var(--danger-bg);color:var(--danger);}
+.st-badge.approved{background:#DFF6E6;color:#17803F;}
+:root[data-theme="dark"] .st-badge.pending{background:#4a3a0a;color:#ffd26a;}
+:root[data-theme="dark"] .st-badge.approved{background:#0f3d24;color:#6ee7a0;}
+.appr-lines{font-size:12px;line-height:1.55;}
+.appr-lines .diff-up{color:var(--danger);font-weight:700;} .appr-lines .diff-ok{color:var(--text-secondary);}
+.nav-count{margin-left:auto;background:#E5484D;color:#fff;border-radius:9px;font-size:10px;font-weight:800;padding:1px 6px;}
+.audit-chg{font-size:12px;line-height:1.5;max-width:420px;white-space:normal;word-break:break-word;}
+.audit-chg s{color:var(--text-muted);}
+.audit-act{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;}
+.audit-act.insert{background:#DFF6E6;color:#17803F;} .audit-act.update{background:#FFF1CC;color:#9A6700;} .audit-act.delete{background:var(--danger-bg);color:var(--danger);}
+:root[data-theme="dark"] .audit-act.insert{background:#0f3d24;color:#6ee7a0;} :root[data-theme="dark"] .audit-act.update{background:#4a3a0a;color:#ffd26a;}
+</style>
 </head>
 <body>
 <div id="wco-bar"><img data-rar-logo alt="RAR"><span>RAR ERP</span></div>
@@ -849,6 +881,8 @@
       <button class="nav-item" data-page="reports"><i class="ti ti-file-analytics"></i> Reports &amp; Export</button>
 
       <div class="nav-section-label">System</div>
+      <button class="nav-item" data-page="approvals"><i class="ti ti-clipboard-check"></i> Price Approvals <span class="nav-count" id="nav-appr-count" style="display:none"></span></button>
+      <button class="nav-item" data-page="audit"><i class="ti ti-clock"></i> Audit Log</button>
       <button class="nav-item" data-page="settings"><i class="ti ti-settings"></i> Settings</button>
     </nav>
 
@@ -886,7 +920,7 @@
           <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         </button>
         <button class="icon-btn" id="quick-backup-btn" title="Download full backup"><i class="ti ti-cloud-download"></i></button>
-        <button class="icon-btn"><i class="ti ti-bell"></i></button>
+        <div class="bell-wrap" id="bell-wrap"><button class="icon-btn" id="bell-btn" title="Notifications" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bell-count" id="bell-count" style="display:none">0</span></button><div class="bell-panel" id="bell-panel"><div class="bell-empty">No notifications</div></div></div>
       </div>
     </div>
 
@@ -1451,6 +1485,60 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- PRICE APPROVALS PAGE -->
+      <div class="page" id="page-approvals">
+        <div class="toolbar">
+          <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="appr-search" placeholder="Search invoice, company, user..."></div>
+          <div class="tb-filters">
+            <select id="appr-filter">
+              <option value="pending">Pending</option><option value="all">All</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+            </select>
+            <button class="btn-secondary" id="appr-refresh"><i class="ti ti-loader-2"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="appr-table">
+              <thead><tr><th>Requested</th><th>Type</th><th>Ref</th><th>Party</th><th>Prices</th><th>Total</th><th>By</th><th>Status</th><th style="width:170px;">Action</th></tr></thead>
+              <tbody id="appr-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-empty" id="appr-empty" style="display:none;">
+            <div class="p-icon"><i class="ti ti-clipboard-check"></i></div>
+            <h3>Nothing to approve</h3>
+            <p>When staff enter a price that differs from the product's list price, it appears here for your confirmation.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDIT LOG PAGE -->
+      <div class="page" id="page-audit">
+        <div class="toolbar">
+          <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="audit-search" placeholder="Search user, record, change..."></div>
+          <div class="tb-filters">
+            <select id="audit-table"><option value="">All records</option></select>
+            <select id="audit-user"><option value="">All users</option></select>
+            <input type="date" id="audit-from" title="From date" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:var(--text-primary);">
+            <input type="date" id="audit-to" title="To date" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:var(--text-primary);">
+            <button class="btn-secondary" id="audit-refresh"><i class="ti ti-loader-2"></i> Refresh</button>
+            <button class="btn-secondary" id="audit-export"><i class="ti ti-download"></i> Export CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="audit-table-el">
+              <thead><tr><th>When</th><th>User</th><th>Action</th><th>Record</th><th>Reference</th><th>What changed</th></tr></thead>
+              <tbody id="audit-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-empty" id="audit-empty" style="display:none;">
+            <div class="p-icon"><i class="ti ti-clock"></i></div>
+            <h3>No log entries</h3>
+            <p>Every create, edit, delete and price decision is recorded here with who did it and when.</p>
+          </div>
+        </div>
       </div>
 
       <!-- SETTINGS PAGE -->
@@ -3106,6 +3194,8 @@
       ledger: ['Tally Book', 'Company-wise ledger and statements'],
       inventory: ['Inventory', 'Stock levels and valuation'],
       reports: ['Reports & Export', 'Search and export your business data'],
+      approvals: ['Price Approvals', 'Confirm prices entered by staff'],
+      audit: ['Audit Log', 'Who did what, and when'],
       settings: ['Settings', 'Manage your ERP login, users and preferences']
     };
     items.forEach(btn=>{
@@ -3126,6 +3216,8 @@
         if(page === 'deliveries' && typeof renderDeliveries === 'function') renderDeliveries();
         if(page === 'reports' && typeof refreshReports === 'function') refreshReports();
         if(page === 'settings' && typeof renderUsers === 'function') renderUsers();
+        if(page === 'approvals'){ renderApprovalsPage(); loadApprovals(true); }
+        if(page === 'audit') loadAuditLog();
       });
     });
 
@@ -4017,7 +4109,7 @@
         <td>${escapeHtml(p.date)}</td>
         <td><div class="cell-name">${escapeHtml(p.companyName)}</div></td>
         <td>${escapeHtml(p.invoiceNo) || '<span class="cell-sub">—</span>'}</td>
-        <td>${escapeHtml(p.productName)}</td>
+        <td>${escapeHtml(p.productName)}${approvalBadge('purchase', p.id)}</td>
         <td>${Number(p.qty).toLocaleString()}</td>
         <td>${fmtMoney(p.rate)}</td>
         <td><b>${fmtMoney(p.total)}</b></td>
@@ -4148,6 +4240,7 @@
         purchasesCache.push(data);
       }
       await setList('purchases', purchasesCache);
+      priceApprovalHook('purchase', data);
       closePurchaseModal();
       renderPurchases();
       refreshDashboard();
@@ -4482,7 +4575,7 @@
       const profit = saleProfit(s);
       return `<tr>
         <td>${escapeHtml(s.date)}</td>
-        <td><b>${escapeHtml(s.invoiceNo)}</b></td>
+        <td><b>${escapeHtml(s.invoiceNo)}</b>${approvalBadge('sale', s.id)}</td>
         <td><div class="cell-name">${escapeHtml(s.companyName)}</div></td>
         <td>${summarizeItems(s.items)}</td>
         <td><b>${fmtMoney(s.total)}</b></td>
@@ -4776,6 +4869,7 @@
       } else {
         if(!queueOfflineSale(data)){ return; }
       }
+      priceApprovalHook('sale', data);
       closeSaleModal();
       renderSales();
       refreshDashboard();
@@ -6981,6 +7075,272 @@
     });
   }
 
+  /* ================= PRICE APPROVALS + NOTIFICATION BELL + AUDIT LOG ================= */
+  let approvalsCache = [];
+  let approvalsSig = '';
+  let approvalsLoadedOnce = false;
+  const APPR_OUTBOX = 'ic_outbox_approvals';
+
+  function isPriceController(){ return !!currentUser && (currentUser.role === 'admin' || currentUser.role === 'management'); }
+  function approvalFor(kind, id){ return approvalsCache.find(a => a.kind === kind && a.record_id === id) || null; }
+  function approvalBadge(kind, id){
+    const a = approvalFor(kind, id);
+    if(!a || a.status === 'approved') return '';
+    return a.status === 'pending'
+      ? '<span class="st-badge pending" title="Waiting for management to confirm the price">Pending approval</span>'
+      : '<span class="st-badge rejected" title="' + escapeHtml(a.decision_note || 'Price rejected by management') + '">Price rejected</span>';
+  }
+  function apprOutboxRead(){ try{ return JSON.parse(localStorage.getItem(APPR_OUTBOX) || '[]'); }catch(e){ return []; } }
+  function apprOutboxWrite(a){ try{ localStorage.setItem(APPR_OUTBOX, JSON.stringify(a)); }catch(e){} }
+
+  function priceDeviations(kind, items){
+    return (items || []).map(it => {
+      const p = productsCache.find(x => x.id === it.productId);
+      const list = p ? (Number(kind === 'sale' ? p.salesRate : p.purchaseRate) || 0) : 0;
+      return { product: it.productName || '', qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, list_rate: list };
+    }).filter(l => Math.abs(l.rate - l.list_rate) > 0.0001);
+  }
+  function apprRateSig(lines){ return (lines || []).map(l => l.product + '|' + Number(l.rate)).sort().join(';'); }
+
+  async function apprCall(fn, args){
+    try{ return await sbRpc(fn, args); }
+    catch(err){
+      if(err && err.friendly && /only management|not signed in/i.test(err.friendly)) throw err;
+      const q = apprOutboxRead(); q.push({ fn: fn, args: args, tries: 0 }); apprOutboxWrite(q);
+      return null;
+    }
+  }
+  async function flushApprovalOutbox(){
+    if(!navigator.onLine || !currentUser) return;
+    const q = apprOutboxRead(); if(!q.length) return;
+    const keep = [];
+    for(const it of q){
+      try{ await sbRpc(it.fn, it.args); }
+      catch(e){ it.tries = (it.tries || 0) + 1; if(it.tries < 8) keep.push(it); }
+    }
+    apprOutboxWrite(keep);
+    loadApprovals(true);
+  }
+
+  async function priceApprovalHook(kind, rec){
+    try{
+      if(!currentUser || !rec) return;
+      const items = kind === 'sale' ? (rec.items || [])
+        : [{ productId: rec.productId, productName: rec.productName, qty: rec.qty, rate: rec.rate }];
+      const label = rec.invoiceNo || rec.productName || '';
+      const existing = approvalFor(kind, rec.id);
+      if(isPriceController()){
+        if(existing && existing.status !== 'approved') await apprCall('clear_price_approval', { p_kind: kind, p_record_id: rec.id });
+      } else {
+        const lines = priceDeviations(kind, items);
+        if(lines.length){
+          if(existing && existing.status === 'approved' && apprRateSig(existing.lines) === apprRateSig(lines)){ /* same prices already approved */ }
+          else {
+            await apprCall('submit_price_approval', { p_kind: kind, p_record_id: rec.id, p_label: label, p_company: rec.companyName || '', p_total: Number(rec.total) || 0, p_lines: lines });
+            showToast('Price sent to management for approval');
+          }
+        } else if(existing && existing.status !== 'approved'){
+          await apprCall('clear_price_approval', { p_kind: kind, p_record_id: rec.id });
+        }
+      }
+    }catch(e){ console.error('price approval hook', e); }
+    loadApprovals(true);
+  }
+
+  async function loadApprovals(force){
+    if(!currentUser || !navigator.onLine) return;
+    try{
+      const rows = await sbFetch('price_approvals?select=*&order=requested_at.desc&limit=500', { headers: sbHeaders() });
+      const list = rows || [];
+      const sig = list.map(a => a.id + ':' + a.status + ':' + (a.decided_at || '')).join(',');
+      const prevPending = new Set(approvalsCache.filter(a => a.status === 'pending').map(a => a.id));
+      const changed = sig !== approvalsSig;
+      approvalsCache = list; approvalsSig = sig;
+      if(isPriceController() && approvalsLoadedOnce){
+        const fresh = list.filter(a => a.status === 'pending' && !prevPending.has(a.id));
+        if(fresh.length) showToast(fresh.length + ' new price approval request' + (fresh.length > 1 ? 's' : '') + ' waiting');
+      }
+      approvalsLoadedOnce = true;
+      renderBell();
+      if(changed || force){
+        try{ renderSales(); }catch(e){}
+        try{ renderPurchases(); }catch(e){}
+        if(document.getElementById('page-approvals').classList.contains('active')) renderApprovalsPage();
+      }
+    }catch(e){ /* price_approvals table not created yet, or offline */ }
+  }
+
+  async function decideApproval(id, approve, btn){
+    let note = null;
+    if(!approve){
+      note = window.prompt('Reason for rejecting (optional):', '');
+      if(note === null) return;
+    }
+    if(btn) btn.disabled = true;
+    try{
+      await sbRpc('decide_price_approval', { p_id: id, p_approve: approve, p_note: note || null });
+      showToast(approve ? 'Price approved' : 'Price rejected');
+    }catch(err){ showToast((err && err.friendly) || 'Could not save decision'); }
+    await loadApprovals(true);
+  }
+
+  function apprLinesHtml(lines){
+    return '<div class="appr-lines">' + (lines || []).map(l => {
+      const up = Number(l.rate) > Number(l.list_rate);
+      return escapeHtml(l.product) + ' &middot; ' + (Number(l.qty) || 0).toLocaleString() + ' &times; <b>' + fmtMoney(l.rate) + '</b> <span class="' + (up ? 'diff-up' : 'diff-ok') + '">(list ' + (Number(l.list_rate) ? fmtMoney(l.list_rate) : 'not set') + ')</span>';
+    }).join('<br>') + '</div>';
+  }
+  function apprWhen(ts){ try{ return new Date(ts).toLocaleString([], { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }); }catch(e){ return ''; } }
+
+  function renderBell(){
+    const countEl = document.getElementById('bell-count'), panel = document.getElementById('bell-panel');
+    const navCount = document.getElementById('nav-appr-count');
+    if(!countEl || !panel || !currentUser) return;
+    const ctrl = isPriceController();
+    let badge = 0, html = '';
+    if(ctrl){
+      const pending = approvalsCache.filter(a => a.status === 'pending');
+      badge = pending.length;
+      html = '<div class="bell-head"><span>Price approvals</span><span>' + pending.length + ' pending</span></div>' +
+        (pending.length ? pending.slice(0, 8).map(a =>
+          '<div class="bell-item"><div class="bi-top"><span>' + escapeHtml(a.kind === 'sale' ? 'Sale' : 'Purchase') + ' ' + escapeHtml(a.record_label || '') + '</span><span>' + fmtMoney(a.total) + '</span></div>' +
+          '<div class="bi-sub">' + escapeHtml(a.company_name || '') + ' &middot; by ' + escapeHtml(a.requested_by) + ' &middot; ' + apprWhen(a.requested_at) + '</div>' +
+          apprLinesHtml(a.lines) +
+          '<div class="bi-act"><button class="appr-btn ok" data-appr="' + a.id + '" data-act="ok">Approve</button><button class="appr-btn no" data-appr="' + a.id + '" data-act="no">Reject</button></div></div>'
+        ).join('') : '<div class="bell-empty">No prices waiting for approval.</div>') +
+        '<div class="bell-foot"><a id="bell-open-appr">Open Price Approvals page</a></div>';
+      if(navCount){ navCount.textContent = pending.length; navCount.style.display = pending.length ? '' : 'none'; }
+    } else {
+      const mine = approvalsCache.filter(a => a.requested_by_id === currentUser.id).slice(0, 10);
+      let seen = 0; try{ seen = Number(localStorage.getItem('ic_appr_seen_' + currentUser.id) || 0); }catch(e){}
+      badge = mine.filter(a => a.status !== 'pending' && a.decided_at && new Date(a.decided_at).getTime() > seen).length;
+      html = '<div class="bell-head"><span>My price requests</span><span>' + mine.filter(a => a.status === 'pending').length + ' pending</span></div>' +
+        (mine.length ? mine.map(a =>
+          '<div class="bell-item"><div class="bi-top"><span>' + escapeHtml(a.kind === 'sale' ? 'Sale' : 'Purchase') + ' ' + escapeHtml(a.record_label || '') + '</span><span class="st-badge ' + a.status + '">' + (a.status === 'pending' ? 'Pending' : a.status === 'approved' ? 'Approved' : 'Rejected') + '</span></div>' +
+          '<div class="bi-sub">' + escapeHtml(a.company_name || '') + ' &middot; ' + apprWhen(a.decided_at || a.requested_at) + (a.decided_by ? ' &middot; by ' + escapeHtml(a.decided_by) : '') + '</div>' +
+          (a.decision_note ? '<div class="bi-sub">Note: ' + escapeHtml(a.decision_note) + '</div>' : '') + '</div>'
+        ).join('') : '<div class="bell-empty">No price requests yet.<br>Prices that differ from the list price are sent to management automatically.</div>');
+    }
+    panel.innerHTML = html;
+    countEl.textContent = badge > 9 ? '9+' : badge;
+    countEl.style.display = badge ? '' : 'none';
+    panel.querySelectorAll('[data-appr]').forEach(b => b.addEventListener('click', ev => {
+      ev.stopPropagation(); decideApproval(b.getAttribute('data-appr'), b.getAttribute('data-act') === 'ok', b);
+    }));
+    const openLink = document.getElementById('bell-open-appr');
+    if(openLink) openLink.addEventListener('click', () => {
+      panel.classList.remove('open');
+      const nb = document.querySelector('.nav-item[data-page="approvals"]'); if(nb) nb.click();
+    });
+  }
+
+  function renderApprovalsPage(){
+    const tbody = document.getElementById('appr-tbody'), empty = document.getElementById('appr-empty'), table = document.getElementById('appr-table');
+    if(!tbody) return;
+    const f = document.getElementById('appr-filter').value;
+    const q = document.getElementById('appr-search').value.trim().toLowerCase();
+    let rows = approvalsCache.filter(a => f === 'all' || a.status === f);
+    if(q) rows = rows.filter(a => ((a.record_label||'') + ' ' + (a.company_name||'') + ' ' + (a.requested_by||'') + ' ' + (a.lines||[]).map(l => l.product).join(' ')).toLowerCase().includes(q));
+    if(!rows.length){ table.style.display = 'none'; empty.style.display = 'flex'; tbody.innerHTML = ''; return; }
+    table.style.display = ''; empty.style.display = 'none';
+    tbody.innerHTML = rows.map(a => '<tr>' +
+      '<td>' + apprWhen(a.requested_at) + '</td>' +
+      '<td>' + (a.kind === 'sale' ? 'Sale' : 'Purchase') + '</td>' +
+      '<td><b>' + escapeHtml(a.record_label || '') + '</b></td>' +
+      '<td>' + escapeHtml(a.company_name || '') + '</td>' +
+      '<td>' + apprLinesHtml(a.lines) + '</td>' +
+      '<td><b>' + fmtMoney(a.total) + '</b></td>' +
+      '<td>' + escapeHtml(a.requested_by) + '</td>' +
+      '<td><span class="st-badge ' + a.status + '" style="margin-left:0">' + a.status + '</span>' + (a.decided_by ? '<div class="cell-sub">' + escapeHtml(a.decided_by) + ' &middot; ' + apprWhen(a.decided_at) + '</div>' : '') + (a.decision_note ? '<div class="cell-sub">' + escapeHtml(a.decision_note) + '</div>' : '') + '</td>' +
+      '<td>' + (a.status === 'pending' ? '<button class="appr-btn ok" data-appr="' + a.id + '" data-act="ok">Approve</button> <button class="appr-btn no" data-appr="' + a.id + '" data-act="no">Reject</button>' : (a.status === 'rejected' ? '<button class="appr-btn ok" data-appr="' + a.id + '" data-act="ok">Approve anyway</button>' : '')) + '</td></tr>').join('');
+    tbody.querySelectorAll('[data-appr]').forEach(b => b.addEventListener('click', () => decideApproval(b.getAttribute('data-appr'), b.getAttribute('data-act') === 'ok', b)));
+  }
+
+  /* ---- Audit log viewer (management only) ---- */
+  let auditRows = [];
+  const AUDIT_TABLE_LABEL = { sales:'Sales', sale_items:'Sale items', purchases:'Purchases', products:'Products', companies:'Companies', payments:'Payments', sales_orders:'Sales orders', recipes:'Recipes', production:'Production', price_approvals:'Price approvals', app_users:'Users' };
+  function auditTableLabel(t){ return AUDIT_TABLE_LABEL[t] || String(t || '').replace(/_/g, ' '); }
+  function auditVal(v){ if(v === null || v === undefined || v === '') return '—'; if(typeof v === 'object') return JSON.stringify(v).slice(0, 80); return String(v).slice(0, 60); }
+  function auditChanges(a){
+    const o = a.old_data || {}, n = a.new_data || {};
+    const skip = { id:1, created_at:1, updated_at:1 };
+    if(a.action === 'update'){
+      const keys = Object.keys(n).filter(k => !skip[k] && JSON.stringify(n[k]) !== JSON.stringify(o[k]));
+      if(!keys.length) return '<span class="cell-sub">no field changes</span>';
+      return keys.slice(0, 6).map(k => '<b>' + escapeHtml(k) + '</b>: <s>' + escapeHtml(auditVal(o[k])) + '</s> &rarr; ' + escapeHtml(auditVal(n[k]))).join('<br>') + (keys.length > 6 ? '<br>+' + (keys.length - 6) + ' more' : '');
+    }
+    const src = a.action === 'insert' ? n : o;
+    const keys = Object.keys(src || {}).filter(k => !skip[k] && !/(^|[a-z])Id$|_id$/.test(k) && src[k] !== null && src[k] !== '' && typeof src[k] !== 'object').slice(0, 5);
+    return keys.map(k => '<b>' + escapeHtml(k) + '</b>: ' + escapeHtml(auditVal(src[k]))).join('<br>') || '<span class="cell-sub">—</span>';
+  }
+  async function loadAuditLog(){
+    try{
+      auditRows = (await sbFetch('audit_log?select=*&order=created_at.desc&limit=1000', { headers: sbHeaders() })) || [];
+    }catch(e){ auditRows = []; showToast('Could not load audit log'); }
+    const tSel = document.getElementById('audit-table'), uSel = document.getElementById('audit-user');
+    const tv = tSel.value, uv = uSel.value;
+    const tables = Array.from(new Set(auditRows.map(r => r.table_name))).sort();
+    const users = Array.from(new Set(auditRows.map(r => r.username))).sort();
+    tSel.innerHTML = '<option value="">All records</option>' + tables.map(t => '<option value="' + escapeHtml(t) + '">' + escapeHtml(auditTableLabel(t)) + '</option>').join('');
+    uSel.innerHTML = '<option value="">All users</option>' + users.map(u => '<option value="' + escapeHtml(u) + '">' + escapeHtml(u) + '</option>').join('');
+    tSel.value = tv; uSel.value = uv;
+    renderAuditLog();
+  }
+  function auditFiltered(){
+    const q = document.getElementById('audit-search').value.trim().toLowerCase();
+    const t = document.getElementById('audit-table').value, u = document.getElementById('audit-user').value;
+    const from = document.getElementById('audit-from').value, to = document.getElementById('audit-to').value;
+    return auditRows.filter(r => {
+      if(t && r.table_name !== t) return false;
+      if(u && r.username !== u) return false;
+      const d = (r.created_at || '').slice(0, 10);
+      if(from && d < from) return false;
+      if(to && d > to) return false;
+      if(q && !((r.username||'') + ' ' + (r.record_label||'') + ' ' + r.table_name + ' ' + r.action + ' ' + JSON.stringify(r.new_data||{}) + JSON.stringify(r.old_data||{})).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+  function renderAuditLog(){
+    const tbody = document.getElementById('audit-tbody'), empty = document.getElementById('audit-empty'), table = document.getElementById('audit-table-el');
+    if(!tbody) return;
+    const rows = auditFiltered().slice(0, 400);
+    if(!rows.length){ table.style.display = 'none'; empty.style.display = 'flex'; tbody.innerHTML = ''; return; }
+    table.style.display = ''; empty.style.display = 'none';
+    tbody.innerHTML = rows.map(r => '<tr>' +
+      '<td style="white-space:nowrap;">' + escapeHtml(new Date(r.created_at).toLocaleString([], { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })) + '</td>' +
+      '<td><b>' + escapeHtml(r.username) + '</b></td>' +
+      '<td><span class="audit-act ' + escapeHtml(r.action) + '">' + escapeHtml(r.action) + '</span></td>' +
+      '<td>' + escapeHtml(auditTableLabel(r.table_name)) + '</td>' +
+      '<td>' + escapeHtml(r.record_label || '') + '</td>' +
+      '<td class="audit-chg">' + auditChanges(r) + '</td></tr>').join('');
+  }
+  function initApprovalsUi(){
+    const bell = document.getElementById('bell-btn'), panel = document.getElementById('bell-panel');
+    if(!bell) return;
+    bell.addEventListener('click', ev => {
+      ev.stopPropagation();
+      panel.classList.toggle('open');
+      if(panel.classList.contains('open') && currentUser && !isPriceController()){
+        try{ localStorage.setItem('ic_appr_seen_' + currentUser.id, String(Date.now())); }catch(e){}
+        document.getElementById('bell-count').style.display = 'none';
+      }
+    });
+    document.addEventListener('click', ev => { if(!ev.target.closest('#bell-wrap')) panel.classList.remove('open'); });
+    ['appr-search','appr-filter'].forEach(id => document.getElementById(id).addEventListener('input', renderApprovalsPage));
+    document.getElementById('appr-refresh').addEventListener('click', () => loadApprovals(true));
+    ['audit-search','audit-table','audit-user','audit-from','audit-to'].forEach(id => document.getElementById(id).addEventListener('input', renderAuditLog));
+    document.getElementById('audit-refresh').addEventListener('click', loadAuditLog);
+    document.getElementById('audit-export').addEventListener('click', () => {
+      const rows = auditFiltered();
+      if(!rows.length){ showToast('Nothing to export'); return; }
+      downloadCsv('audit-log.csv', [['When','User','Action','Record','Reference','Old','New']].concat(
+        rows.map(r => [r.created_at, r.username, r.action, auditTableLabel(r.table_name), r.record_label || '', JSON.stringify(r.old_data || ''), JSON.stringify(r.new_data || '')])));
+    });
+    setInterval(() => { if(currentUser && !document.hidden){ loadApprovals(); flushApprovalOutbox(); } }, 20000);
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) loadApprovals(); });
+  }
+  initApprovalsUi();
+
   /* ---- Installable app icon (PWA): manifest + icons above, real sw.js for install prompt ---- */
   (function registerInstallServiceWorker(){
     try{
@@ -7137,6 +7497,7 @@
     if(dataLoadStarted) return;
     dataLoadStarted = true;
     flushOutbox();
+    loadApprovals(); flushApprovalOutbox();
     loadStockSummary();
     loadCompanies().then(populateCompanyDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(populatePaymentDropdowns).then(refreshLedger).then(refreshReports);
     loadProducts().then(populateProductDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(renderInventory).then(refreshReports).then(loadRecipes).then(loadProductionLog);
