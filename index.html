@@ -797,6 +797,33 @@
 .audit-act.insert{background:#DFF6E6;color:#17803F;} .audit-act.update{background:#FFF1CC;color:#9A6700;} .audit-act.delete{background:var(--danger-bg);color:var(--danger);}
 :root[data-theme="dark"] .audit-act.insert{background:#0f3d24;color:#6ee7a0;} :root[data-theme="dark"] .audit-act.update{background:#4a3a0a;color:#ffd26a;}
 </style>
+<style id="p2-report-css">
+.mr-page{--mr-ink:#18222b;--mr-mute:#5d6b76;--mr-line:#dde3e8;--mr-teal:#0b7468;background:#fff;color:var(--mr-ink);width:794px;max-width:none;margin:0 auto;position:relative;padding:30px 34px;font-size:12px;line-height:1.5;box-shadow:0 2px 14px rgba(0,0,0,.18);font-family:'Manrope',system-ui,sans-serif;}
+.mr-page *{color:inherit;}
+.mr-head{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:3px solid var(--mr-teal);padding-bottom:14px;margin-bottom:16px;}
+.mr-head img{height:46px;max-width:150px;object-fit:contain;}
+.mr-head h1{font-size:19px;margin:0;font-weight:800;color:var(--mr-ink);}
+.mr-head .mr-sub{color:var(--mr-mute);font-size:11.5px;}
+.mr-sec{margin-bottom:16px;}
+.mr-sec h2{font-size:13px;font-weight:800;margin:0 0 8px;color:var(--mr-teal);text-transform:uppercase;letter-spacing:.5px;}
+.mr-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;}
+.mr-kpi{border:1px solid var(--mr-line);border-radius:9px;padding:9px 11px;background:#f8fafb;}
+.mr-kpi .l{font-size:10.5px;color:var(--mr-mute);font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.mr-kpi .v{font-size:16.5px;font-weight:800;margin-top:2px;}
+.mr-kpi .d{font-size:10.5px;margin-top:1px;color:var(--mr-mute);}
+.mr-kpi .d.up{color:#17803F;} .mr-kpi .d.down{color:#C0392B;}
+.mr-tbl{width:100%;border-collapse:collapse;font-size:11.5px;}
+.mr-tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--mr-mute);padding:6px 8px;border-bottom:1.5px solid var(--mr-line);}
+.mr-tbl td{padding:6px 8px;border-bottom:1px solid var(--mr-line);}
+.mr-tbl .r{text-align:right;white-space:nowrap;}
+.mr-tbl tfoot td{font-weight:800;border-top:1.5px solid var(--mr-line);border-bottom:0;}
+.mr-neg{color:#C0392B !important;} .mr-pos{color:#17803F !important;}
+.mr-note{color:var(--mr-mute);font-size:10.5px;}
+.mr-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.mr-foot{margin-top:12px;border-top:1px solid var(--mr-line);padding-top:8px;display:flex;justify-content:space-between;color:var(--mr-mute);font-size:10.5px;}
+.mr-empty{color:var(--mr-mute);font-style:italic;padding:6px 0;}
+@media print{ #mreport-modal{position:static !important;background:none !important;padding:0 !important;display:block !important;} #mreport-modal .modal-box{box-shadow:none;max-width:none;} #mreport-modal .modal-body{max-height:none !important;overflow:visible !important;background:#fff !important;padding:0 !important;} .mr-page{box-shadow:none;width:100%;padding:0;} .mr-sec{page-break-inside:avoid;} }
+</style>
 </head>
 <body>
 <div id="wco-bar"><img data-rar-logo alt="RAR"><span>RAR ERP</span></div>
@@ -1432,6 +1459,19 @@
       </div>
       <!-- REPORTS & EXPORT PAGE -->
       <div class="page" id="page-reports">
+
+        <div class="card card-pad" id="mreport-card" style="margin-bottom:16px;display:none;">
+          <div class="section-title"><i class="ti ti-file-analytics"></i> Monthly management report</div>
+          <p style="font-size:12.5px;color:var(--text-secondary);margin:0 0 12px;">Full business picture for one month &mdash; sales, purchases, profit, collections, dues, top customers &amp; products, stock and staff activity. View it here or download as PDF.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="field" style="margin:0;min-width:200px;">
+              <label>Month</label>
+              <div class="field-input-wrap"><i class="ti ti-calendar"></i><input type="month" id="mreport-month"></div>
+            </div>
+            <button class="btn-primary sm" id="mreport-view-btn"><i class="ti ti-file-analytics"></i> View report</button>
+          </div>
+        </div>
+
 
         <div class="card card-pad" style="margin-bottom:16px;">
           <div class="section-title"><i class="ti ti-calendar-stats"></i> Business summary by date range</div>
@@ -2088,6 +2128,23 @@
         <button type="submit" class="btn-primary sm"><i class="ti ti-receipt"></i> Save &amp; generate receipt</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MONTHLY MANAGEMENT REPORT MODAL -->
+<div class="modal-overlay" id="mreport-modal">
+  <div class="modal-box" style="max-width:880px;">
+    <div class="modal-head no-print">
+      <h3><i class="ti ti-file-analytics" style="margin-right:6px;vertical-align:-2px;color:var(--ic-green);"></i>Monthly management report</h3>
+      <button class="modal-close" id="mreport-close"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" style="max-height:72vh;overflow:auto;background:#e9edf0;">
+      <div id="mreport-body" class="print-area mr-page"><div style="padding:40px;text-align:center;">Preparing report...</div></div>
+    </div>
+    <div class="modal-foot no-print">
+      <button type="button" class="btn-secondary" id="mreport-print-btn"><i class="ti ti-printer"></i> Print</button>
+      <button type="button" class="btn-primary sm" id="mreport-download-btn"><i class="ti ti-download"></i> Download PDF</button>
+    </div>
   </div>
 </div>
 
@@ -3078,6 +3135,7 @@
 
     // Settings sub-sections
     setVis('profile-form-wrap', canEdit('settings'));
+    setVis('mreport-card', currentUser.role === 'admin' || currentUser.role === 'management');
     setVis('backup-section', currentUser.role === 'admin' || currentUser.role === 'management');
     setVis('user-mgmt-section', currentUser.role === 'admin' || currentUser.role === 'management');
     setVis('quick-backup-btn', currentUser.role === 'admin' || currentUser.role === 'management');
@@ -7340,6 +7398,215 @@
     document.addEventListener('visibilitychange', () => { if(!document.hidden) loadApprovals(); });
   }
   initApprovalsUi();
+
+  /* ================= MONTHLY MANAGEMENT REPORT ================= */
+  function mrMonthRange(ym){
+    const [y, m] = ym.split('-').map(Number);
+    const pad = n => String(n).padStart(2, '0');
+    const start = y + '-' + pad(m) + '-01';
+    const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+    const next = ny + '-' + pad(nm) + '-01';
+    const last = new Date(y, m, 0).getDate();
+    const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+    return { y, m, start, next, end: y + '-' + pad(m) + '-' + pad(last), days: last, prev: py + '-' + pad(pm) };
+  }
+  const mrIn = (d, a, b) => (d || '') >= a && (d || '') < b;
+  function mrPct(cur, prev){
+    if(!prev) return { t: prev === 0 && cur ? 'new this month' : '—', c: '' };
+    const p = (cur - prev) / Math.abs(prev) * 100;
+    return { t: (p >= 0 ? '▲ ' : '▼ ') + Math.abs(p).toFixed(0) + '% vs last month', c: p >= 0 ? 'up' : 'down' };
+  }
+  function mrStats(ym){
+    const R = mrMonthRange(ym);
+    const sales = salesCache.filter(s => mrIn(s.date, R.start, R.next));
+    const purch = purchasesCache.filter(p => mrIn(p.date, R.start, R.next));
+    const pays = paymentsCache.filter(p => mrIn(p.date, R.start, R.next));
+    const salesTotal = sales.reduce((a, s) => a + (Number(s.total) || 0), 0);
+    const profit = sales.reduce((a, s) => a + saleProfit(s), 0);
+    const purchTotal = purch.reduce((a, p) => a + (Number(p.total) || 0), 0);
+    const received = pays.filter(p => p.type === 'received').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const paid = pays.filter(p => p.type === 'paid').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    return { R, sales, purch, pays, salesTotal, profit, purchTotal, received, paid };
+  }
+  // Balance per company as of the end of the month (same signs as the Tally Book: + = they owe us)
+  function mrBalanceAsOf(companyId, before){
+    const c = companiesCache.find(x => x.id === companyId); if(!c) return 0;
+    let b = Number(c.opening) || 0;
+    salesCache.forEach(s => { if(s.companyId === companyId && (s.date || '') < before) b += Number(s.total) || 0; });
+    purchasesCache.forEach(p => { if(p.companyId === companyId && (p.date || '') < before) b -= Number(p.total) || 0; });
+    paymentsCache.forEach(p => { if(p.companyId === companyId && (p.date || '') < before) b += (p.type === 'received' ? -1 : 1) * (Number(p.amount) || 0); });
+    return b;
+  }
+  function mrTable(head, rows, foot){
+    return '<table class="mr-tbl"><thead><tr>' + head.map((h, i) => '<th' + (i ? ' class="r"' : '') + '>' + h + '</th>').join('') + '</tr></thead><tbody>' +
+      rows.map(r => '<tr>' + r.map((c, i) => '<td' + (i ? ' class="r"' : '') + '>' + c + '</td>').join('') + '</tr>').join('') + '</tbody>' +
+      (foot ? '<tfoot><tr>' + foot.map((c, i) => '<td' + (i ? ' class="r"' : '') + '>' + c + '</td>').join('') + '</tr></tfoot>' : '') + '</table>';
+  }
+  function mrDailyChart(st){
+    const days = st.R.days, vals = new Array(days).fill(0);
+    st.sales.forEach(s => { const d = parseInt((s.date || '').slice(8, 10), 10); if(d >= 1 && d <= days) vals[d - 1] += Number(s.total) || 0; });
+    const max = Math.max.apply(null, vals.concat([1])), W = 720, H = 110, bw = W / days;
+    let bars = '';
+    vals.forEach((v, i) => {
+      const h = Math.round(v / max * (H - 22));
+      bars += '<rect x="' + (i * bw + 2).toFixed(1) + '" y="' + (H - 16 - h) + '" width="' + (bw - 4).toFixed(1) + '" height="' + Math.max(h, v ? 2 : 0) + '" rx="2" fill="#0F9484"/>';
+      if((i + 1) % 5 === 1 || i === days - 1) bars += '<text x="' + (i * bw + bw / 2).toFixed(1) + '" y="' + (H - 3) + '" font-size="9" text-anchor="middle" fill="#5d6b76">' + (i + 1) + '</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" xmlns="http://www.w3.org/2000/svg">' + bars + '</svg>';
+  }
+
+  async function buildMonthlyReport(ym){
+    const st = mrStats(ym), pv = mrStats(st.R.prev), R = st.R;
+    const monthName = new Date(R.y, R.m - 1, 1).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+    const margin = st.salesTotal ? st.profit / st.salesTotal * 100 : 0;
+
+    // receivable / payable at month end
+    let recv = 0, pay = 0;
+    const balances = companiesCache.map(c => ({ c, b: mrBalanceAsOf(c.id, R.next) }));
+    balances.forEach(x => { if(x.b > 0) recv += x.b; else pay -= x.b; });
+    const balOf = id => (balances.find(x => x.c.id === id) || { b: 0 }).b;
+
+    const kpi = (l, v, d) => '<div class="mr-kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div><div class="d ' + (d && d.c || '') + '">' + (d ? d.t : '&nbsp;') + '</div></div>';
+    const kpis = '<div class="mr-kpis">' +
+      kpi('Sales', fmtMoney(st.salesTotal), mrPct(st.salesTotal, pv.salesTotal)) +
+      kpi('Gross profit', fmtMoney(st.profit), mrPct(st.profit, pv.profit)) +
+      kpi('Profit margin', margin.toFixed(1) + '%', { t: 'on sales', c: '' }) +
+      kpi('Purchases', fmtMoney(st.purchTotal), mrPct(st.purchTotal, pv.purchTotal)) +
+      kpi('Collected', fmtMoney(st.received), { t: 'payments received', c: '' }) +
+      kpi('Paid out', fmtMoney(st.paid), { t: 'payments made', c: '' }) +
+      kpi('Receivable', fmtMoney(recv), { t: 'owed to us, month end', c: '' }) +
+      kpi('Payable', fmtMoney(pay), { t: 'we owe, month end', c: '' }) + '</div>' +
+      '<div class="mr-note" style="margin-top:6px;">' + st.sales.length + ' invoices &middot; average invoice ' + fmtMoney(st.sales.length ? st.salesTotal / st.sales.length : 0) + ' &middot; ' + st.purch.length + ' purchase entries &middot; net cash movement ' + fmtMoney(st.received - st.paid) + '</div>';
+
+    // customers
+    const cust = {};
+    st.sales.forEach(s => { const o = cust[s.companyId] || (cust[s.companyId] = { name: s.companyName, n: 0, sales: 0, profit: 0, id: s.companyId }); o.n++; o.sales += Number(s.total) || 0; o.profit += saleProfit(s); });
+    const custRows = Object.values(cust).sort((a, b) => b.sales - a.sales).slice(0, 10);
+    const collectedBy = id => st.pays.filter(p => p.companyId === id && p.type === 'received').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const custHtml = custRows.length ? mrTable(['Customer', 'Invoices', 'Sales', 'Profit', 'Collected', 'Outstanding'],
+      custRows.map(o => { const b = balOf(o.id); return [escapeHtml(o.name), o.n, fmtMoney(o.sales), fmtMoney(o.profit), fmtMoney(collectedBy(o.id)), '<span class="' + (b > 0 ? 'mr-neg' : '') + '">' + fmtMoney(Math.max(b, 0)) + '</span>']; }))
+      : '<div class="mr-empty">No sales this month.</div>';
+
+    // products
+    const prod = {};
+    st.sales.forEach(s => (s.items || []).forEach(it => {
+      const o = prod[it.productId || it.productName] || (prod[it.productId || it.productName] = { name: it.productName, unit: it.unit, qty: 0, rev: 0, cost: 0 });
+      o.qty += Number(it.qty) || 0; o.rev += Number(it.amount) || 0; o.cost += (Number(it.cost) || 0) * (Number(it.qty) || 0);
+    }));
+    const prodRows = Object.values(prod).sort((a, b) => b.rev - a.rev).slice(0, 10);
+    const prodHtml = prodRows.length ? mrTable(['Product', 'Qty sold', 'Revenue', 'Profit', 'Margin'],
+      prodRows.map(o => [escapeHtml(o.name), o.qty.toLocaleString() + ' ' + escapeHtml(o.unit || ''), fmtMoney(o.rev), fmtMoney(o.rev - o.cost), (o.rev ? ((o.rev - o.cost) / o.rev * 100).toFixed(0) : 0) + '%']))
+      : '<div class="mr-empty">No product sales this month.</div>';
+
+    // suppliers
+    const sup = {};
+    st.purch.forEach(p => { const o = sup[p.companyId] || (sup[p.companyId] = { name: p.companyName, id: p.companyId, n: 0, total: 0 }); o.n++; o.total += Number(p.total) || 0; });
+    const supRows = Object.values(sup).sort((a, b) => b.total - a.total).slice(0, 10);
+    const paidTo = id => st.pays.filter(p => p.companyId === id && p.type === 'paid').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const supHtml = supRows.length ? mrTable(['Supplier', 'Entries', 'Purchased', 'Paid', 'We owe'],
+      supRows.map(o => { const b = balOf(o.id); return [escapeHtml(o.name), o.n, fmtMoney(o.total), fmtMoney(paidTo(o.id)), fmtMoney(Math.max(-b, 0))]; }))
+      : '<div class="mr-empty">No purchases this month.</div>';
+
+    // stock position (today)
+    const inv = computeInventory();
+    const stockValue = inv.reduce((a, i) => a + (Number(i.stockValue) || 0), 0);
+    const outList = inv.filter(i => i.currentStock <= 0).map(i => escapeHtml(i.product.name));
+    const lowList = inv.filter(i => i.currentStock > 0 && Number(i.product.reorderLevel) && i.currentStock <= Number(i.product.reorderLevel)).map(i => escapeHtml(i.product.name) + ' (' + i.currentStock.toLocaleString() + ' ' + escapeHtml(i.product.unit) + ')');
+    const stockHtml = '<div><b>Stock value now:</b> ' + fmtMoney(stockValue) + ' across ' + inv.length + ' products</div>' +
+      '<div style="margin-top:4px;"><b>Out of stock (' + outList.length + '):</b> ' + (outList.length ? outList.slice(0, 15).join(', ') + (outList.length > 15 ? ' +' + (outList.length - 15) + ' more' : '') : 'none') + '</div>' +
+      '<div style="margin-top:4px;"><b>Running low (' + lowList.length + '):</b> ' + (lowList.length ? lowList.slice(0, 15).join(', ') : 'none') + '</div>';
+
+    // controls: price approvals + audit
+    const ap = approvalsCache.filter(a => mrIn((a.requested_at || '').slice(0, 10), R.start, R.next));
+    const apCount = s => ap.filter(a => a.status === s).length;
+    let auditHtml = '<div class="mr-empty">Staff activity is unavailable (audit log could not be loaded).</div>';
+    try{
+      const from = encodeURIComponent(R.start + 'T00:00:00+06:00'), to = encodeURIComponent(R.next + 'T00:00:00+06:00');
+      const rows = (await sbFetch('audit_log?select=*&created_at=gte.' + from + '&created_at=lt.' + to + '&order=created_at.desc&limit=5000', { headers: sbHeaders() })) || [];
+      const byUser = {};
+      rows.forEach(r => { const o = byUser[r.username] || (byUser[r.username] = { insert: 0, update: 0, delete: 0 }); o[r.action] = (o[r.action] || 0) + 1; });
+      const uRows = Object.keys(byUser).sort().map(u => [escapeHtml(u), byUser[u].insert, byUser[u].update, '<span class="' + (byUser[u].delete ? 'mr-neg' : '') + '">' + byUser[u].delete + '</span>']);
+      const dels = rows.filter(r => r.action === 'delete').slice(0, 12);
+      auditHtml = (uRows.length ? mrTable(['User', 'Created', 'Edited', 'Deleted'], uRows) : '<div class="mr-empty">No activity recorded.</div>') +
+        (dels.length ? '<div style="margin-top:8px;"><b>Deleted records</b> (latest ' + dels.length + ')</div>' + mrTable(['When', 'User', 'Record'], dels.map(r => [escapeHtml(new Date(r.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })), escapeHtml(r.username), escapeHtml(auditTableLabel(r.table_name) + (r.record_label ? ' — ' + r.record_label : ''))])) : '');
+    }catch(e){}
+    const apHtml = '<div><b>Price approvals this month:</b> ' + ap.length + ' requested &middot; ' + apCount('approved') + ' approved &middot; ' + apCount('rejected') + ' rejected &middot; <span class="' + (apCount('pending') ? 'mr-neg' : '') + '">' + apCount('pending') + ' still pending</span></div>';
+
+    const who = currentUser ? currentUser.username : '';
+    const logo = getAppLogoSrc();
+    return '<div class="mr-head"><div><h1>Monthly Management Report</h1><div class="mr-sub">' + escapeHtml(monthName) + ' &middot; ' + escapeHtml(profileCache.name || 'Inno Chem Bangladesh') + '</div></div>' + (logo ? '<img src="' + logo + '" alt="">' : '') + '</div>' +
+      '<div class="mr-sec"><h2>Performance at a glance</h2>' + kpis + '</div>' +
+      '<div class="mr-sec"><h2>Daily sales</h2>' + mrDailyChart(st) + '</div>' +
+      '<div class="mr-sec"><h2>Top customers</h2>' + custHtml + '</div>' +
+      '<div class="mr-sec"><h2>Top products</h2>' + prodHtml + '</div>' +
+      '<div class="mr-sec"><h2>Suppliers</h2>' + supHtml + '</div>' +
+      '<div class="mr-sec"><h2>Stock position</h2>' + stockHtml + '</div>' +
+      '<div class="mr-sec"><h2>Controls &amp; staff activity</h2>' + apHtml + '<div style="margin-top:8px;">' + auditHtml + '</div></div>' +
+      '<div class="mr-foot"><span>Generated ' + escapeHtml(new Date().toLocaleString('en-GB')) + ' by ' + escapeHtml(who) + '</span><span>Powered by RAR ERP</span></div>' +
+      '<div class="mr-note" style="margin-top:4px;">Collected / Paid = payments recorded in the Payments module. Receivable / Payable follow the Tally Book (opening balance + sales &minus; purchases &minus; receipts + payments) as of month end. Profit uses the cost recorded on each invoice.</div>';
+  }
+
+  let mrCurrentYm = '';
+  async function openMonthlyReport(){
+    if(!isPriceController()){ showToast('Only management can open this report'); return; }
+    const ym = document.getElementById('mreport-month').value;
+    if(!ym){ showToast('Choose a month'); return; }
+    mrCurrentYm = ym;
+    document.getElementById('mreport-modal').classList.add('open');
+    const body = document.getElementById('mreport-body');
+    body.innerHTML = '<div style="padding:40px;text-align:center;">Preparing report...</div>';
+    try{ body.innerHTML = await buildMonthlyReport(ym); }
+    catch(e){ console.error(e); body.innerHTML = '<div style="padding:40px;text-align:center;">Could not build the report.</div>'; }
+  }
+  async function downloadMonthlyReportPdf(btn){
+    const el = document.getElementById('mreport-body');
+    const orig = btn.innerHTML; btn.innerHTML = '<i class="ti ti-loader-2"></i> Generating...'; btn.disabled = true;
+    try{
+      const W = el.offsetWidth, usableMm = { w: 194, h: 281 }, pageH = W * usableMm.h / usableMm.w;
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+      const k = canvas.width / W, total = el.scrollHeight;
+      const secs = Array.prototype.map.call(el.querySelectorAll('.mr-sec, .mr-head, .mr-foot'), e => ({ top: e.offsetTop, bottom: e.offsetTop + e.offsetHeight }));
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let y = 0, page = 0;
+      while(y < total - 2){
+        let end = Math.min(y + pageH, total);
+        if(end < total){
+          const cross = secs.find(s => s.top < end && s.bottom > end);
+          if(cross && cross.top > y + pageH * 0.3) end = cross.top;
+        }
+        const sliceH = end - y;
+        const c = document.createElement('canvas');
+        c.width = canvas.width; c.height = Math.max(1, Math.round(sliceH * k));
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(canvas, 0, Math.round(y * k), canvas.width, c.height, 0, 0, canvas.width, c.height);
+        if(page > 0) pdf.addPage();
+        pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', 8, 8, usableMm.w, sliceH * usableMm.w / W);
+        y = end; page++;
+      }
+      pdf.save('RAR-ERP-Monthly-Report-' + mrCurrentYm + '.pdf');
+      showToast('Report downloaded');
+    }catch(e){
+      console.error(e);
+      showToast('Could not create PDF — use Print and choose "Save as PDF"');
+    }
+    btn.innerHTML = orig; btn.disabled = false;
+  }
+  (function initMonthlyReport(){
+    const mi = document.getElementById('mreport-month'); if(!mi) return;
+    const d = new Date(); d.setMonth(d.getMonth() - 1);   // default: last full month
+    mi.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    document.getElementById('mreport-view-btn').addEventListener('click', openMonthlyReport);
+    mi.addEventListener('change', () => { if(document.getElementById('mreport-modal').classList.contains('open')) openMonthlyReport(); });
+    document.getElementById('mreport-close').addEventListener('click', () => document.getElementById('mreport-modal').classList.remove('open'));
+    document.getElementById('mreport-modal').addEventListener('click', function(e){ if(e.target === this) this.classList.remove('open'); });
+    document.getElementById('mreport-download-btn').addEventListener('click', function(){ downloadMonthlyReportPdf(this); });
+    document.getElementById('mreport-print-btn').addEventListener('click', () => {
+      const t = document.title; document.title = 'RAR-ERP-Monthly-Report-' + mrCurrentYm;
+      window.print(); setTimeout(() => { document.title = t; }, 500);
+    });
+  })();
 
   /* ---- Installable app icon (PWA): manifest + icons above, real sw.js for install prompt ---- */
   (function registerInstallServiceWorker(){
