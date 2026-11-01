@@ -884,6 +884,14 @@
 .ai-typing{opacity:.7;font-style:italic;}
 @media(max-width:600px){#ai-panel{right:8px;left:8px;width:auto;bottom:70px;} #ai-fab span{display:none;}}
 </style>
+<style id="pc-manual-css">
+.man-card{background:var(--bg-card,#fff);border:1px solid var(--border);border-radius:12px;padding:0;margin-bottom:10px;overflow:hidden;} .man-card summary{padding:14px 18px;font-weight:800;font-size:14.5px;cursor:pointer;} .man-card[open] summary{border-bottom:1px solid var(--border);background:var(--bg-page,#f5f7f8);}
+.man-what{padding:12px 18px 0;font-weight:600;font-size:13.5px;line-height:1.6;} .man-steps{margin:10px 0;padding:0 18px 0 38px;font-size:13px;line-height:1.7;} .man-steps li{margin-bottom:4px;}
+.man-tips{margin:6px 18px 16px;padding:10px 12px;background:#E8F6F3;border-radius:9px;font-size:12.5px;line-height:1.6;color:#0B5F55;} .man-tips b{display:block;margin-bottom:2px;}
+#man-lang{display:flex;gap:6px;} #man-lang button{border:1px solid var(--border);background:var(--bg-card,#fff);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer;color:var(--text-primary);font-family:inherit;} #man-lang button.on{background:#0F9484;color:#fff;border-color:#0F9484;}
+#help-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card,#fff);color:var(--text-primary);font-weight:800;font-size:16px;cursor:pointer;font-family:inherit;}
+#help-modal-body .man-steps{padding-left:36px;}
+</style>
 </head>
 <body>
 <div id="wco-bar"><img data-rar-logo alt="RAR"><span>RAR TECH</span></div>
@@ -973,6 +981,7 @@
       <button class="nav-item" data-page="approvals"><i class="ti ti-clipboard-check"></i> Price Approvals <span class="nav-count" id="nav-appr-count" style="display:none"></span></button>
       <button class="nav-item" data-page="audit"><i class="ti ti-clock"></i> Audit Log</button>
       <button class="nav-item" data-page="settings"><i class="ti ti-settings"></i> Settings</button>
+      <button class="nav-item" data-page="manual"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg> Help &amp; Manual</button>
     </nav>
 
     <div class="sidebar-footer">
@@ -1009,6 +1018,7 @@
           <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         </button>
         <button class="icon-btn" id="quick-backup-btn" title="Download full backup"><i class="ti ti-cloud-download"></i></button>
+        <button id="help-btn" type="button" title="How to use this page" aria-label="How to use this page">?</button>
         <div class="bell-wrap" id="bell-wrap"><button class="icon-btn" id="bell-btn" title="Notifications" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bell-count" id="bell-count" style="display:none">0</span></button><div class="bell-panel" id="bell-panel"><div class="bell-empty">No notifications</div></div></div>
       </div>
     </div>
@@ -1641,6 +1651,15 @@
         </div>
       </div>
 
+      <!-- HELP & MANUAL PAGE -->
+      <div class="page" id="page-manual">
+        <div class="toolbar">
+          <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="man-search" placeholder="Search the manual..."></div>
+          <div class="tb-filters"><div id="man-lang"><button type="button" data-l="en">English</button><button type="button" data-l="bn">বাংলা</button></div></div>
+        </div>
+        <div id="man-list"></div>
+      </div>
+
       <div class="page" id="page-approvals">
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="appr-search" placeholder="Search invoice, company, user..."></div>
@@ -1796,6 +1815,13 @@
 </div>
 
 <!-- COMPANY MODAL -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-head"><h3 id="help-modal-title">Help</h3><button type="button" class="modal-close" id="help-modal-close"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body" id="help-modal-body"></div>
+    <div class="modal-foot"><button type="button" class="btn-secondary" id="help-open-full"><i class="ti ti-book-2"></i> Open full manual</button></div>
+  </div>
+</div>
 <div class="modal-overlay" id="company-modal">
   <div class="modal-box">
     <div class="modal-head">
@@ -3306,7 +3332,7 @@
     // Nav visibility
     document.querySelectorAll('.nav-item').forEach(btn => {
       const page = btn.getAttribute('data-page');
-      const visible = page === 'settings' ? true : canView(page);
+      const visible = (page === 'settings' || page === 'manual') ? true : canView(page);
       btn.style.display = visible ? '' : 'none';
     });
 
@@ -3450,12 +3476,13 @@
       reports: ['Reports & Export', 'Search and export your business data'],
       approvals: ['Price Approvals', 'Confirm prices entered by staff'],
       audit: ['Audit Log', 'Who did what, and when'],
+      manual: ['Help & Manual', 'Step-by-step guide for every menu'],
       settings: ['Settings', 'Manage your ERP login, users and preferences']
     };
     items.forEach(btn=>{
       btn.addEventListener('click', function(){
         const page = btn.getAttribute('data-page');
-        if(page !== 'settings' && !canView(page)){ showToast("You don't have access to this page"); return; }
+        if(page !== 'settings' && page !== 'manual' && !canView(page)){ showToast("You don't have access to this page"); return; }
         items.forEach(i=>i.classList.remove('active'));
         btn.classList.add('active');
         pages.forEach(p=>p.classList.remove('active'));
@@ -3470,6 +3497,7 @@
         if(page === 'deliveries' && typeof renderDeliveries === 'function') renderDeliveries();
         if(page === 'reports' && typeof refreshReports === 'function') refreshReports();
         if(page === 'settings' && typeof renderUsers === 'function') renderUsers();
+        if(page === 'manual') renderManualPage();
         if(page === 'todo'){ renderTodoPage(); loadTodos(); }
         if(page === 'receivables') renderReceivables();
         if(page === 'approvals'){ renderApprovalsPage(); loadApprovals(true); }
@@ -7974,6 +8002,85 @@
       });
     }
     setInterval(aiShowFab, 3000); setTimeout(aiShowFab, 1500);
+  })();
+  /* ================= HELP & MANUAL ================= */
+  const MANUAL = {
+    dashboard: { en: { what: 'Your business at a glance. Nothing to type here, just look.', steps: ['Top cards: total purchases, sales, profit, today\'s sales, this month vs last month.', '"Money to collect" lists the customers who owe you most. Call them first.', '"Low stock alerts" shows products that are running out.', '"Recent activity" and the 6-month chart show what happened lately.'], tips: ['Click the bell at the top for things that need attention today.'] },
+      bn: { what: 'এক নজরে পুরো ব্যবসা। এখানে কিছু লিখতে হয় না, শুধু দেখুন।', steps: ['উপরের কার্ডে মোট কেনা, বিক্রি, লাভ, আজকের বিক্রি এবং এই মাস বনাম গত মাস।', '"Money to collect"-এ যাদের কাছে সবচেয়ে বেশি টাকা পাবেন তাদের নাম। আগে তাদের ফোন করুন।', '"Low stock alerts"-এ যেসব পণ্য শেষ হয়ে আসছে।', '"Recent activity" ও ৬ মাসের চার্টে সাম্প্রতিক অবস্থা।'], tips: ['উপরের ঘণ্টা আইকনে আজকের জরুরি বিষয় দেখা যায়।'] } },
+    companies: { en: { what: 'Your address book of customers (Buyers) and suppliers. Every bill and payment is linked to a company.', steps: ['Press "Add company".', 'Fill the Name and choose Type: Buyer (you sell to them), Supplier (you buy from them) or Both.', 'Add phone and address. The phone is used for WhatsApp messages.', 'Opening balance: money already pending BEFORE you started using this app. Positive = they owe you. Negative = you owe them. Leave 0 if none.', 'Press Save. To fix a mistake, use the pencil icon in the row.'], tips: ['Create the company first, then you can bill or pay it.', 'Do not create the same company twice. Search before adding.'] },
+      bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।'] } },
+    products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: when stock falls to this number you get a low-stock alert.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
+      bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: মজুদ এই সংখ্যায় নামলে low-stock সতর্কতা আসবে।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
+    recipes: { en: { what: 'For products you MIX yourself. A recipe says which raw materials, and how much of each, make one unit of the finished product.', steps: ['Press "Add recipe".', 'Choose the finished product.', 'Add each raw material with the quantity needed.', 'Save. The recipe is then used automatically in Production Log.'], tips: ['Skip this page if you only buy and resell.'] },
+      bn: { what: 'যেসব পণ্য আপনি নিজে মিশিয়ে বানান তার জন্য। রেসিপি বলে এক ইউনিট তৈরি পণ্যে কোন কাঁচামাল কত লাগে।', steps: ['"Add recipe" চাপুন।', 'তৈরি পণ্যটি বাছুন।', 'প্রতিটি কাঁচামাল ও দরকারি পরিমাণ যোগ করুন।', 'Save করুন। পরে Production Log-এ এটি নিজে থেকে কাজে লাগবে।'], tips: ['শুধু কিনে বিক্রি করলে এই পেজ লাগবে না।'] } },
+    production: { en: { what: 'Record each mixing batch. Raw materials go down, finished product goes up, and the unit cost is worked out for you.', steps: ['Press "Add batch".', 'Choose Date and the Finished product, and the Quantity produced.', 'The materials from the recipe fill in. Change the amounts if the real usage was different.', 'Save. Stock is updated automatically.'], tips: ['Make the recipe first (Mix Recipes).'] },
+      bn: { what: 'প্রতিটি মিক্সিং ব্যাচ লিখে রাখুন। কাঁচামাল কমে, তৈরি পণ্য বাড়ে এবং ইউনিট খরচ নিজে হিসাব হয়।', steps: ['"Add batch" চাপুন।', 'তারিখ, তৈরি পণ্য এবং কত উৎপাদন হলো তা দিন।', 'রেসিপি থেকে কাঁচামাল ভরে যাবে। আসল ব্যবহার আলাদা হলে সংখ্যা বদলান।', 'Save করুন। স্টক নিজে হালনাগাদ হবে।'], tips: ['আগে Mix Recipes-এ রেসিপি বানান।'] } },
+    purchases: { en: { what: 'Record every time you BUY goods from a supplier. Stock goes up and the supplier\'s balance is updated.', steps: ['Press "New purchase".', 'Choose Date, Supplier and Product. Enter Invoice/bill no.', 'Enter Quantity and Rate per unit. The Total is calculated.', 'Paid amount: how much you paid right now. The rest becomes "Due" (you owe the supplier).', 'Save. Pay the due later from the Payments menu.'], tips: ['If the price you enter differs from the product\'s purchase rate, management must approve it.'] },
+      bn: { what: 'সরবরাহকারীর কাছ থেকে মাল কিনলে প্রতিবার এখানে লিখুন। স্টক বাড়ে এবং সরবরাহকারীর হিসাব হালনাগাদ হয়।', steps: ['"New purchase" চাপুন।', 'তারিখ, সরবরাহকারী ও পণ্য বাছুন। ইনভয়েস/বিল নম্বর দিন।', 'পরিমাণ ও প্রতি ইউনিট দাম দিন। মোট নিজে হিসাব হবে।', 'Paid amount: এখনই যত টাকা দিলেন। বাকিটা "Due" (সরবরাহকারীকে দিতে হবে)।', 'Save করুন। বাকি টাকা পরে Payments মেনু থেকে দিন।'], tips: ['পণ্যের Purchase rate-এর থেকে আলাদা দাম দিলে ম্যানেজমেন্টকে অনুমোদন দিতে হবে।'] } },
+    salesOrders: { en: { what: 'Order Booking: write down what a customer wants to buy. NO bill yet, stock and money do not change.', steps: ['Press "New order".', 'Choose Date and Customer, then add the products and quantities.', 'Save. The order shows as Open.', 'When you are ready to sell, press "Convert to invoice" on that row. A bill is made with the same items.', 'If the customer cancels, mark it Cancelled.'], tips: ['Skip this page if you always bill straight away.'] },
+      bn: { what: 'অর্ডার বুকিং: ক্রেতা কী কিনতে চায় তা লিখে রাখুন। এখনো বিল হয়নি, স্টক ও টাকার হিসাব বদলায় না।', steps: ['"New order" চাপুন।', 'তারিখ ও ক্রেতা বাছুন, তারপর পণ্য ও পরিমাণ যোগ করুন।', 'Save করুন। অর্ডার "Open" থাকবে।', 'বিক্রির সময় হলে সারির "Convert to invoice" চাপুন। একই আইটেম দিয়ে বিল তৈরি হবে।', 'ক্রেতা বাতিল করলে Cancelled করে দিন।'], tips: ['সবসময় সরাসরি বিল করলে এই পেজ লাগবে না।'] } },
+    sales: { en: { what: 'Sales Invoice: make the bill when goods are sold. Stock goes down and the customer\'s dues go up.', steps: ['Press "New sale".', 'Choose Date and Customer. Invoice no is suggested for you.', 'Add each product with Quantity and Rate (the list price fills in). Use "Add another item" for more products.', 'Received amount: money the customer paid right now. The rest is "Due".', 'Save. Then use the row buttons to print, download the PDF receipt, or send it on WhatsApp.', 'Delivery: set the status here or later in the Deliveries menu.'], tips: ['A price different from the list price is sent to management for approval. You will see "Pending approval" on the bill.', 'To collect the due later, use Payments, not a new bill.'] },
+      bn: { what: 'সেলস ইনভয়েস: মাল বিক্রি হলে বিল বানান। স্টক কমে এবং ক্রেতার বাকি বাড়ে।', steps: ['"New sale" চাপুন।', 'তারিখ ও ক্রেতা বাছুন। ইনভয়েস নম্বর নিজে থেকে আসবে।', 'প্রতিটি পণ্যের পরিমাণ ও দাম দিন (তালিকা দাম ভরা থাকে)। আরও পণ্যের জন্য "Add another item"।', 'Received amount: ক্রেতা এখনই যত টাকা দিল। বাকিটা "Due"।', 'Save করুন। এরপর সারির বাটনে প্রিন্ট, PDF রসিদ ডাউনলোড বা WhatsApp-এ পাঠান।', 'ডেলিভারির অবস্থা এখানে বা পরে Deliveries মেনুতে ঠিক করুন।'], tips: ['তালিকা দামের থেকে আলাদা দাম দিলে অনুমোদনের জন্য ম্যানেজমেন্টের কাছে যায়। বিলে "Pending approval" দেখাবে।', 'বাকি টাকা পরে নিতে নতুন বিল নয়, Payments ব্যবহার করুন।'] } },
+    deliveries: { en: { what: 'Track whether each sold order has gone out and reached the customer.', steps: ['The list shows each invoice with its status: Pending, Dispatched or Delivered.', 'When the goods leave, mark it Dispatched. Add vehicle/transport.', 'When the customer receives, mark it Delivered and write who received it.', 'Use the filter to see only Pending or Dispatched.'], tips: ['Bills pending for 3+ days appear in your alerts.'] },
+      bn: { what: 'বিক্রি করা প্রতিটি মাল পাঠানো হলো কিনা এবং ক্রেতা পেল কিনা তা ট্র্যাক করুন।', steps: ['তালিকায় প্রতিটি ইনভয়েসের অবস্থা: Pending, Dispatched বা Delivered।', 'মাল বের হলে Dispatched করুন। গাড়ি/পরিবহন লিখুন।', 'ক্রেতা বুঝে পেলে Delivered করুন এবং কে গ্রহণ করল লিখুন।', 'ফিল্টার দিয়ে শুধু Pending বা Dispatched দেখুন।'], tips: ['৩ দিনের বেশি Pending থাকলে সতর্কতায় আসে।'] } },
+    payments: { en: { what: 'Record money you RECEIVE from customers or PAY to suppliers (separate from the bill).', steps: ['Press "Add payment".', 'Choose Type: Received (customer paid you) or Paid (you paid a supplier).', 'Choose the Company, Date, Amount and Method (cash, bank, bKash...).', 'Optional but best: "Apply to an outstanding invoice" so that bill\'s due is reduced.', 'Save. A receipt can be printed, downloaded or sent on WhatsApp.'], tips: ['The company balance in Tally Book changes immediately.', 'Money paid at the time of billing is already counted; do not enter it again here.'] },
+      bn: { what: 'ক্রেতার কাছ থেকে টাকা পেলে বা সরবরাহকারীকে দিলে এখানে লিখুন (বিল থেকে আলাদা)।', steps: ['"Add payment" চাপুন।', 'Type বাছুন: Received (ক্রেতা দিল) বা Paid (সরবরাহকারীকে দিলেন)।', 'কোম্পানি, তারিখ, পরিমাণ ও পদ্ধতি (নগদ, ব্যাংক, bKash...) দিন।', 'ভালো হয়: "Apply to an outstanding invoice" বেছে নিলে ওই বিলের বাকি কমে।', 'Save করুন। রসিদ প্রিন্ট, ডাউনলোড বা WhatsApp-এ পাঠানো যায়।'], tips: ['Tally Book-এ কোম্পানির ব্যালেন্স সাথে সাথে বদলায়।', 'বিলের সময় যে টাকা নেওয়া হয়েছে তা আগেই ধরা আছে, এখানে আবার লিখবেন না।'] } },
+    ledger: { en: { what: 'Tally Book: the full account of one company. Every bill and payment in date order with a running balance.', steps: ['Pick a company from the left list (use search).', 'Read the table: Debit = they owe you more, Credit = they paid or you bought from them. Dr = they owe you, Cr = you owe them.', 'Press "Statement" to open a printable statement with the age of dues. Download PDF or Print and send it to the customer.', 'Press "Export" for an Excel/CSV copy.'], tips: ['Red/positive balance = money to collect. Negative = money you must pay.'] },
+      bn: { what: 'ট্যালি বুক: একটি কোম্পানির পূর্ণ হিসাব। তারিখ অনুযায়ী প্রতিটি বিল ও পেমেন্ট, সাথে চলতি ব্যালেন্স।', steps: ['বাঁ দিকের তালিকা থেকে কোম্পানি বাছুন (সার্চ করা যায়)।', 'টেবিল পড়ুন: Debit = তারা আপনাকে আরও বেশি দেবে, Credit = তারা দিয়েছে বা আপনি কিনেছেন। Dr = তারা আপনাকে দেবে, Cr = আপনি তাদের দেবেন।', '"Statement" চাপলে বাকির বয়স-সহ প্রিন্টযোগ্য স্টেটমেন্ট খোলে। PDF ডাউনলোড বা প্রিন্ট করে ক্রেতাকে পাঠান।', '"Export" চাপলে Excel/CSV কপি পাবেন।'], tips: ['ধনাত্মক ব্যালেন্স = টাকা পাবেন। ঋণাত্মক = টাকা দিতে হবে।'] } },
+    receivables: { en: { what: 'Who owes you money and for how long. Use this every morning to decide whom to call.', steps: ['Top cards: total receivable, overdue over 30 days, over 90 days.', 'Each customer row splits the dues into 0-30, 31-60, 61-90 and 90+ days. Older = more risk.', 'Press "WhatsApp" to send a ready reminder message (Bangla + English).', 'Press "Statement" to send the full account.', 'At the bottom, "Accuracy check" warns if any company\'s balance does not match its bills and payments.'], tips: ['Payments clear the OLDEST bills first.'] },
+      bn: { what: 'কে আপনাকে টাকা দেবে এবং কতদিন ধরে বাকি। প্রতিদিন সকালে দেখুন কাকে ফোন করবেন।', steps: ['উপরের কার্ডে মোট বাকি, ৩০ দিনের বেশি এবং ৯০ দিনের বেশি পুরনো বাকি।', 'প্রতিটি ক্রেতার বাকি 0-30, 31-60, 61-90 ও 90+ দিনে ভাগ করা। যত পুরনো, তত ঝুঁকি।', '"WhatsApp" চাপলে তৈরি রিমাইন্ডার মেসেজ যায় (বাংলা + English)।', '"Statement" চাপলে পুরো হিসাব পাঠানো যায়।', 'নিচের "Accuracy check" কোনো কোম্পানির ব্যালেন্স বিল ও পেমেন্টের সাথে না মিললে সতর্ক করে।'], tips: ['পেমেন্ট আগে সবচেয়ে পুরনো বিল মেটায়।'] } },
+    todo: { en: { what: 'Smart alerts and your task list in one place (management only).', steps: ['Left side: alerts the app finds by itself: late payments, low stock, undelivered bills, sales below cost, price approvals waiting.', 'Press "Open" on an alert to go to the right page.', 'Press "+ To-do" to turn an alert into a task.', 'Right side: type a task, pick a due date and priority, press Enter.', 'Tick the box when done. "Show completed" brings finished tasks back.'], tips: ['The red number on this menu and on the bell shows how much needs attention.'] },
+      bn: { what: 'স্মার্ট সতর্কতা ও কাজের তালিকা এক জায়গায় (শুধু ম্যানেজমেন্ট)।', steps: ['বাঁ দিকে অ্যাপ নিজে যা খুঁজে পায়: দেরির বাকি, কম স্টক, অডেলিভার্ড বিল, ক্ষতিতে বিক্রি, অপেক্ষমাণ price approval।', 'সতর্কতার "Open" চাপলে সঠিক পেজে যাবেন।', '"+ To-do" চাপলে সতর্কতা কাজ হয়ে যায়।', 'ডান দিকে কাজ লিখুন, তারিখ ও গুরুত্ব বেছে Enter চাপুন।', 'শেষ হলে টিক দিন। "Show completed" চাপলে শেষ হওয়া কাজ দেখা যায়।'], tips: ['এই মেনু ও ঘণ্টার লাল সংখ্যা বলে কতটা মনোযোগ দরকার।'] } },
+    inventory: { en: { what: 'How much of each product you have in stock and what it is worth.', steps: ['Each row shows opening stock, bought, produced, sold and current stock.', 'Status: In stock, Low stock (at or below reorder level) or Out of stock.', 'Use search and the stock filter to find products.', 'Stock changes automatically when you save purchases, sales and production. You never edit it here.'], tips: ['If the number looks wrong, check the product\'s Opening stock and the latest bills.'] },
+      bn: { what: 'প্রতিটি পণ্যের কতটা মজুদ আছে এবং তার মূল্য কত।', steps: ['প্রতিটি সারিতে opening stock, কেনা, উৎপাদন, বিক্রি এবং বর্তমান স্টক।', 'অবস্থা: In stock, Low stock (reorder level বা তার নিচে) বা Out of stock।', 'সার্চ ও স্টক ফিল্টার দিয়ে পণ্য খুঁজুন।', 'কেনা, বিক্রি ও উৎপাদন Save করলে স্টক নিজে বদলায়। এখানে হাতে বদলাতে হয় না।'], tips: ['সংখ্যা ভুল মনে হলে পণ্যের Opening stock ও সাম্প্রতিক বিল দেখুন।'] } },
+    reports: { en: { what: 'Reports and data export.', steps: ['Monthly management report (management only): choose a Month, press View, then Download PDF.', 'Business summary: choose From and To dates to see sales, purchases and profit for that period.', 'Company-wise and Product-wise tables: press Export for an Excel/CSV copy.', 'Full data backup: "Export" saves everything to a file. Do this regularly and keep the file safe. "Import" restores a backup.'], tips: ['Take a full backup at least once a week.'] },
+      bn: { what: 'রিপোর্ট ও ডেটা এক্সপোর্ট।', steps: ['মাসিক ম্যানেজমেন্ট রিপোর্ট (শুধু ম্যানেজমেন্ট): মাস বাছুন, View চাপুন, তারপর PDF ডাউনলোড।', 'Business summary: From ও To তারিখ দিলে ওই সময়ের বিক্রি, কেনা ও লাভ দেখা যায়।', 'কোম্পানি ও পণ্য অনুযায়ী টেবিল: Export চাপলে Excel/CSV পাবেন।', 'Full data backup: "Export" সব তথ্য একটি ফাইলে রাখে। নিয়মিত করুন এবং ফাইল নিরাপদে রাখুন। "Import" ব্যাকআপ ফেরত আনে।'], tips: ['অন্তত সপ্তাহে একবার ফুল ব্যাকআপ নিন।'] } },
+    approvals: { en: { what: 'Price Approvals (management only). When staff use a price different from the list price, it waits here.', steps: ['Each request shows the product, the price used, and the list price.', 'Press Approve if the price is fine, or Reject (you can write a reason).', 'The staff member sees the decision on their bell.', 'The bell at the top also lets you approve quickly.'], tips: ['Every decision is saved in the Audit Log.'] },
+      bn: { what: 'প্রাইস অ্যাপ্রুভাল (শুধু ম্যানেজমেন্ট)। স্টাফ তালিকা দামের থেকে আলাদা দাম দিলে সেটা এখানে অপেক্ষা করে।', steps: ['প্রতিটি অনুরোধে পণ্য, ব্যবহৃত দাম ও তালিকা দাম দেখা যায়।', 'দাম ঠিক থাকলে Approve, না হলে Reject চাপুন (কারণ লিখতে পারেন)।', 'স্টাফ নিজের ঘণ্টায় সিদ্ধান্ত দেখবে।', 'উপরের ঘণ্টা থেকেও দ্রুত অনুমোদন দেওয়া যায়।'], tips: ['প্রতিটি সিদ্ধান্ত Audit Log-এ জমা থাকে।'] } },
+    audit: { en: { what: 'Audit Log (management only): who added, changed or deleted what, and when.', steps: ['Rows are newest first. Each shows the user, the action (insert / update / delete), the record and the changes.', 'Filter by record type, user or dates, or type in the search box.', 'Press Export for a CSV copy.'], tips: ['Use it when a number looks wrong to find out who changed it.'] },
+      bn: { what: 'অডিট লগ (শুধু ম্যানেজমেন্ট): কে কী যোগ, বদল বা মুছেছে এবং কখন।', steps: ['সর্বশেষটা উপরে। প্রতিটিতে ইউজার, কাজ (insert / update / delete), রেকর্ড ও পরিবর্তন।', 'রেকর্ডের ধরন, ইউজার বা তারিখ দিয়ে ফিল্টার করুন অথবা সার্চ করুন।', 'Export চাপলে CSV কপি।'], tips: ['কোনো সংখ্যা ভুল মনে হলে কে বদলেছে খুঁজতে এটা ব্যবহার করুন।'] } },
+    settings: { en: { what: 'Your business details, your account and (for admin) the users.', steps: ['Business profile: name, address, phone, email. These appear on bills and statements.', 'Logo, photo and login page: upload your logo and change the login picture.', 'My account: change your own password.', 'User management (admin): "Add user", choose a role. Staff get only the pages you tick. Management sees everything including approvals.'], tips: ['Give each person their own login. Never share one password.'] },
+      bn: { what: 'ব্যবসার তথ্য, আপনার একাউন্ট এবং (অ্যাডমিনের জন্য) ইউজার ব্যবস্থাপনা।', steps: ['Business profile: নাম, ঠিকানা, ফোন, ইমেইল। এগুলো বিল ও স্টেটমেন্টে ছাপা হয়।', 'লোগো, ছবি ও লগইন পেজ: লোগো আপলোড ও লগইন ছবি বদলান।', 'My account: নিজের পাসওয়ার্ড বদলান।', 'User management (অ্যাডমিন): "Add user" চাপুন, Role বাছুন। Staff শুধু আপনার টিক দেওয়া পেজ দেখবে। Management সব দেখে, approval সহ।'], tips: ['প্রত্যেককে আলাদা লগইন দিন। একটি পাসওয়ার্ড শেয়ার করবেন না।'] } },
+    manual: { en: { what: 'This manual. Every menu is explained here.', steps: ['Pick English or বাংলা at the top.', 'Search a word to find a topic.', 'On any page, press the "?" button at the top right to see that page\'s guide.'], tips: ['Ask the "Ask RAR" assistant if you are stuck.'] },
+      bn: { what: 'এই ম্যানুয়াল। প্রতিটি মেনু এখানে বোঝানো আছে।', steps: ['উপরে English বা বাংলা বাছুন।', 'শব্দ সার্চ করে বিষয় খুঁজুন।', 'যেকোনো পেজে উপরে ডানের "?" বাটনে ওই পেজের গাইড দেখুন।'], tips: ['আটকে গেলে "Ask RAR" সহকারীকে জিজ্ঞেস করুন।'] } }
+  };
+  let manLang = 'en';
+  try{ manLang = localStorage.getItem('ic_man_lang') || 'en'; }catch(e){}
+  function manItemHtml(key){
+    const m = MANUAL[key], t = m && (m[manLang] || m.en); if(!t) return '';
+    return '<div class="man-what">' + escapeHtml(t.what) + '</div><ol class="man-steps">' + t.steps.map(x => '<li>' + escapeHtml(x) + '</li>').join('') + '</ol>' + (t.tips && t.tips.length ? '<div class="man-tips"><b>' + (manLang === 'bn' ? 'টিপস' : 'Tips') + '</b>' + t.tips.map(x => '<div>' + escapeHtml(x) + '</div>').join('') + '</div>' : '');
+  }
+  function manTitle(key){ const el = document.querySelector('.nav-item[data-page="' + key + '"]'); return el ? el.textContent.replace(/\s+/g, ' ').replace(/\d+$/, '').trim() : key; }
+  function renderManualPage(){
+    const box = document.getElementById('man-list'); if(!box) return;
+    const q = document.getElementById('man-search').value.trim().toLowerCase();
+    document.querySelectorAll('#man-lang button').forEach(b => b.classList.toggle('on', b.getAttribute('data-l') === manLang));
+    const keys = Object.keys(MANUAL).filter(k => k === 'manual' || k === 'dashboard' || canView(k) || ((k === 'approvals' || k === 'audit' || k === 'todo' || k === 'receivables') && isPriceController()));
+    const html = keys.map(k => { const body = manItemHtml(k), title = manTitle(k); if(q && !(title + ' ' + body.replace(/<[^>]+>/g, ' ')).toLowerCase().includes(q)) return '';
+      return '<details class="man-card" id="man-' + k + '"' + (q ? ' open' : '') + '><summary>' + escapeHtml(title) + '</summary>' + body + '</details>'; }).join('');
+    box.innerHTML = html || '<div class="empty-row">Nothing found.</div>';
+  }
+  function openManualFor(key){
+    if(!MANUAL[key]) key = 'manual';
+    const nb = document.querySelector('.nav-item[data-page="manual"]'); if(nb) nb.click();
+    document.getElementById('man-search').value = ''; renderManualPage();
+    const d = document.getElementById('man-' + key); if(d){ d.open = true; setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }
+  }
+  function showHelpModal(){
+    const act = document.querySelector('.nav-item.active'); const key = act ? act.getAttribute('data-page') : 'dashboard';
+    const k = MANUAL[key] ? key : 'manual';
+    document.getElementById('help-modal-title').textContent = manTitle(k);
+    document.getElementById('help-modal-body').innerHTML = manItemHtml(k);
+    document.getElementById('help-modal').classList.add('open');
+  }
+  (function initManual(){
+    const hb = document.getElementById('help-btn'); if(!hb) return;
+    hb.addEventListener('click', showHelpModal);
+    document.getElementById('help-modal-close').addEventListener('click', () => document.getElementById('help-modal').classList.remove('open'));
+    document.getElementById('help-modal').addEventListener('click', e => { if(e.target.id === 'help-modal') e.target.classList.remove('open'); });
+    document.getElementById('help-open-full').addEventListener('click', () => { const act = document.querySelector('.nav-item.active'); document.getElementById('help-modal').classList.remove('open'); openManualFor(act ? act.getAttribute('data-page') : 'manual'); });
+    document.getElementById('man-search').addEventListener('input', renderManualPage);
+    document.querySelectorAll('#man-lang button').forEach(b => b.addEventListener('click', () => { manLang = b.getAttribute('data-l'); try{ localStorage.setItem('ic_man_lang', manLang); }catch(e){} renderManualPage(); }));
   })();
   initApprovalsUi();
 
