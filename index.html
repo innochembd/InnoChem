@@ -957,8 +957,8 @@
 
       <div class="nav-section-label">Transactions</div>
       <button class="nav-item" data-page="purchases"><i class="ti ti-shopping-cart"></i> Purchases</button>
-      <button class="nav-item" data-page="salesOrders"><i class="ti ti-file-invoice"></i> Sales Orders</button>
-      <button class="nav-item" data-page="sales"><i class="ti ti-receipt"></i> Sales &amp; Receipts</button>
+      <button class="nav-item" data-page="salesOrders"><i class="ti ti-file-invoice"></i> Order Booking</button>
+      <button class="nav-item" data-page="sales"><i class="ti ti-receipt"></i> Sales Invoice</button>
       <button class="nav-item" data-page="deliveries"><i class="ti ti-truck-delivery"></i> Deliveries</button>
       <button class="nav-item" data-page="payments"><i class="ti ti-cash"></i> Payments</button>
 
@@ -2630,7 +2630,7 @@
   const MODULES = ['dashboard','companies','products','recipes','production','purchases','salesOrders','sales','deliveries','payments','ledger','inventory','reports','settings'];
   const MODULE_LABELS = {
     dashboard:'Dashboard', companies:'Companies', products:'Products', purchases:'Purchases',
-    salesOrders:'Sales Orders', sales:'Sales & Receipts', deliveries:'Deliveries', payments:'Payments', ledger:'Tally Book', inventory:'Inventory',
+    salesOrders:'Order Booking', sales:'Sales Invoice', deliveries:'Deliveries', payments:'Payments', ledger:'Tally Book', inventory:'Inventory',
     reports:'Reports & Export', settings:'Settings'
   };
   function fullPermissions(){
@@ -3439,8 +3439,8 @@
       recipes: ['Mix Recipes', 'Define the components that make up a finished product'],
       production: ['Production Log', 'Log mixing batches and their material cost'],
       purchases: ['Purchases', 'Record stock coming into your business'],
-      salesOrders: ['Sales Orders', 'Record customer orders before they\'re billed'],
-      sales: ['Sales & Receipts', 'Record sales and generate receipts'],
+      salesOrders: ['Order Booking', 'Write down what a customer wants to buy. No bill yet, no stock change'],
+      sales: ['Sales Invoice', 'Make the bill when goods are sold. Updates stock and customer dues'],
       deliveries: ['Deliveries', 'Track dispatch and delivery status for every sale'],
       payments: ['Payments', 'Track money received and sent'],
       ledger: ['Tally Book', 'Company-wise ledger and statements'],
