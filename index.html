@@ -888,7 +888,7 @@
 .man-card{background:var(--bg-card,#fff);border:1px solid var(--border);border-radius:12px;padding:0;margin-bottom:10px;overflow:hidden;} .man-card summary{padding:14px 18px;font-weight:800;font-size:14.5px;cursor:pointer;} .man-card[open] summary{border-bottom:1px solid var(--border);background:var(--bg-page,#f5f7f8);}
 .man-what{padding:12px 18px 0;font-weight:600;font-size:13.5px;line-height:1.6;} .man-steps{margin:10px 0;padding:0 18px 0 38px;font-size:13px;line-height:1.7;} .man-steps li{margin-bottom:4px;}
 .man-tips{margin:6px 18px 16px;padding:10px 12px;background:#E8F6F3;border-radius:9px;font-size:12.5px;line-height:1.6;color:#0B5F55;} .man-tips b{display:block;margin-bottom:2px;}
-#man-lang{display:flex;gap:6px;} #man-lang button{border:1px solid var(--border);background:var(--bg-card,#fff);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer;color:var(--text-primary);font-family:inherit;} #man-lang button.on{background:#0F9484;color:#fff;border-color:#0F9484;}
+#man-lang,.man-langbar{display:flex;gap:6px;} .man-langbar{margin-bottom:10px;} .man-langbar button,#man-lang button{border:1px solid var(--border);background:var(--bg-card,#fff);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer;color:var(--text-primary);font-family:inherit;} #man-lang button.on,.man-langbar button.on{background:#0F9484;color:#fff;border-color:#0F9484;}
 #help-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card,#fff);color:var(--text-primary);font-weight:800;font-size:16px;cursor:pointer;font-family:inherit;}
 #help-modal-body .man-steps{padding-left:36px;}
 </style>
@@ -1818,7 +1818,7 @@
 <div class="modal-overlay" id="help-modal">
   <div class="modal-box" style="max-width:560px;">
     <div class="modal-head"><h3 id="help-modal-title">Help</h3><button type="button" class="modal-close" id="help-modal-close"><i class="ti ti-x"></i></button></div>
-    <div class="modal-body" id="help-modal-body"></div>
+    <div class="modal-body"><div id="help-lang" class="man-langbar"><button type="button" data-l="en">English</button><button type="button" data-l="bn">বাংলা</button></div><div id="help-modal-body"></div></div>
     <div class="modal-foot"><button type="button" class="btn-secondary" id="help-open-full"><i class="ti ti-book-2"></i> Open full manual</button></div>
   </div>
 </div>
@@ -8066,9 +8066,12 @@
     document.getElementById('man-search').value = ''; renderManualPage();
     const d = document.getElementById('man-' + key); if(d){ d.open = true; setTimeout(() => d.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }
   }
+  let helpKey = 'manual';
   function showHelpModal(){
     const act = document.querySelector('.nav-item.active'); const key = act ? act.getAttribute('data-page') : 'dashboard';
-    const k = MANUAL[key] ? key : 'manual';
+    const k = MANUAL[key] ? key : 'manual'; helpKey = k;
+    document.querySelectorAll('#help-lang button').forEach(b => b.classList.toggle('on', b.getAttribute('data-l') === manLang));
+    document.getElementById('help-open-full').lastChild.textContent = manLang === 'bn' ? ' পূর্ণ ম্যানুয়াল খুলুন' : ' Open full manual';
     document.getElementById('help-modal-title').textContent = manTitle(k);
     document.getElementById('help-modal-body').innerHTML = manItemHtml(k);
     document.getElementById('help-modal').classList.add('open');
@@ -8079,6 +8082,7 @@
     document.getElementById('help-modal-close').addEventListener('click', () => document.getElementById('help-modal').classList.remove('open'));
     document.getElementById('help-modal').addEventListener('click', e => { if(e.target.id === 'help-modal') e.target.classList.remove('open'); });
     document.getElementById('help-open-full').addEventListener('click', () => { const act = document.querySelector('.nav-item.active'); document.getElementById('help-modal').classList.remove('open'); openManualFor(act ? act.getAttribute('data-page') : 'manual'); });
+    document.querySelectorAll('#help-lang button').forEach(b => b.addEventListener('click', () => { manLang = b.getAttribute('data-l'); try{ localStorage.setItem('ic_man_lang', manLang); }catch(e){} showHelpModal(); renderManualPage(); }));
     document.getElementById('man-search').addEventListener('input', renderManualPage);
     document.querySelectorAll('#man-lang button').forEach(b => b.addEventListener('click', () => { manLang = b.getAttribute('data-l'); try{ localStorage.setItem('ic_man_lang', manLang); }catch(e){} renderManualPage(); }));
   })();
