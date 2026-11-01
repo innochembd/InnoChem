@@ -845,6 +845,42 @@
 .poster-modal-overlay-mode .poster-full-only{display:none;}
 .poster-modal-full-mode .poster-overlay-only{display:none;}
 </style>
+<style id="pa-receivables-css">
+#page-receivables .data-table th.r,#page-receivables .data-table td.r{text-align:right;white-space:nowrap;}
+.rcv-b90{color:var(--danger);font-weight:800;} .rcv-b60{color:#C0661F;font-weight:700;} .rcv-b30{font-weight:600;}
+.rcv-act{display:flex;gap:6px;}
+.rcv-act button{border:1px solid var(--border);background:var(--bg-card,#fff);border-radius:8px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--text-primary);font-family:inherit;}
+.rcv-act button:hover{background:var(--bg-page);}
+.rcv-ok{color:var(--success);font-weight:700;}
+.rcv-check-row{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+</style>
+<style id="pb-todo-css">
+.todo-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start;} @media(max-width:900px){.todo-grid{grid-template-columns:1fr;}}
+.al-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);}
+.al-dot{width:9px;height:9px;border-radius:50%;margin-top:6px;flex:none;background:var(--ic-green);} .al-dot.high{background:var(--danger);} .al-dot.med{background:#E39A1B;}
+.al-main{flex:1;min-width:0;} .al-title{font-weight:700;font-size:13px;} .al-sub{font-size:12px;color:var(--text-secondary);margin-top:2px;line-height:1.5;}
+.al-btns{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end;}
+.al-btns button,.td-del{border:1px solid var(--border);background:var(--bg-card,#fff);border-radius:8px;padding:4px 9px;font-size:11.5px;font-weight:700;cursor:pointer;color:var(--text-primary);font-family:inherit;}
+.todo-add{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;} .todo-add input[type=text]{flex:1;min-width:160px;} .todo-add input,.todo-add select{padding:8px 10px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:var(--bg-card,#fff);color:var(--text-primary);font-family:inherit;}
+.td-item{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);} .td-item.done .td-t{text-decoration:line-through;color:var(--text-muted);}
+.td-t{flex:1;font-size:13px;font-weight:600;} .td-d{font-size:11.5px;color:var(--text-muted);} .td-d.late{color:var(--danger);font-weight:700;} .td-p-high{color:var(--danger);font-weight:800;font-size:11px;}
+.bell-sec{font-size:11px;font-weight:800;text-transform:uppercase;color:var(--text-muted);padding:10px 14px 4px;}
+</style>
+<style id="pb-ai-css">
+#ai-fab{position:fixed;right:18px;bottom:18px;z-index:900;border:none;border-radius:999px;background:linear-gradient(135deg,#0F9484,#1F5FA8);color:#fff;padding:12px 18px;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:7px;cursor:pointer;box-shadow:0 8px 24px rgba(15,148,132,.4);font-family:inherit;}
+#ai-panel{position:fixed;right:18px;bottom:76px;width:400px;max-width:calc(100vw - 24px);height:min(620px,calc(100vh - 100px));z-index:901;background:var(--bg-card,#fff);border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden;}
+#ai-panel.open{display:flex;}
+.ai-head{display:flex;align-items:center;gap:6px;padding:12px 14px;background:linear-gradient(135deg,#0F9484,#1F5FA8);color:#fff;} .ai-head>div{flex:1;} .ai-sub{font-size:11px;opacity:.85;}
+.ai-head button{background:rgba(255,255,255,.18);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;}
+#ai-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+.ai-m{max-width:88%;padding:9px 12px;border-radius:13px;font-size:13px;line-height:1.55;word-wrap:break-word;} .ai-m.u{align-self:flex-end;background:#0F9484;color:#fff;border-bottom-right-radius:4px;} .ai-m.a{align-self:flex-start;background:var(--bg-page,#f2f5f7);color:var(--text-primary);border-bottom-left-radius:4px;} .ai-m.err{background:#fde8e8;color:#9b1c1c;}
+.ai-m .ai-todo{display:block;margin-top:8px;border:1px solid #0F9484;color:#0F7A6D;background:#fff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;}
+#ai-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 8px;} #ai-chips button{border:1px solid var(--border);background:var(--bg-card,#fff);border-radius:999px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--text-primary);font-family:inherit;}
+#ai-form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--border);align-items:flex-end;} #ai-input{flex:1;resize:none;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit;background:var(--bg-card,#fff);color:var(--text-primary);max-height:90px;}
+#ai-form button{border:none;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:16px;} #ai-send{background:#0F9484;color:#fff;} #ai-mic{background:var(--bg-page,#eef2f5);color:var(--text-primary);} #ai-mic.on{background:#d92d20;color:#fff;}
+.ai-typing{opacity:.7;font-style:italic;}
+@media(max-width:600px){#ai-panel{right:8px;left:8px;width:auto;bottom:70px;} #ai-fab span{display:none;}}
+</style>
 </head>
 <body>
 <div id="wco-bar"><img data-rar-logo alt="RAR"><span>RAR ERP</span></div>
@@ -925,6 +961,8 @@
 
       <div class="nav-section-label">Reports</div>
       <button class="nav-item" data-page="ledger"><i class="ti ti-book-2"></i> Tally Book</button>
+      <button class="nav-item" data-page="todo"><i class="ti ti-checklist"></i> To-do &amp; Alerts <span class="nav-count" id="nav-todo-count" style="display:none"></span></button>
+      <button class="nav-item" data-page="receivables"><i class="ti ti-hourglass-high"></i> Receivables</button>
       <button class="nav-item" data-page="inventory"><i class="ti ti-packages"></i> Inventory</button>
       <button class="nav-item" data-page="reports"><i class="ti ti-file-analytics"></i> Reports &amp; Export</button>
 
@@ -1549,6 +1587,57 @@
       </div>
 
       <!-- PRICE APPROVALS PAGE -->
+      <!-- RECEIVABLES (AGEING) PAGE -->
+      <div class="page" id="page-receivables">
+        <div class="metric-grid" style="margin-bottom:16px;">
+          <div class="metric-card"><div class="m-icon blue"><i class="ti ti-cash-banknote"></i></div><div class="m-label">Total receivable</div><div class="m-value" id="rcv-total">৳0</div></div>
+          <div class="metric-card"><div class="m-icon red"><i class="ti ti-clock"></i></div><div class="m-label">Overdue &gt; 30 days</div><div class="m-value" id="rcv-over30">৳0</div></div>
+          <div class="metric-card"><div class="m-icon red"><i class="ti ti-alert-triangle"></i></div><div class="m-label">Overdue &gt; 90 days</div><div class="m-value" id="rcv-over90">৳0</div></div>
+          <div class="metric-card"><div class="m-icon green"><i class="ti ti-users"></i></div><div class="m-label">Customers with dues</div><div class="m-value" id="rcv-count">0</div></div>
+        </div>
+        <div class="toolbar">
+          <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="rcv-search" placeholder="Search customer..."></div>
+          <div class="tb-filters">
+            <select id="rcv-filter"><option value="">All with dues</option><option value="30">Older than 30 days</option><option value="60">Older than 60 days</option><option value="90">Older than 90 days</option></select>
+            <button class="btn-secondary" id="rcv-export"><i class="ti ti-download"></i> Export CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table" id="rcv-table">
+              <thead><tr><th>Customer</th><th class="r">Balance due</th><th class="r">0-30 d</th><th class="r">31-60 d</th><th class="r">61-90 d</th><th class="r">90+ d</th><th>Last received</th><th style="width:130px;">Actions</th></tr></thead>
+              <tbody id="rcv-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-empty" id="rcv-empty" style="display:none;">
+            <div class="p-icon"><i class="ti ti-circle-check"></i></div><h3>No customer dues</h3><p>Nobody owes you money right now.</p>
+          </div>
+        </div>
+        <div class="card card-pad" id="rcv-check" style="margin-top:16px;"></div>
+        <p class="cell-sub" style="margin-top:10px;line-height:1.6;">Ageing counts the oldest invoices as paid first (FIFO): any payment clears the oldest bill before newer ones. Balance = Tally Book balance, so both always agree.</p>
+      </div>
+
+      <!-- TO-DO & ALERTS PAGE -->
+      <div class="page" id="page-todo">
+        <div class="todo-grid">
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-bell-ringing"></i> Smart alerts <span class="cell-sub" id="alerts-count" style="margin-left:auto"></span></div>
+            <div id="alerts-list"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-checklist"></i> To-do list</div>
+            <form id="todo-form" class="todo-add">
+              <input type="text" id="todo-title" placeholder="Type a task and press Enter..." autocomplete="off">
+              <input type="date" id="todo-due" title="Due date">
+              <select id="todo-prio"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select>
+              <button class="btn-primary" type="submit"><i class="ti ti-plus"></i></button>
+            </form>
+            <div id="todo-list"></div>
+            <label class="cell-sub" style="display:block;margin-top:10px;cursor:pointer;"><input type="checkbox" id="todo-showdone"> Show completed</label>
+          </div>
+        </div>
+      </div>
+
       <div class="page" id="page-approvals">
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="appr-search" placeholder="Search invoice, company, user..."></div>
@@ -2518,6 +2607,15 @@
   </div>
 </div>
 
+
+<!-- RAR ASSISTANT (chatbot) -->
+<button id="ai-fab" type="button" title="RAR Assistant" style="display:none"><i class="ti ti-sparkles"></i><span>Ask RAR</span></button>
+<div id="ai-panel" role="dialog" aria-label="RAR Assistant">
+  <div class="ai-head"><div><b>RAR Assistant</b><div class="ai-sub">Your business analyst. Reads your live numbers.</div></div><button type="button" id="ai-clear" title="New chat"><i class="ti ti-refresh"></i></button><button type="button" id="ai-close" title="Close"><i class="ti ti-x"></i></button></div>
+  <div id="ai-msgs"></div>
+  <div id="ai-chips"></div>
+  <form id="ai-form"><textarea id="ai-input" rows="1" placeholder="Ask anything... বাংলায়ও লিখুন"></textarea><button type="button" id="ai-mic" title="Speak" style="display:none"><i class="ti ti-microphone"></i></button><button type="submit" id="ai-send"><i class="ti ti-send"></i></button></form>
+</div>
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-text"></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -3342,6 +3440,8 @@
       deliveries: ['Deliveries', 'Track dispatch and delivery status for every sale'],
       payments: ['Payments', 'Track money received and sent'],
       ledger: ['Tally Book', 'Company-wise ledger and statements'],
+      todo: ['To-do & Alerts', 'What needs your attention today'],
+      receivables: ['Receivables', 'Who owes you, how long, and what to chase first'],
       inventory: ['Inventory', 'Stock levels and valuation'],
       reports: ['Reports & Export', 'Search and export your business data'],
       approvals: ['Price Approvals', 'Confirm prices entered by staff'],
@@ -3366,6 +3466,8 @@
         if(page === 'deliveries' && typeof renderDeliveries === 'function') renderDeliveries();
         if(page === 'reports' && typeof refreshReports === 'function') refreshReports();
         if(page === 'settings' && typeof renderUsers === 'function') renderUsers();
+        if(page === 'todo'){ renderTodoPage(); loadTodos(); }
+        if(page === 'receivables') renderReceivables();
         if(page === 'approvals'){ renderApprovalsPage(); loadApprovals(true); }
         if(page === 'audit') loadAuditLog();
       });
@@ -6213,6 +6315,16 @@
   /* ================= TALLY BOOK / LEDGER ================= */
   let ledgerSelectedCompanyId = null;
 
+  // Amount entered in the bill form's "Received"/"Paid" box (not a separate payment entry)
+  function saleAtBilling(s){
+    const ap = paymentsCache.filter(p => p.appliedId === s.id && p.type === 'received').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    return Math.max((Number(s.received) || 0) - ap, 0);
+  }
+  function purchAtBilling(x){
+    const ap = paymentsCache.filter(p => p.appliedId === x.id && p.type === 'paid').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    return Math.max((Number(x.paid) || 0) - ap, 0);
+  }
+
   function computeCompanyLedger(companyId){
     const company = companiesCache.find(c => c.id === companyId);
     if(!company) return null;
@@ -6223,6 +6335,9 @@
       entries.push({ date: p.date, created_at: p.created_at, type:'purchase',
         particulars: `Purchase — ${p.invoiceNo ? p.invoiceNo + ' — ' : ''}${p.productName}`,
         debit: 0, credit: Number(p.total)||0 });
+      const pb = purchAtBilling(p);
+      if(pb > 0) entries.push({ date: p.date, created_at: (p.created_at||0) + 1, type:'payment',
+        particulars: `Paid at purchase${p.invoiceNo ? ' — ' + p.invoiceNo : ''}`, debit: pb, credit: 0 });
     });
     salesCache.filter(s => s.companyId === companyId).forEach(s => {
       const itemDesc = (s.items && s.items.length)
@@ -6231,6 +6346,9 @@
       entries.push({ date: s.date, created_at: s.created_at, type:'sale',
         particulars: `Sale — ${s.invoiceNo} — ${itemDesc}`,
         debit: Number(s.total)||0, credit: 0 });
+      const sb = saleAtBilling(s);
+      if(sb > 0) entries.push({ date: s.date, created_at: (s.created_at||0) + 1, type:'payment',
+        particulars: `Received at billing — ${s.invoiceNo}`, debit: 0, credit: sb });
     });
     paymentsCache.filter(p => p.companyId === companyId).forEach(p => {
       if(p.type === 'received'){
@@ -6255,8 +6373,10 @@
     const totals = {
       sales: salesCache.filter(s=>s.companyId===companyId).reduce((s,x)=>s+(Number(x.total)||0),0),
       purchases: purchasesCache.filter(p=>p.companyId===companyId).reduce((s,x)=>s+(Number(x.total)||0),0),
-      received: paymentsCache.filter(p=>p.companyId===companyId && p.type==='received').reduce((s,x)=>s+(Number(x.amount)||0),0),
+      received: paymentsCache.filter(p=>p.companyId===companyId && p.type==='received').reduce((s,x)=>s+(Number(x.amount)||0),0)
+        + salesCache.filter(s=>s.companyId===companyId).reduce((a,s)=>a+saleAtBilling(s),0),
       paid: paymentsCache.filter(p=>p.companyId===companyId && p.type==='paid').reduce((s,x)=>s+(Number(x.amount)||0),0)
+        + purchasesCache.filter(p=>p.companyId===companyId).reduce((a,p)=>a+purchAtBilling(p),0)
     };
 
     return { company, opening, rows, totals, closingBalance: running };
@@ -6459,6 +6579,10 @@
         <thead><tr><th>Date</th><th>Particulars</th><th class="rc-num">Debit</th><th class="rc-num">Credit</th><th class="rc-num">Balance</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
+      ${(function(){ const ag = ledger.closingBalance > 0.5 ? computeAgeing(c.id) : null; if(!ag) return '';
+        const cell = (t, v) => '<td style="padding:6px 10px;text-align:right;border:1px solid #dde3e8;"><div style="font-size:10px;color:#5d6b76;">' + t + '</div><b>' + (v > 0 ? fmtMoney(v) : '—') + '</b></td>';
+        return '<div style="margin:16px 0 0;"><div style="font-size:11px;font-weight:800;text-transform:uppercase;color:#5d6b76;margin-bottom:4px;">Outstanding by age</div><table style="border-collapse:collapse;font-size:12px;"><tr>' +
+          cell('0-30 days', ag.b0) + cell('31-60 days', ag.b31) + cell('61-90 days', ag.b61) + cell('Over 90 days', ag.b90) + '</tr></table></div>'; })()}
       <div class="rc-totals" style="width:280px;">
         <div class="rc-trow"><span>Total sales</span><span>${fmtMoney(ledger.totals.sales)}</span></div>
         <div class="rc-trow"><span>Total purchases</span><span>${fmtMoney(ledger.totals.purchases)}</span></div>
@@ -7350,6 +7474,7 @@
     if(!countEl || !panel || !currentUser) return;
     const ctrl = isPriceController();
     let badge = 0, html = '';
+    refreshAlerts();
     if(ctrl){
       const pending = approvalsCache.filter(a => a.status === 'pending');
       badge = pending.length;
@@ -7360,7 +7485,8 @@
           apprLinesHtml(a.lines) +
           '<div class="bi-act"><button class="appr-btn ok" data-appr="' + a.id + '" data-act="ok">Approve</button><button class="appr-btn no" data-appr="' + a.id + '" data-act="no">Reject</button></div></div>'
         ).join('') : '<div class="bell-empty">No prices waiting for approval.</div>') +
-        '<div class="bell-foot"><a id="bell-open-appr">Open Price Approvals page</a></div>';
+        '<div class="bell-foot"><a id="bell-open-appr">Open Price Approvals page</a></div>' + alertsBellHtml();
+      badge += alertsCache.length;
       if(navCount){ navCount.textContent = pending.length; navCount.style.display = pending.length ? '' : 'none'; }
     } else {
       const mine = approvalsCache.filter(a => a.requested_by_id === currentUser.id).slice(0, 10);
@@ -7491,6 +7617,300 @@
     setInterval(() => { if(currentUser && !document.hidden){ loadApprovals(); flushApprovalOutbox(); } }, 20000);
     document.addEventListener('visibilitychange', () => { if(!document.hidden) loadApprovals(); });
   }
+  /* ================= RECEIVABLES: ageing, accuracy check, reminders ================= */
+  function daysBetweenStr(a, b){ return Math.floor((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 86400000); }
+  function computeAgeing(companyId){
+    const L = computeCompanyLedger(companyId); if(!L) return null;
+    const bal = L.closingBalance, today = todayStr();
+    const out = { company: L.company, balance: bal, b0: 0, b31: 0, b61: 0, b90: 0, opening: 0, oldestDays: 0, lastReceived: '', invoices: [] };
+    const recvDates = paymentsCache.filter(p => p.companyId === companyId && p.type === 'received').map(p => p.date)
+      .concat(salesCache.filter(s => s.companyId === companyId && saleAtBilling(s) > 0).map(s => s.date)).filter(Boolean).sort();
+    out.lastReceived = recvDates.length ? recvDates[recvDates.length - 1] : '';
+    if(bal > 0.5){
+      let rem = bal;
+      const inv = salesCache.filter(s => s.companyId === companyId).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.created_at || 0) - (a.created_at || 0));
+      for(const s of inv){
+        if(rem <= 0.005) break;
+        const take = Math.min(Number(s.total) || 0, rem); if(take <= 0) continue;
+        rem -= take;
+        const age = daysBetweenStr(s.date, today);
+        out.invoices.push({ no: s.invoiceNo, date: s.date, age: age, amount: take });
+        if(age <= 30) out.b0 += take; else if(age <= 60) out.b31 += take; else if(age <= 90) out.b61 += take; else out.b90 += take;
+        out.oldestDays = Math.max(out.oldestDays, age);
+      }
+      if(rem > 0.5){ out.opening = rem; out.b90 += rem; out.oldestDays = Math.max(out.oldestDays, 91); }
+    }
+    return out;
+  }
+  function rcvWaNumber(phone){
+    let d = String(phone || '').replace(/\D/g, ''); if(!d) return '';
+    if(d.indexOf('880') === 0) return d; if(d.charAt(0) === '0') return '88' + d; if(d.length === 10) return '880' + d; return d;
+  }
+  function rcvReminderText(a){
+    const biz = (profileCache && profileCache.name) || 'Inno Chem Bangladesh', amt = fmtMoney(a.balance);
+    return 'আসসালামু আলাইকুম, ' + a.company.name + '।\n' + biz + '-এর হিসাব অনুযায়ী আপনার কাছে মোট বকেয়া ' + amt +
+      (a.oldestDays ? ' (সবচেয়ে পুরনো বকেয়া ' + a.oldestDays + ' দিনের)' : '') + '। অনুগ্রহ করে পরিশোধের ব্যবস্থা নিন। ধন্যবাদ।\n\n' +
+      'Dear ' + a.company.name + ', our records show an outstanding balance of ' + amt + ' with ' + biz + '. Kindly arrange payment. Thank you.';
+  }
+  let rcvRows = [];
+  function renderReceivables(){
+    const tbody = document.getElementById('rcv-tbody'); if(!tbody) return;
+    const q = document.getElementById('rcv-search').value.trim().toLowerCase(), f = Number(document.getElementById('rcv-filter').value) || 0;
+    const all = companiesCache.map(c => computeAgeing(c.id)).filter(a => a && a.balance > 0.5);
+    rcvRows = all.filter(a => (!q || a.company.name.toLowerCase().includes(q)) && (!f || a.oldestDays > f))
+      .sort((a, b) => (b.b90 - a.b90) || (b.balance - a.balance));
+    const sum = k => all.reduce((s, a) => s + a[k], 0);
+    document.getElementById('rcv-total').textContent = fmtMoney(all.reduce((s, a) => s + a.balance, 0));
+    document.getElementById('rcv-over30').textContent = fmtMoney(sum('b31') + sum('b61') + sum('b90'));
+    document.getElementById('rcv-over90').textContent = fmtMoney(sum('b90'));
+    document.getElementById('rcv-count').textContent = all.length;
+    const table = document.getElementById('rcv-table'), empty = document.getElementById('rcv-empty');
+    if(!rcvRows.length){ table.style.display = 'none'; empty.style.display = 'flex'; tbody.innerHTML = ''; }
+    else {
+      table.style.display = ''; empty.style.display = 'none';
+      const cell = (v, cls) => '<td class="r ' + (v > 0 ? cls : '') + '">' + (v > 0 ? fmtMoney(v) : '—') + '</td>';
+      tbody.innerHTML = rcvRows.map(a => '<tr><td><div class="cell-name">' + escapeHtml(a.company.name) + '</div><div class="cell-sub">' + (a.oldestDays ? 'oldest ' + a.oldestDays + ' days' : '') + (a.company.phone ? ' · ' + escapeHtml(a.company.phone) : '') + '</div></td>' +
+        '<td class="r"><b>' + fmtMoney(a.balance) + '</b></td>' + cell(a.b0, '') + cell(a.b31, 'rcv-b30') + cell(a.b61, 'rcv-b60') + cell(a.b90, 'rcv-b90') +
+        '<td>' + (a.lastReceived ? escapeHtml(a.lastReceived) + '<div class="cell-sub">' + daysBetweenStr(a.lastReceived, todayStr()) + ' days ago</div>' : '<span class="cell-sub">never</span>') + '</td>' +
+        '<td><div class="rcv-act"><button data-stmt="' + a.company.id + '">Statement</button><button data-wa="' + a.company.id + '" title="Send WhatsApp reminder">WhatsApp</button></div></td></tr>').join('');
+      tbody.querySelectorAll('[data-stmt]').forEach(b => b.addEventListener('click', () => { const L = computeCompanyLedger(b.getAttribute('data-stmt')); if(L) openStatementModal(L); }));
+      tbody.querySelectorAll('[data-wa]').forEach(b => b.addEventListener('click', () => {
+        const a = rcvRows.find(x => x.company.id === b.getAttribute('data-wa')); if(!a) return;
+        const num = rcvWaNumber(a.company.phone);
+        if(!num){ showToast('This company has no phone number'); return; }
+        window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(rcvReminderText(a)), '_blank');
+      }));
+    }
+    renderReceivablesCheck();
+  }
+  // Accuracy check: the Tally Book balance must equal what the invoices themselves say
+  function ledgerVsInvoices(c){
+    const L = computeCompanyLedger(c.id); if(!L) return null;
+    const mySales = salesCache.filter(s => s.companyId === c.id), myPurch = purchasesCache.filter(p => p.companyId === c.id);
+    const saleIds = new Set(mySales.map(s => s.id)), purchIds = new Set(myPurch.map(p => p.id));
+    const unRecv = paymentsCache.filter(p => p.companyId === c.id && p.type === 'received' && !(p.appliedId && saleIds.has(p.appliedId))).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const unPaid = paymentsCache.filter(p => p.companyId === c.id && p.type === 'paid' && !(p.appliedId && purchIds.has(p.appliedId))).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const expected = (Number(c.opening) || 0) + mySales.reduce((a, s) => a + (Number(s.due) || 0), 0) - unRecv - myPurch.reduce((a, p) => a + (Number(p.due) || 0), 0) + unPaid;
+    return { company: c, ledger: L.closingBalance, expected: expected, diff: L.closingBalance - expected };
+  }
+  function renderReceivablesCheck(){
+    const box = document.getElementById('rcv-check'); if(!box) return;
+    const bad = companiesCache.map(ledgerVsInvoices).filter(r => r && Math.abs(r.diff) > 1).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+    if(!bad.length){ box.innerHTML = '<div class="section-title"><i class="ti ti-circle-check"></i> Accuracy check</div><div class="rcv-ok">All ' + companiesCache.length + ' company balances agree with their invoices and payments.</div>'; return; }
+    box.innerHTML = '<div class="section-title"><i class="ti ti-alert-triangle"></i> Accuracy check &mdash; ' + bad.length + ' balance' + (bad.length > 1 ? 's do' : ' does') + ' not agree</div>' +
+      '<p class="cell-sub" style="margin:0 0 8px;line-height:1.6;">The Tally Book balance differs from what the invoices and payments add up to. Usually a payment was linked to a deleted bill, or an invoice amount was edited after payment. Open the company\'s Tally Book and check the entries.</p>' +
+      '<div class="rcv-check-row" style="font-weight:800;font-size:11px;text-transform:uppercase;color:var(--text-muted);"><span>Company</span><span>Tally Book</span><span>From invoices</span><span>Difference</span></div>' +
+      bad.slice(0, 15).map(r => '<div class="rcv-check-row"><span><b>' + escapeHtml(r.company.name) + '</b></span><span>' + fmtMoney(r.ledger) + '</span><span>' + fmtMoney(r.expected) + '</span><span class="rcv-b90">' + fmtMoney(r.diff) + '</span></div>').join('');
+  }
+  (function initReceivables(){
+    const s = document.getElementById('rcv-search'); if(!s) return;
+    s.addEventListener('input', renderReceivables); document.getElementById('rcv-filter').addEventListener('change', renderReceivables);
+    document.getElementById('rcv-export').addEventListener('click', () => {
+      if(!rcvRows.length){ showToast('Nothing to export'); return; }
+      downloadCsv('receivables-ageing.csv', [['Customer','Phone','Balance due','0-30 days','31-60 days','61-90 days','90+ days','Oldest (days)','Last received']].concat(
+        rcvRows.map(a => [a.company.name, a.company.phone || '', a.balance, a.b0, a.b31, a.b61, a.b90, a.oldestDays, a.lastReceived])));
+    });
+  })();
+
+
+  /* ================= SMART ALERTS + TO-DO (RAR Assistant) ================= */
+  let todosCache = [], todosLoaded = false, alertsCache = [];
+  function computeAlerts(){
+    const out = [], today = todayStr();
+    // 1) overdue receivables
+    const ag = companiesCache.map(c => computeAgeing(c.id)).filter(a => a && a.balance > 0.5);
+    ag.map(a => ({ a: a, over: a.b31 + a.b61 + a.b90 })).filter(x => x.over > 0).sort((x, y) => (y.a.b90 - x.a.b90) || (y.over - x.over)).slice(0, 6).forEach(x => {
+      out.push({ key: 'rcv:' + x.a.company.id + ':' + today.slice(0, 7), sev: x.a.b90 > 0 ? 'high' : 'med', icon: 'ti-cash-banknote', page: 'receivables',
+        title: x.a.company.name + ' owes ' + fmtMoney(x.a.balance), sub: fmtMoney(x.over) + ' is older than 30 days (oldest ' + x.a.oldestDays + ' days). Time to follow up.', todo: 'Collect ' + fmtMoney(x.a.balance) + ' from ' + x.a.company.name });
+    });
+    // 2) stock: low vs reorder level, or running out within 10 days at the last 30 days' pace
+    const since = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    computeInventory().forEach(r => {
+      const sold30 = salesCache.filter(x => (x.date || '') >= since).reduce((a, x) => a + (x.items || []).filter(it => it.productId === r.product.id).reduce((b, it) => b + (Number(it.qty) || 0), 0), 0);
+      const perDay = sold30 / 30, days = perDay > 0 ? r.currentStock / perDay : Infinity;
+      const lowByLevel = Number(r.product.reorderLevel) > 0 && r.currentStock <= Number(r.product.reorderLevel);
+      if(r.currentStock <= 0 && sold30 > 0) out.push({ key: 'stk:' + r.product.id, sev: 'high', icon: 'ti-packages', page: 'inventory', title: r.product.name + ' is out of stock', sub: 'Sold ' + sold30.toLocaleString() + ' ' + r.product.unit + ' in the last 30 days. Reorder now.', todo: 'Order ' + r.product.name });
+      else if(r.currentStock > 0 && (lowByLevel || days <= 10)) out.push({ key: 'stk:' + r.product.id, sev: days <= 5 ? 'high' : 'med', icon: 'ti-packages', page: 'inventory', title: r.product.name + ' running low (' + Math.round(r.currentStock).toLocaleString() + ' ' + r.product.unit + ')', sub: isFinite(days) ? 'About ' + Math.max(Math.floor(days), 0) + ' days of stock left at the current pace.' : 'Below the reorder level.', todo: 'Order ' + r.product.name });
+    });
+    // 3) deliveries still pending after 3 days
+    const lim = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+    const pend = salesCache.filter(s => (s.deliveryStatus || 'pending') === 'pending' && (s.date || '') <= lim);
+    if(pend.length) out.push({ key: 'dlv:' + today, sev: 'med', icon: 'ti-truck-delivery', page: 'deliveries', title: pend.length + ' sale' + (pend.length > 1 ? 's' : '') + ' not dispatched for 3+ days', sub: pend.slice(0, 4).map(s => s.invoiceNo + ' (' + (s.companyName || '') + ')').join(', ') + (pend.length > 4 ? ' ...' : ''), todo: 'Dispatch ' + pend.length + ' pending deliveries' });
+    // 4) sales below cost in the last 7 days
+    const w = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const loss = salesCache.filter(s => (s.date || '') >= w && (s.items || []).some(it => Number(it.cost) > 0) && saleProfit(s) < 0);
+    if(loss.length) out.push({ key: 'loss:' + today, sev: 'high', icon: 'ti-trending-down', page: 'sales', title: loss.length + ' sale' + (loss.length > 1 ? 's' : '') + ' below cost this week', sub: loss.slice(0, 4).map(s => s.invoiceNo + ' (' + fmtMoney(saleProfit(s)) + ')').join(', '), todo: 'Review below-cost sales' });
+    // 5) price approvals waiting
+    const pa = approvalsCache.filter(a => a.status === 'pending').length;
+    if(pa) out.push({ key: 'appr:' + today, sev: 'med', icon: 'ti-clipboard-check', page: 'approvals', title: pa + ' price approval' + (pa > 1 ? 's' : '') + ' waiting', sub: 'Staff entered prices different from the list price.', todo: null });
+    const rank = { high: 0, med: 1, low: 2 };
+    return out.sort((a, b) => rank[a.sev] - rank[b.sev]);
+  }
+  function alertsBellHtml(){
+    if(!alertsCache.length) return '';
+    return '<div class="bell-sec">Needs attention (' + alertsCache.length + ')</div>' + alertsCache.slice(0, 6).map(a =>
+      '<div class="bell-item" style="cursor:pointer" data-goto="' + a.page + '"><div class="bi-top"><span><span class="al-dot ' + a.sev + '" style="display:inline-block;margin:0 6px 0 0"></span>' + escapeHtml(a.title) + '</span></div><div class="bi-sub">' + escapeHtml(a.sub) + '</div></div>').join('') +
+      '<div class="bell-foot"><a data-goto="todo">Open To-do &amp; Alerts</a></div>';
+  }
+  function refreshAlerts(){
+    if(!currentUser || !isPriceController()){ alertsCache = []; return; }
+    try{ alertsCache = computeAlerts(); }catch(e){ console.error('alerts', e); alertsCache = []; }
+    const nc = document.getElementById('nav-todo-count');
+    const open = todosCache.filter(t => t.status === 'open').length;
+    if(nc){ const n = alertsCache.filter(a => a.sev === 'high').length + open; nc.textContent = n; nc.style.display = n ? '' : 'none'; }
+  }
+  async function loadTodos(){
+    if(!currentUser || !isPriceController() || !navigator.onLine) return;
+    try{ todosCache = (await sbFetch('todos?select=*&order=created_at.desc&limit=500', { headers: sbHeaders() })) || []; todosLoaded = true; }catch(e){ /* table not created yet */ }
+    refreshAlerts(); if(document.getElementById('page-todo').classList.contains('active')) renderTodoPage();
+  }
+  async function addTodo(title, due, prio, key){
+    if(!title) return;
+    if(key && todosCache.some(t => t.auto_key === key && t.status === 'open')){ showToast('Already on your to-do list'); return; }
+    try{
+      const row = { title: title, due_date: due || null, priority: prio || 'normal', source: key ? 'alert' : 'manual', auto_key: key || null, created_by: (currentUser && currentUser.username) || '' };
+      await sbFetch('todos', { method: 'POST', headers: sbHeaders({ Prefer: 'return=minimal' }), body: JSON.stringify(row) });
+      showToast('Added to to-do'); await loadTodos();
+    }catch(e){ showToast(/42P01|404/.test(String(e.message)) ? 'Run phase_b_todos.sql in Supabase first' : 'Could not save task'); }
+  }
+  async function patchTodo(id, patch){
+    try{ await sbFetch('todos?id=eq.' + encodeURIComponent(id), { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: JSON.stringify(patch) }); await loadTodos(); }
+    catch(e){ showToast('Could not update task'); }
+  }
+  function renderTodoPage(){
+    refreshAlerts();
+    const al = document.getElementById('alerts-list'); if(!al) return;
+    document.getElementById('alerts-count').textContent = alertsCache.length ? alertsCache.length + ' item' + (alertsCache.length > 1 ? 's' : '') : '';
+    al.innerHTML = alertsCache.length ? alertsCache.map((a, i) => '<div class="al-item"><span class="al-dot ' + a.sev + '"></span><div class="al-main"><div class="al-title">' + escapeHtml(a.title) + '</div><div class="al-sub">' + escapeHtml(a.sub) + '</div></div><div class="al-btns"><button data-open="' + a.page + '">Open</button>' + (a.todo ? '<button data-todo="' + i + '">+ To-do</button>' : '') + '</div></div>').join('')
+      : '<div class="empty-row"><i class="ti ti-circle-check" style="color:var(--success);"></i> All clear. Nothing needs attention right now.</div>';
+    al.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => { const nb = document.querySelector('.nav-item[data-page="' + b.getAttribute('data-open') + '"]'); if(nb) nb.click(); }));
+    al.querySelectorAll('[data-todo]').forEach(b => b.addEventListener('click', () => { const a = alertsCache[Number(b.getAttribute('data-todo'))]; addTodo(a.todo, '', a.sev === 'high' ? 'high' : 'normal', a.key); }));
+    const showDone = document.getElementById('todo-showdone').checked, today = todayStr();
+    const rows = todosCache.filter(t => showDone || t.status === 'open').sort((a, b) => (a.status === 'done') - (b.status === 'done') || ((a.due_date || '9999') < (b.due_date || '9999') ? -1 : 1));
+    document.getElementById('todo-list').innerHTML = rows.length ? rows.map(t => '<div class="td-item ' + t.status + '"><input type="checkbox" data-done="' + t.id + '" ' + (t.status === 'done' ? 'checked' : '') + '><div class="td-t">' + (t.priority === 'high' ? '<span class="td-p-high">HIGH </span>' : '') + escapeHtml(t.title) + '</div>' +
+      (t.due_date ? '<span class="td-d ' + (t.status === 'open' && t.due_date < today ? 'late' : '') + '">' + escapeHtml(t.due_date) + '</span>' : '') + '<button class="td-del" data-del="' + t.id + '" title="Delete">&times;</button></div>').join('')
+      : '<div class="empty-row">No tasks. Add one above, or tap "+ To-do" on an alert.</div>';
+    document.querySelectorAll('#todo-list [data-done]').forEach(c => c.addEventListener('change', () => patchTodo(c.getAttribute('data-done'), c.checked ? { status: 'done', done_at: new Date().toISOString(), done_by: currentUser.username } : { status: 'open', done_at: null, done_by: null })));
+    document.querySelectorAll('#todo-list [data-del]').forEach(b => b.addEventListener('click', async () => { try{ await sbFetch('todos?id=eq.' + encodeURIComponent(b.getAttribute('data-del')), { method: 'DELETE', headers: sbHeaders() }); await loadTodos(); }catch(e){ showToast('Could not delete'); } }));
+  }
+  (function initTodoUi(){
+    const f = document.getElementById('todo-form'); if(!f) return;
+    f.addEventListener('submit', ev => { ev.preventDefault(); const t = document.getElementById('todo-title'); addTodo(t.value.trim(), document.getElementById('todo-due').value, document.getElementById('todo-prio').value); t.value = ''; });
+    document.getElementById('todo-showdone').addEventListener('change', renderTodoPage);
+    document.addEventListener('click', ev => { const g = ev.target.closest('#bell-panel [data-goto]'); if(g){ document.getElementById('bell-panel').classList.remove('open'); const nb = document.querySelector('.nav-item[data-page="' + g.getAttribute('data-goto') + '"]'); if(nb) nb.click(); } });
+    setInterval(() => { if(currentUser && !document.hidden){ refreshAlerts(); renderBell(); } }, 30000);
+    setInterval(() => { if(currentUser && !document.hidden) loadTodos(); }, 60000);
+    setTimeout(() => { loadTodos(); refreshAlerts(); renderBell(); }, 4000);
+  })();
+
+  /* ================= RAR ASSISTANT: chatbot (Gemini via Edge Function) ================= */
+  let aiHistory = [];
+  function aiSnapshot(){
+    const today = todayStr(), r0 = n => Math.round(Number(n) || 0);
+    const ags = companiesCache.map(c => computeAgeing(c.id)).filter(Boolean);
+    const recv = ags.filter(a => a.balance > 0.5).sort((a, b) => b.balance - a.balance);
+    const pay = companiesCache.map(c => { const L = computeCompanyLedger(c.id); return L && L.closingBalance < -0.5 ? { name: c.name, we_owe: r0(-L.closingBalance) } : null; }).filter(Boolean).sort((a, b) => b.we_owe - a.we_owe);
+    const ym = today.slice(0, 7), cur = mrStats(ym), prev = mrStats(mrMonthRange(ym).prev);
+    const mstat = st => ({ sales: r0(st.salesTotal), profit: r0(st.profit), purchases: r0(st.purchTotal), collected: r0(st.received), paid_out: r0(st.paid), invoices: st.sales.length });
+    const d = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+    const since30 = d(30), since90 = d(90);
+    const byProd = {}, byCust = {};
+    salesCache.filter(s => (s.date || '') >= since90).forEach(s => {
+      const cu = byCust[s.companyName || '?'] = byCust[s.companyName || '?'] || { customer: s.companyName, sales: 0, profit: 0, invoices: 0 };
+      cu.sales += Number(s.total) || 0; cu.profit += saleProfit(s); cu.invoices++;
+      (s.items || []).forEach(it => { const k = it.productName || '?', e = byProd[k] = byProd[k] || { product: k, qty: 0, sales: 0, profit: 0 };
+        e.qty += Number(it.qty) || 0; e.sales += Number(it.amount) || 0; e.profit += (Number(it.amount) || 0) - (Number(it.cost) || 0) * (Number(it.qty) || 0); });
+    });
+    const top = (o, n) => Object.values(o).sort((a, b) => b.sales - a.sales).slice(0, n).map(x => Object.assign({}, x, { sales: r0(x.sales), profit: r0(x.profit), qty: x.qty !== undefined ? Math.round(x.qty * 100) / 100 : undefined }));
+    const stock = computeInventory().map(r => {
+      const sold30 = salesCache.filter(x => (x.date || '') >= since30).reduce((a, x) => a + (x.items || []).filter(it => it.productId === r.product.id).reduce((b, it) => b + (Number(it.qty) || 0), 0), 0);
+      return { product: r.product.name, unit: r.product.unit, in_stock: Math.round(r.currentStock * 100) / 100, reorder_level: r.product.reorderLevel || 0, avg_cost: r0(r.avgCost), list_sale_rate: r0(r.product.salesRate), sold_last_30d: Math.round(sold30 * 100) / 100, days_left: sold30 > 0 ? Math.round(r.currentStock / (sold30 / 30)) : null };
+    });
+    const months = []; for(let i = 5; i >= 0; i--){ const dt = new Date(); dt.setDate(1); dt.setMonth(dt.getMonth() - i); const y = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0'); const st = mrStats(y); months.push(Object.assign({ month: y }, mstat(st))); }
+    return {
+      business: (profileCache && profileCache.name) || '',
+      today: today,
+      totals: { receivable_total: r0(recv.reduce((a, x) => a + x.balance, 0)), receivable_over_30d: r0(recv.reduce((a, x) => a + x.b31 + x.b61 + x.b90, 0)), receivable_over_90d: r0(recv.reduce((a, x) => a + x.b90, 0)), payable_total: r0(pay.reduce((a, x) => a + x.we_owe, 0)), stock_value: r0(computeInventory().reduce((a, r) => a + r.stockValue, 0)) },
+      this_month: mstat(cur), last_month: mstat(prev), last_6_months: months,
+      customers_owing_us: recv.slice(0, 40).map(a => ({ name: a.company.name, phone: a.company.phone || '', balance: r0(a.balance), d0_30: r0(a.b0), d31_60: r0(a.b31), d61_90: r0(a.b61), d90_plus: r0(a.b90), oldest_days: a.oldestDays, last_payment_date: a.lastReceived || null })),
+      we_owe_suppliers: pay.slice(0, 20),
+      stock: stock,
+      top_products_90d: top(byProd, 15), top_customers_90d: top(byCust, 15),
+      recent_sales: salesCache.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 25).map(s => ({ invoice: s.invoiceNo, date: s.date, customer: s.companyName, total: r0(s.total), received: r0(s.received), due: r0(s.due), delivery: s.deliveryStatus || 'pending', profit: r0(saleProfit(s)) })),
+      pending_price_approvals: approvalsCache.filter(a => a.status === 'pending').length,
+      open_todos: todosCache.filter(t => t.status === 'open').slice(0, 15).map(t => t.title),
+      current_alerts: alertsCache.slice(0, 10).map(a => a.title)
+    };
+  }
+  function aiFmt(text){
+    let t = escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/^\s*[-*]\s+/gm, '• ').replace(/\n/g, '<br>');
+    return t;
+  }
+  function aiAdd(role, text, cls){
+    const box = document.getElementById('ai-msgs'), el = document.createElement('div');
+    el.className = 'ai-m ' + (role === 'user' ? 'u' : 'a') + (cls ? ' ' + cls : '');
+    if(role === 'user'){ el.textContent = text; }
+    else {
+      const todos = []; const clean = text.replace(/\[\[TODO:\s*(.+?)\]\]/g, (m, t) => { todos.push(t.trim()); return ''; }).trim();
+      el.innerHTML = aiFmt(clean);
+      todos.slice(0, 2).forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.innerHTML = '<i class="ti ti-plus"></i> Add to to-do: ' + escapeHtml(t); b.addEventListener('click', () => { addTodo(t, '', 'normal'); b.disabled = true; b.style.opacity = '.5'; }); el.appendChild(b); });
+    }
+    box.appendChild(el); box.scrollTop = box.scrollHeight; return el;
+  }
+  async function aiCallFn(payload){
+    const body = JSON.stringify(payload);
+    const call = () => fetch(SUPABASE_URL + '/functions/v1/rar-assistant', { method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + ((authState && authState.access_token) || SUPABASE_ANON_KEY), 'Content-Type': 'application/json' }, body: body });
+    let res = await call();
+    if(res.status === 401 && authState && authState.refresh_token && await authRefresh() === 'ok') res = await call();
+    const j = await res.json().catch(() => ({}));
+    if(res.status === 404) throw new Error('The assistant is not set up yet. Deploy the rar-assistant function in Supabase (see setup steps).');
+    if(!res.ok || !j.reply) throw new Error(j.error || j.message || ('Error ' + res.status));
+    return j.reply;
+  }
+  let aiBusy = false;
+  async function aiAsk(q){
+    q = (q || '').trim(); if(!q || aiBusy) return;
+    if(!navigator.onLine){ aiAdd('assistant', 'You are offline. The assistant needs the internet.', 'err'); return; }
+    aiBusy = true; document.getElementById('ai-chips').style.display = 'none';
+    aiAdd('user', q); aiHistory.push({ role: 'user', text: q });
+    const wait = aiAdd('assistant', 'Thinking...', 'ai-typing');
+    try{
+      const reply = await aiCallFn({ messages: aiHistory.slice(-10), data: aiSnapshot(), today: todayStr() });
+      wait.remove(); aiAdd('assistant', reply); aiHistory.push({ role: 'assistant', text: reply.replace(/\[\[TODO:.*?\]\]/g, '').trim() });
+    }catch(e){ wait.remove(); aiHistory.pop(); aiAdd('assistant', e.message || 'Something went wrong.', 'err'); }
+    aiBusy = false;
+  }
+  function aiReset(){
+    aiHistory = []; document.getElementById('ai-msgs').innerHTML = '';
+    aiAdd('assistant', 'আসসালামু আলাইকুম! আমি RAR Assistant। বাকি, স্টক, বিক্রি, লাভ, যেকোনো কিছু জিজ্ঞেস করুন। বাংলা বা English, যেটা সহজ।');
+    const chips = ['আজ কার কাছে সবচেয়ে বেশি বাকি?', 'এই মাসের বিক্রি ও লাভ কেমন?', 'কোন পণ্যের স্টক শেষ হতে যাচ্ছে?', 'Who are my top 5 customers?', 'আজ আমার কী কী করা উচিত?'];
+    const c = document.getElementById('ai-chips'); c.style.display = ''; c.innerHTML = chips.map(x => '<button type="button">' + escapeHtml(x) + '</button>').join('');
+    c.querySelectorAll('button').forEach(b => b.addEventListener('click', () => aiAsk(b.textContent)));
+  }
+  function aiShowFab(){ const f = document.getElementById('ai-fab'); if(f) f.style.display = (currentUser && isPriceController()) ? '' : 'none'; if(f && f.style.display === 'none') document.getElementById('ai-panel').classList.remove('open'); }
+  (function initAssistant(){
+    const fab = document.getElementById('ai-fab'); if(!fab) return;
+    const panel = document.getElementById('ai-panel'), inp = document.getElementById('ai-input');
+    fab.addEventListener('click', () => { panel.classList.toggle('open'); if(panel.classList.contains('open')){ if(!document.getElementById('ai-msgs').children.length) aiReset(); inp.focus(); } });
+    document.getElementById('ai-close').addEventListener('click', () => panel.classList.remove('open'));
+    document.getElementById('ai-clear').addEventListener('click', aiReset);
+    document.getElementById('ai-form').addEventListener('submit', ev => { ev.preventDefault(); const v = inp.value; inp.value = ''; inp.style.height = ''; aiAsk(v); });
+    inp.addEventListener('keydown', ev => { if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); document.getElementById('ai-form').requestSubmit(); } });
+    inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 90) + 'px'; });
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = document.getElementById('ai-mic');
+    if(SR){
+      mic.style.display = '';
+      let rec = null;
+      mic.addEventListener('click', () => {
+        if(rec){ rec.stop(); return; }
+        rec = new SR(); rec.lang = 'bn-BD'; rec.interimResults = false;
+        rec.onresult = e => { inp.value = (inp.value + ' ' + e.results[0][0].transcript).trim(); };
+        rec.onend = () => { rec = null; mic.classList.remove('on'); }; rec.onerror = () => { rec = null; mic.classList.remove('on'); };
+        mic.classList.add('on'); try{ rec.start(); }catch(e){ rec = null; mic.classList.remove('on'); }
+      });
+    }
+    setInterval(aiShowFab, 3000); setTimeout(aiShowFab, 1500);
+  })();
   initApprovalsUi();
 
   /* ================= MONTHLY MANAGEMENT REPORT ================= */
@@ -7518,16 +7938,16 @@
     const salesTotal = sales.reduce((a, s) => a + (Number(s.total) || 0), 0);
     const profit = sales.reduce((a, s) => a + saleProfit(s), 0);
     const purchTotal = purch.reduce((a, p) => a + (Number(p.total) || 0), 0);
-    const received = pays.filter(p => p.type === 'received').reduce((a, p) => a + (Number(p.amount) || 0), 0);
-    const paid = pays.filter(p => p.type === 'paid').reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const received = pays.filter(p => p.type === 'received').reduce((a, p) => a + (Number(p.amount) || 0), 0) + sales.reduce((a, x) => a + saleAtBilling(x), 0);
+    const paid = pays.filter(p => p.type === 'paid').reduce((a, p) => a + (Number(p.amount) || 0), 0) + purch.reduce((a, x) => a + purchAtBilling(x), 0);
     return { R, sales, purch, pays, salesTotal, profit, purchTotal, received, paid };
   }
   // Balance per company as of the end of the month (same signs as the Tally Book: + = they owe us)
   function mrBalanceAsOf(companyId, before){
     const c = companiesCache.find(x => x.id === companyId); if(!c) return 0;
     let b = Number(c.opening) || 0;
-    salesCache.forEach(s => { if(s.companyId === companyId && (s.date || '') < before) b += Number(s.total) || 0; });
-    purchasesCache.forEach(p => { if(p.companyId === companyId && (p.date || '') < before) b -= Number(p.total) || 0; });
+    salesCache.forEach(s => { if(s.companyId === companyId && (s.date || '') < before) b += (Number(s.total) || 0) - saleAtBilling(s); });
+    purchasesCache.forEach(p => { if(p.companyId === companyId && (p.date || '') < before) b += -(Number(p.total) || 0) + purchAtBilling(p); });
     paymentsCache.forEach(p => { if(p.companyId === companyId && (p.date || '') < before) b += (p.type === 'received' ? -1 : 1) * (Number(p.amount) || 0); });
     return b;
   }
