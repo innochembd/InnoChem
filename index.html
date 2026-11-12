@@ -891,6 +891,10 @@
 #help-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card,#fff);color:var(--text-primary);font-weight:800;font-size:16px;cursor:pointer;font-family:inherit;}
 #help-modal-body .man-steps{padding-left:36px;}
 </style>
+<style id="pd-phase1-css">
+.qa-link{font-size:11.5px;font-weight:700;color:var(--ic-green-dark,#0F7A6D);text-decoration:none;margin-left:6px;white-space:nowrap;} .qa-link:hover{text-decoration:underline;}
+.more-details{border-top:1px solid var(--border);margin-top:14px;padding-top:10px;} .more-details>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text-secondary);padding:4px 0 10px;}
+</style>
 </head>
 <body>
 <div id="wco-bar"><img data-rar-logo alt="RAR TECH"><span>RAR TECH</span></div>
@@ -2065,25 +2069,15 @@
     <form id="purchase-form">
       <div class="modal-body">
         <input type="hidden" id="purchase-id">
-        <div class="form-row">
-          <div class="field">
-            <label>Date <span class="required-mark">*</span></label>
-            <div class="field-input-wrap"><i class="ti ti-calendar"></i><input type="date" id="purchase-date" required></div>
-          </div>
-          <div class="field">
-            <label>Invoice / bill no</label>
-            <div class="field-input-wrap"><i class="ti ti-file-invoice"></i><input type="text" id="purchase-invoice" placeholder="e.g. PUR-1001"></div>
-          </div>
-        </div>
         <div class="field">
-          <label>Supplier <span class="required-mark">*</span></label>
+          <label>Supplier <span class="required-mark">*</span> <a href="#" class="qa-link" data-qa="company" data-ctx="purchase">+ New supplier</a></label>
           <select id="purchase-company" required></select>
-          <div class="field-hint" id="purchase-no-company-hint" style="display:none;color:var(--danger);">No companies yet — add one on the Companies page first.</div>
+          <div class="field-hint" id="purchase-no-company-hint" style="display:none;color:var(--danger);">No suppliers yet. Tap "+ New supplier" above.</div>
         </div>
         <div class="field">
-          <label>Product <span class="required-mark">*</span></label>
+          <label>Product <span class="required-mark">*</span> <a href="#" class="qa-link" data-qa="product" data-ctx="purchase">+ New product</a></label>
           <select id="purchase-product" required></select>
-          <div class="field-hint" id="purchase-no-product-hint" style="display:none;color:var(--danger);">No products yet — add one on the Products page first.</div>
+          <div class="field-hint" id="purchase-no-product-hint" style="display:none;color:var(--danger);">No products yet. Tap "+ New product" above.</div>
         </div>
         <div class="form-row">
           <div class="field">
@@ -2106,10 +2100,22 @@
           </div>
         </div>
         <div class="field-hint" id="purchase-due-hint" style="margin-bottom:14px;">Due: ৳0</div>
+        <details class="more-details" id="purchase-more"><summary>More details (date, bill no, notes)</summary>
+        <div class="form-row">
+          <div class="field">
+            <label>Date <span class="required-mark">*</span></label>
+            <div class="field-input-wrap"><i class="ti ti-calendar"></i><input type="date" id="purchase-date" required></div>
+          </div>
+          <div class="field">
+            <label>Invoice / bill no</label>
+            <div class="field-input-wrap"><i class="ti ti-file-invoice"></i><input type="text" id="purchase-invoice" placeholder="e.g. PUR-1001"></div>
+          </div>
+        </div>
         <div class="field">
           <label>Notes</label>
           <textarea id="purchase-notes" placeholder="Any additional notes"></textarea>
         </div>
+        </details>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn-secondary" id="purchase-cancel-btn">Cancel</button>
@@ -2175,6 +2181,21 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="quick-modal" style="z-index:1200;">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-head"><h3 id="quick-title">New</h3><button type="button" class="modal-close" id="quick-close"><i class="ti ti-x"></i></button></div>
+    <form id="quick-form">
+      <div class="modal-body">
+        <div class="field"><label>Name <span class="required-mark">*</span></label><input type="text" id="quick-name" autocomplete="off" required></div>
+        <div class="field" id="quick-type-wrap"><label>Type</label><select id="quick-type"><option>Buyer</option><option>Supplier</option><option>Both</option></select></div>
+        <div class="field" id="quick-phone-wrap"><label>Phone (optional)</label><input type="text" id="quick-phone" inputmode="tel"></div>
+        <div class="field" id="quick-unit-wrap"><label>Unit</label><select id="quick-unit"></select></div>
+        <div class="field" id="quick-rate-wrap"><label id="quick-rate-label">Rate (optional)</label><input type="number" id="quick-rate" step="0.01" min="0"></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn-secondary" id="quick-cancel">Cancel</button><button type="submit" class="btn-primary sm"><i class="ti ti-device-floppy"></i> Add</button></div>
+    </form>
+  </div>
+</div>
 <div class="modal-overlay" id="sale-modal">
   <div class="modal-box" style="max-width:640px;">
     <div class="modal-head">
@@ -2184,6 +2205,35 @@
     <form id="sale-form">
       <div class="modal-body">
         <input type="hidden" id="sale-id">
+        <div class="field">
+          <label>Customer <span class="required-mark">*</span> <a href="#" class="qa-link" data-qa="company" data-ctx="sale">+ New customer</a></label>
+          <select id="sale-company" required></select>
+          <div class="field-hint" id="sale-no-company-hint" style="display:none;color:var(--danger);">No customers yet. Tap "+ New customer" above.</div>
+        </div>
+
+        <div class="field">
+          <label>Items <span class="required-mark">*</span></label>
+          <div class="field-hint" id="sale-no-product-hint" style="display:none;color:var(--danger);margin-bottom:8px;">No products yet. Tap "+ New product" below.</div>
+          <div class="sale-item-labels">
+            <span>Product</span><span>Qty</span><span>Rate</span><span>Amount</span><span></span>
+          </div>
+          <div id="sale-items-wrap"></div>
+          <button type="button" class="btn-secondary" id="sale-add-item-btn" style="margin-top:8px;"><i class="ti ti-plus"></i> Add another item</button> <a href="#" class="qa-link" data-qa="product" data-ctx="sale" style="margin-left:10px;">+ New product</a>
+        </div>
+
+        <div class="form-row" style="margin-top:16px;">
+          <div class="field">
+            <label>Total amount</label>
+            <div class="field-input-wrap"><i class="ti ti-sum"></i><input type="text" id="sale-total-display" readonly style="background:var(--bg-page);font-weight:700;"></div>
+          </div>
+          <div class="field">
+            <label>Received amount</label>
+            <div class="field-input-wrap"><i class="ti ti-cash"></i><input type="number" id="sale-received" step="0.01" min="0" placeholder="0"></div>
+          </div>
+        </div>
+        <div class="field-hint" id="sale-due-hint" style="margin-bottom:4px;">Due: ৳0</div>
+        <div class="field-hint" id="sale-profit-hint" style="margin-bottom:14px;">Estimated cost/profit: ৳0 / ৳0</div>
+        <details class="more-details" id="sale-more"><summary>More details (date, invoice no, challan, notes, delivery)</summary>
         <div class="form-row">
           <div class="field">
             <label>Date <span class="required-mark">*</span></label>
@@ -2200,34 +2250,6 @@
             <div class="field-input-wrap"><i class="ti ti-truck-delivery"></i><input type="text" id="sale-challan"></div>
           </div>
         </div>
-        <div class="field">
-          <label>Customer <span class="required-mark">*</span></label>
-          <select id="sale-company" required></select>
-          <div class="field-hint" id="sale-no-company-hint" style="display:none;color:var(--danger);">No companies yet — add one on the Companies page first.</div>
-        </div>
-
-        <div class="field">
-          <label>Items <span class="required-mark">*</span></label>
-          <div class="field-hint" id="sale-no-product-hint" style="display:none;color:var(--danger);margin-bottom:8px;">No products yet — add one on the Products page first.</div>
-          <div class="sale-item-labels">
-            <span>Product</span><span>Qty</span><span>Rate</span><span>Amount</span><span></span>
-          </div>
-          <div id="sale-items-wrap"></div>
-          <button type="button" class="btn-secondary" id="sale-add-item-btn" style="margin-top:8px;"><i class="ti ti-plus"></i> Add another item</button>
-        </div>
-
-        <div class="form-row" style="margin-top:16px;">
-          <div class="field">
-            <label>Total amount</label>
-            <div class="field-input-wrap"><i class="ti ti-sum"></i><input type="text" id="sale-total-display" readonly style="background:var(--bg-page);font-weight:700;"></div>
-          </div>
-          <div class="field">
-            <label>Received amount</label>
-            <div class="field-input-wrap"><i class="ti ti-cash"></i><input type="number" id="sale-received" step="0.01" min="0" placeholder="0"></div>
-          </div>
-        </div>
-        <div class="field-hint" id="sale-due-hint" style="margin-bottom:4px;">Due: ৳0</div>
-        <div class="field-hint" id="sale-profit-hint" style="margin-bottom:14px;">Estimated cost/profit: ৳0 / ৳0</div>
         <div class="field">
           <label>Notes</label>
           <textarea id="sale-notes" placeholder="Any additional notes for this sale"></textarea>
@@ -2260,6 +2282,7 @@
             </div>
           </div>
         </div>
+        </details>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn-secondary" id="sale-cancel-btn">Cancel</button>
@@ -2498,7 +2521,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Apply to an outstanding invoice (optional)</label>
+          <label>Which bill is this for? (auto: oldest unpaid)</label>
           <select id="payment-apply-to">
             <option value="">— General / advance payment —</option>
           </select>
@@ -4333,7 +4356,9 @@
       filterSel.value = current;
     }
     if(modalSel){
+      const keep = modalSel.value;
       modalSel.innerHTML = sorted.map(c => `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.type)})</option>`).join('');
+      if(keep && sorted.some(c => c.id === keep)) modalSel.value = keep;
       document.getElementById('purchase-no-company-hint').style.display = sorted.length ? 'none' : 'block';
     }
   }
@@ -4342,7 +4367,9 @@
     const sorted = productsCache.slice().sort((a,b)=>a.name.localeCompare(b.name));
     const modalSel = document.getElementById('purchase-product');
     if(modalSel){
+      const keep = modalSel.value;
       modalSel.innerHTML = sorted.map(p => `<option value="${p.id}" data-rate="${p.purchaseRate||0}" data-unit="${escapeHtml(p.unit)}">${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`).join('');
+      if(keep && sorted.some(p => p.id === keep)) modalSel.value = keep;
       document.getElementById('purchase-no-product-hint').style.display = sorted.length ? 'none' : 'block';
     }
   }
@@ -4433,10 +4460,6 @@
   }
 
   function openPurchaseModal(id){
-    if(companiesCache.length === 0 || productsCache.length === 0){
-      showToast('Add a company and a product first');
-      return;
-    }
     const form = document.getElementById('purchase-form');
     form.reset();
     populateCompanyDropdowns();
@@ -4465,6 +4488,7 @@
       }
     }
     updatePurchaseCalcs();
+    const pm = document.getElementById('purchase-more'); if(pm) pm.open = false;
     document.getElementById('purchase-modal').classList.add('open');
   }
   function closePurchaseModal(){ document.getElementById('purchase-modal').classList.remove('open'); }
@@ -4769,7 +4793,9 @@
       filterSel.value = current;
     }
     if(modalSel){
+      const keep = modalSel.value;
       modalSel.innerHTML = sorted.map(c => `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.type)})</option>`).join('');
+      if(keep && sorted.some(c => c.id === keep)) modalSel.value = keep;
       document.getElementById('sale-no-company-hint').style.display = sorted.length ? 'none' : 'block';
     }
     document.getElementById('sale-no-product-hint').style.display = productsCache.length ? 'none' : 'block';
@@ -5042,10 +5068,6 @@
   }
 
   function openSaleModal(id){
-    if(companiesCache.length === 0 || productsCache.length === 0){
-      showToast('Add a company and a product first');
-      return;
-    }
     const form = document.getElementById('sale-form');
     form.reset();
     populateSaleDropdowns();
@@ -5074,6 +5096,7 @@
       document.getElementById('sale-delivery-status').value = 'pending';
       renderSaleItemRows(null);
     }
+    const sm = document.getElementById('sale-more'); if(sm) sm.open = false;
     document.getElementById('sale-modal').classList.add('open');
   }
   function closeSaleModal(){ document.getElementById('sale-modal').classList.remove('open'); }
@@ -5991,6 +6014,18 @@
         });
     }
     if(editingPayment && editingPayment.appliedId){ sel.value = editingPayment.appliedId; }
+    else if(!editingPayment){ autoPickPaymentInvoice(); }
+  }
+  // New payment: pre-select the OLDEST unpaid bill of that company (so staff need not choose).
+  // If the amount is bigger than that bill's due, leave it as a general payment (Tally still counts it).
+  function autoPickPaymentInvoice(){
+    const sel = document.getElementById('payment-apply-to'); if(!sel || document.getElementById('payment-id').value) return;
+    const type = document.getElementById('payment-type').value, companyId = document.getElementById('payment-company').value;
+    const list = (type === 'received' ? salesCache : purchasesCache).filter(x => x.companyId === companyId && Number(x.due) > 0)
+      .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.created_at || 0) - (b.created_at || 0));
+    const amt = parseFloat(document.getElementById('payment-amount').value) || 0;
+    const first = list[0];
+    sel.value = (first && (!amt || amt <= Number(first.due) + 0.005)) ? first.id : '';
   }
 
   async function loadPayments(){
@@ -6167,6 +6202,7 @@
     document.getElementById('payment-type-filter').addEventListener('change', renderPayments);
     document.getElementById('payment-company-filter').addEventListener('change', renderPayments);
     document.getElementById('payment-type').addEventListener('change', populatePaymentApplyToOptions);
+    document.getElementById('payment-amount').addEventListener('input', autoPickPaymentInvoice);
     document.getElementById('payment-company').addEventListener('change', populatePaymentApplyToOptions);
 
     document.getElementById('payment-export-btn').addEventListener('click', () => {
@@ -8084,6 +8120,76 @@
     document.querySelectorAll('#help-lang button').forEach(b => b.addEventListener('click', () => { manLang = b.getAttribute('data-l'); try{ localStorage.setItem('ic_man_lang', manLang); }catch(e){} showHelpModal(); renderManualPage(); }));
     document.getElementById('man-search').addEventListener('input', renderManualPage);
     document.querySelectorAll('#man-lang button').forEach(b => b.addEventListener('click', () => { manLang = b.getAttribute('data-l'); try{ localStorage.setItem('ic_man_lang', manLang); }catch(e){} renderManualPage(); }));
+  })();
+
+  /* ================= QUICK-ADD: new customer / supplier / product from inside a form ================= */
+  let quickCtx = null;
+  function openQuickAdd(kind, ctx){
+    quickCtx = { kind: kind, ctx: ctx };
+    const isC = kind === 'company';
+    document.getElementById('quick-title').textContent = isC ? (ctx === 'purchase' ? 'New supplier' : 'New customer') : 'New product';
+    document.getElementById('quick-type-wrap').style.display = isC ? '' : 'none';
+    document.getElementById('quick-phone-wrap').style.display = isC ? '' : 'none';
+    document.getElementById('quick-unit-wrap').style.display = isC ? 'none' : '';
+    document.getElementById('quick-rate-wrap').style.display = isC ? 'none' : '';
+    document.getElementById('quick-rate-label').textContent = ctx === 'purchase' ? 'Purchase rate (optional)' : 'Sales rate (optional)';
+    document.getElementById('quick-type').value = ctx === 'purchase' ? 'Supplier' : 'Buyer';
+    const us = document.getElementById('quick-unit'), pu = document.getElementById('product-unit');
+    if(pu) us.innerHTML = pu.innerHTML;
+    document.getElementById('quick-form').reset();
+    document.getElementById('quick-type').value = ctx === 'purchase' ? 'Supplier' : 'Buyer';
+    document.getElementById('quick-modal').classList.add('open');
+    setTimeout(() => document.getElementById('quick-name').focus(), 50);
+  }
+  function closeQuickAdd(){ document.getElementById('quick-modal').classList.remove('open'); }
+  (function initQuickAdd(){
+    const f = document.getElementById('quick-form'); if(!f) return;
+    document.addEventListener('click', ev => { const a = ev.target.closest('.qa-link'); if(a){ ev.preventDefault(); openQuickAdd(a.getAttribute('data-qa'), a.getAttribute('data-ctx')); } });
+    document.getElementById('quick-close').addEventListener('click', closeQuickAdd);
+    document.getElementById('quick-cancel').addEventListener('click', closeQuickAdd);
+    f.addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const name = document.getElementById('quick-name').value.trim(); if(!name) return;
+      const q = quickCtx; if(!q) return;
+      if(q.kind === 'company'){
+        const dup = companiesCache.find(c => c.name.trim().toLowerCase() === name.toLowerCase());
+        if(dup){ showToast('"' + dup.name + '" already exists. Selected it.'); closeQuickAdd(); populateSaleDropdowns(); populateCompanyDropdowns(); document.getElementById(q.ctx === 'purchase' ? 'purchase-company' : 'sale-company').value = dup.id; return; }
+        const c = { id: uid(), name: name, type: document.getElementById('quick-type').value, opening: 0, contact: '', phone: document.getElementById('quick-phone').value.trim(), email: '', address: '', notes: '', created_at: Date.now() };
+        companiesCache.push(c); await setList('companies', companiesCache);
+        renderCompanies(); populateSaleDropdowns(); populateCompanyDropdowns();
+        document.getElementById(q.ctx === 'purchase' ? 'purchase-company' : 'sale-company').value = c.id;
+        showToast('Added: ' + c.name);
+      } else {
+        const unit = document.getElementById('quick-unit').value, rate = parseFloat(document.getElementById('quick-rate').value) || 0;
+        const dup = productsCache.find(p => p.name.trim().toLowerCase() === name.toLowerCase() && p.unit === unit);
+        let pr = dup;
+        if(!pr){
+          pr = { id: uid(), name: name, category: '', unit: unit, openingStock: 0, purchaseRate: q.ctx === 'purchase' ? rate : 0, salesRate: q.ctx === 'sale' ? rate : 0, reorderLevel: 0, notes: '', created_at: Date.now() };
+          productsCache.push(pr); await setList('products', productsCache);
+          renderProducts(); if(typeof populateProductDropdowns === 'function') populateProductDropdowns(); populateSaleDropdowns();
+          showToast('Added: ' + pr.name);
+        } else showToast('"' + pr.name + '" already exists. Selected it.');
+        if(q.ctx === 'purchase'){
+          populateProductDropdowns(); const ps = document.getElementById('purchase-product'); ps.value = pr.id;
+          const r = document.getElementById('purchase-rate'); if(r) r.value = pr.purchaseRate || rate || '';
+          if(typeof updatePurchaseCalcs === 'function') updatePurchaseCalcs();
+        } else {
+          const sorted = productsCache.slice().sort((a, b) => a.name.localeCompare(b.name)); ensureProductDatalist(sorted);
+          const rows = Array.from(document.querySelectorAll('#sale-items-wrap .sale-item-row'));
+          let row = rows.find(r => !r.querySelector('.sale-item-product').value);
+          if(!row){ document.getElementById('sale-add-item-btn').click(); const rr = document.querySelectorAll('#sale-items-wrap .sale-item-row'); row = rr[rr.length - 1]; }
+          const sel = row.querySelector('.sale-item-product');
+          if(!Array.from(sel.options).some(o => o.value === pr.id)){ const o = document.createElement('option'); o.value = pr.id; o.textContent = pr.name + ' (' + pr.unit + ')'; o.setAttribute('data-rate', pr.salesRate || 0); o.setAttribute('data-unit', pr.unit); sel.appendChild(o); }
+          const si = row.querySelector('.sale-item-search'); si.value = productLabel(pr); si.dispatchEvent(new Event('input', { bubbles: true })); si.dispatchEvent(new Event('change', { bubbles: true }));
+          if(sel.value !== pr.id){ sel.value = pr.id; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+          const rt = row.querySelector('.sale-item-rate'); if(rt && !rt.value && rate) rt.value = rate;
+          recalcSaleTotals();
+        }
+      }
+      closeQuickAdd();
+    });
+    // if the browser refuses to submit because a required field sits inside a closed "More details", open it
+    ['sale-form', 'purchase-form'].forEach(id => { const fm = document.getElementById(id); if(fm) fm.addEventListener('invalid', e => { const d = e.target.closest('details'); if(d) d.open = true; }, true); });
   })();
   initApprovalsUi();
 
