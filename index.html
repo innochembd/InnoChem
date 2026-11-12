@@ -148,8 +148,9 @@
   .sidebar{
     width:236px;flex-shrink:0;background:var(--bg-sidebar);
     display:flex;flex-direction:column;
-    position:sticky;top:0;height:100vh;overflow-y:auto;
+    position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;
   }
+  .sidebar-brand,.sidebar-footer{flex-shrink:0;}
   .sidebar-brand{
     display:flex;align-items:center;gap:10px;
     padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);
@@ -159,7 +160,9 @@
   .sidebar-brand-text .name{font-size:13.5px;font-weight:800;color:var(--text-on-dark);white-space:nowrap;}
   .sidebar-brand-text .tag{font-size:10.5px;color:var(--text-on-dark-muted);font-style:italic;}
 
-  .sidebar-nav{flex:1;padding:14px 10px;}
+  .sidebar-nav{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 10px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.25) transparent;}
+  .sidebar-nav::-webkit-scrollbar{width:6px;}
+  .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.25);border-radius:6px;}
   .nav-section-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-on-dark-muted);padding:14px 10px 6px;font-weight:700;}
   .nav-item{
     display:flex;align-items:center;gap:11px;
@@ -559,7 +562,7 @@
 
   .mobile-topbar-toggle{display:none;}
   @media (max-width:860px){
-    .sidebar{position:fixed;left:-236px;z-index:50;transition:left .2s;box-shadow:var(--shadow-pop);}
+    .sidebar{position:fixed;top:0;left:-236px;z-index:50;transition:left .2s;box-shadow:var(--shadow-pop);}
     .sidebar.open{left:0;}
     .mobile-topbar-toggle{display:flex;}
     .global-search{display:none;}
@@ -758,7 +761,7 @@
   #wco-bar img{height:calc(var(--wco-h) - 10px);width:auto;pointer-events:none;}
   #wco-bar span{font-size:12.5px;font-weight:700;letter-spacing:0.3px;}
   body{padding-top:var(--wco-h);}
-  .sidebar{top:var(--wco-h);height:calc(100vh - var(--wco-h));}
+  .sidebar{top:var(--wco-h);height:calc(100vh - var(--wco-h));height:calc(100dvh - var(--wco-h));}
   .topbar{top:var(--wco-h);}
   #login-screen{min-height:calc(100vh - var(--wco-h));}
   #wco-bar button, #wco-bar a{-webkit-app-region:no-drag;app-region:no-drag;}
@@ -1186,7 +1189,7 @@
           <div class="table-empty" id="recipe-empty" style="display:none;">
             <div class="p-icon"><i class="ti ti-category"></i></div>
             <h3>No mix recipes yet</h3>
-            <p>Define which raw materials (and how much of each) go into 1 unit of a finished/mixed product. Once set, the Production Log can auto-calculate costs from it.</p>
+            <p>Define which raw materials (and how much of each) go into 1 unit of a finished/mixed product. Once set, selling this product when it is not in stock automatically uses these raw materials (no Production Log needed), and profit is worked out from this recipe's cost.</p>
           </div>
         </div>
       </div>
@@ -1223,7 +1226,7 @@
           <div class="table-empty" id="production-empty" style="display:none;">
             <div class="p-icon"><i class="ti ti-clipboard-check"></i></div>
             <h3>No production batches yet</h3>
-            <p>Log a mixing batch to auto-calculate material cost from its recipe — this deducts raw materials from stock and adds the finished product.</p>
+            <p>Optional. You can skip this: when you sell a mixed product that is not in stock, raw materials are cut automatically by its recipe. Log a batch only when you make stock ahead of selling.</p>
           </div>
         </div>
       </div>
@@ -2238,7 +2241,8 @@
           </div>
         </div>
         <div class="field-hint" id="sale-due-hint" style="margin-bottom:4px;">Due: ৳0</div>
-        <div class="field-hint" id="sale-profit-hint" style="margin-bottom:14px;">Estimated cost/profit: ৳0 / ৳0</div>
+        <div class="field-hint" id="sale-profit-hint" style="margin-bottom:4px;">Estimated cost/profit: ৳0 / ৳0</div>
+        <div class="field-hint" id="sale-auto-hint" style="margin-bottom:14px;display:none;color:var(--ic-green-dark);"></div>
         <details class="more-details" id="sale-more"><summary>More details (date, invoice no, challan, notes, delivery)</summary>
         <div class="form-row">
           <div class="field">
@@ -3091,11 +3095,51 @@
       stockSummaryCache = map;
     }catch(e){ console.error('loadStockSummary failed', e); }
   }
-  function getAvgCost(productId){
+  function getAvgCost(productId, depth){
     const s = stockSummaryCache[productId];
     if(s && s.avgCost > 0) return s.avgCost;
+    // finished product with a Mix Recipe and no logged production cost: use the recipe cost
+    const rc = recipeUnitCost(productId, depth || 0);
+    if(rc > 0) return rc;
     const p = productsCache.find(x => x.id === productId);
     return p ? Number(p.purchaseRate)||0 : 0;
+  }
+  function recipeUnitCost(productId, depth){
+    if((depth || 0) > 3) return 0;
+    const g = (typeof recipesCache !== 'undefined' ? recipesCache : []).find(x => x.finishedProductId === productId);
+    if(!g || !g.components) return 0;
+    return g.components.reduce((sum, c) => sum + (Number(c.qtyPerUnit)||0) * getAvgCost(c.componentProductId, (depth || 0) + 1), 0);
+  }
+  /* Auto-make from recipe: when a finished product with a Mix Recipe is sold and its own stock is not enough,
+     the shortfall is treated as made on the spot, and its raw materials are cut from stock by the recipe.
+     Worked out live from the data (nothing extra is saved), in date order. */
+  function computeAutoMake(){
+    const out = { made:{}, madeCost:{}, used:{}, log:[] };
+    (recipesCache || []).forEach(g => {
+      if(!g.components || !g.components.length) return;
+      const pid = g.finishedProductId;
+      const p = productsCache.find(x => x.id === pid);
+      if(!p) return;
+      const ev = [];
+      purchasesCache.filter(x => x.productId === pid).forEach(x => ev.push({ d:x.date||'', c:x.created_at||0, q:Number(x.qty)||0 }));
+      (productionCache || []).filter(x => x.productId === pid).forEach(x => ev.push({ d:x.date||'', c:x.created_at||0, q:Number(x.qtyProduced)||0 }));
+      salesCache.forEach(s => (s.items || []).forEach(it => { if(it.productId === pid) ev.push({ d:s.date||'', c:s.created_at||0, q:-(Number(it.qty)||0), s:s }); }));
+      ev.sort((a,b) => a.d.localeCompare(b.d) || ((a.q<0)-(b.q<0)) || (a.c-b.c));
+      const unitCost = recipeUnitCost(pid, 0);
+      let run = Number(p.openingStock) || 0;
+      ev.forEach(e => {
+        run += e.q;
+        if(run < 0){
+          const short = -run; run = 0;
+          out.made[pid] = (out.made[pid]||0) + short;
+          out.madeCost[pid] = (out.madeCost[pid]||0) + short * unitCost;
+          const comps = g.components.map(c => ({ id:c.componentProductId, qty: short * (Number(c.qtyPerUnit)||0) }));
+          comps.forEach(c => { out.used[c.id] = (out.used[c.id]||0) + c.qty; });
+          out.log.push({ pid:pid, qty:short, date:e.d, created_at:e.c, invoiceNo:e.s ? e.s.invoiceNo : '', companyName:e.s ? e.s.companyName : '', comps:comps });
+        }
+      });
+    });
+    return out;
   }
 
   /* ---- business profile: single row ---- */
@@ -3491,7 +3535,7 @@
       companies: ['Companies', 'Manage buyers and suppliers'],
       products: ['Products', 'Manage your chemical product catalogue'],
       recipes: ['Mix Recipes', 'Define the components that make up a finished product'],
-      production: ['Production Log', 'Log mixing batches and their material cost'],
+      production: ['Production Log', 'Optional — only if you make stock ahead of selling'],
       purchases: ['Purchases', 'Record stock coming into your business'],
       salesOrders: ['Order Booking', 'Write down what a customer wants to buy. No bill yet, no stock change'],
       sales: ['Sales Invoice', 'Make the bill when goods are sold. Updates stock and customer dues'],
@@ -5100,6 +5144,39 @@
     const profitHint = document.getElementById('sale-profit-hint');
     profitHint.textContent = 'Estimated cost/profit: ' + fmtMoney(totalCost) + ' / ' + fmtMoney(profit);
     profitHint.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+    updateSaleAutoHint();
+  }
+  /* new sale only: tell the user when stock is short and the recipe will cut raw materials by itself */
+  function updateSaleAutoHint(){
+    const el = document.getElementById('sale-auto-hint');
+    if(!el) return;
+    el.style.display = 'none';
+    if(document.getElementById('sale-id').value) return;
+    const need = {};
+    document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => {
+      const pid = row.querySelector('.sale-item-product').value;
+      const qty = parseFloat(row.querySelector('.sale-item-qty').value) || 0;
+      if(pid && qty > 0) need[pid] = (need[pid] || 0) + qty;
+    });
+    const ids = Object.keys(need).filter(id => (recipesCache || []).some(g => g.finishedProductId === id));
+    if(!ids.length) return;
+    const inv = computeInventory();
+    const lines = [];
+    ids.forEach(id => {
+      const r = inv.find(i => i.product.id === id);
+      const g = recipesCache.find(x => x.finishedProductId === id);
+      if(!r || !g) return;
+      const short = need[id] - Math.max(r.currentStock, 0);
+      if(short <= 0) return;
+      const parts = g.components.map(c => {
+        const cp = inv.find(i => i.product.id === c.componentProductId);
+        const useQ = short * (Number(c.qtyPerUnit)||0);
+        const warn = cp && cp.currentStock < useQ ? ' ⚠ only ' + Math.max(cp.currentStock,0).toLocaleString() + ' in stock' : '';
+        return (cp ? cp.product.name : '?') + ' ' + (Math.round(useQ*1000)/1000).toLocaleString() + ' ' + (cp ? cp.product.unit : '') + warn;
+      });
+      lines.push(r.product.name + ': ' + (Math.round(short*1000)/1000).toLocaleString() + ' ' + r.product.unit + ' not in stock — will be made from recipe (' + parts.join(', ') + ')');
+    });
+    if(lines.length){ el.textContent = 'Auto from recipe → ' + lines.join(' | '); el.style.display = ''; }
   }
 
   function openSaleModal(id){
@@ -6740,6 +6817,7 @@
 
   /* ================= INVENTORY ================= */
   function computeInventory(){
+    const auto = computeAutoMake();
     return productsCache.map(p => {
       const purchasedQty = purchasesCache.filter(x => x.productId === p.id).reduce((s,x)=> s + (Number(x.qty)||0), 0);
       const purchasedCost = purchasesCache.filter(x => x.productId === p.id).reduce((s,x)=> s + (Number(x.qty)||0) * (Number(x.rate)||0), 0);
@@ -6754,10 +6832,11 @@
         return s + itemsForProduct.reduce((s2,it)=> s2 + (Number(it.usedQty)||0), 0);
       }, 0);
       const openingQty = Number(p.openingStock) || 0;
-      const openingCost = openingQty * (Number(p.purchaseRate) || 0);
-      const currentStock = openingQty + purchasedQty + producedQty - soldQty - consumedQty;
-      const totalInQty = openingQty + purchasedQty + producedQty;
-      const avgCost = totalInQty > 0 ? (openingCost + purchasedCost + producedCost) / totalInQty : (Number(p.purchaseRate) || 0);
+      const openingCost = openingQty * ((Number(p.purchaseRate) || 0) || recipeUnitCost(p.id, 0));
+      const autoMadeQty = auto.made[p.id] || 0, autoMadeCost = auto.madeCost[p.id] || 0, autoUsedQty = auto.used[p.id] || 0;
+      const currentStock = openingQty + purchasedQty + producedQty + autoMadeQty - soldQty - consumedQty - autoUsedQty;
+      const totalInQty = openingQty + purchasedQty + producedQty + autoMadeQty;
+      const avgCost = totalInQty > 0 ? (openingCost + purchasedCost + producedCost + autoMadeCost) / totalInQty : (Number(p.purchaseRate) || 0);
       const stockValue = Math.max(currentStock, 0) * avgCost;
       // Reorder level: use the one typed on the product; if none, work it out = about 14 days of the last 30 days' selling pace
       const since30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
@@ -6767,7 +6846,7 @@
       let status = 'instock';
       if(currentStock <= 0) status = 'outstock';
       else if(reorderEff > 0 && currentStock <= reorderEff) status = 'lowstock';
-      return { product: p, reorderEff, reorderAuto: !(Number(p.reorderLevel) > 0) && autoLevel > 0, purchasedQty, soldQty, producedQty, consumedQty, openingQty, currentStock, avgCost, stockValue, status };
+      return { product: p, reorderEff, reorderAuto: !(Number(p.reorderLevel) > 0) && autoLevel > 0, purchasedQty, soldQty, producedQty, consumedQty, autoMadeQty, autoUsedQty, openingQty, currentStock, avgCost, stockValue, status };
     });
   }
   function avgCostForProduct(productId){
@@ -6870,6 +6949,21 @@
       (s.items||[]).forEach(it => {
         if(it.productId === productId){
           entries.push({ date:s.date, created_at:s.created_at, particulars:`Sale — ${s.invoiceNo} — ${s.companyName}`, qtyIn:0, qtyOut:Number(it.qty)||0 });
+        }
+      });
+    });
+    (productionCache || []).filter(x => x.productId === productId).forEach(x => {
+      entries.push({ date:x.date, created_at:x.created_at||0, particulars:`Production${x.batchNo ? ' — ' + x.batchNo : ''}`, qtyIn:Number(x.qtyProduced)||0, qtyOut:0 });
+    });
+    (productionCache || []).forEach(b => (b.items || []).forEach(it => {
+      if(it.componentProductId === productId) entries.push({ date:b.date, created_at:b.created_at||0, particulars:`Used in production — ${b.productName || ''}${b.batchNo ? ' (' + b.batchNo + ')' : ''}`, qtyIn:0, qtyOut:Number(it.usedQty)||0 });
+    }));
+    computeAutoMake().log.forEach(l => {
+      if(l.pid === productId) entries.push({ date:l.date, created_at:(l.created_at||0) - 0.1, particulars:`Auto-made from recipe — for ${l.invoiceNo || 'sale'} (stock was short)`, qtyIn:l.qty, qtyOut:0 });
+      l.comps.forEach(c => {
+        if(c.id === productId){
+          const fp = productsCache.find(x => x.id === l.pid);
+          entries.push({ date:l.date, created_at:(l.created_at||0) - 0.1, particulars:`Used by recipe (auto) — ${fp ? fp.name : ''} for ${l.invoiceNo || 'sale'}`, qtyIn:0, qtyOut:c.qty });
         }
       });
     });
@@ -7946,7 +8040,7 @@
       top_products_90d: top(byProd, 15), top_customers_90d: top(byCust, 15),
       recent_sales: salesCache.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 25).map(s => ({ invoice: s.invoiceNo, date: s.date, customer: s.companyName, total: r0(s.total), received: r0(s.received), due: r0(s.due), delivery: s.deliveryStatus || 'pending', profit: r0(saleProfit(s)) })),
       pending_price_approvals: approvalsCache.filter(a => a.status === 'pending').length,
-      open_todos: todosCache.filter(t => t.status === 'open').slice(0, 15).map(t => t.title),
+      open_todos: todosCache.filter(t => t.status === 'open').slice(0, 25).map(t => ({ title: t.title, due: t.due_date || null, priority: t.priority || 'normal' })),
       current_alerts: alertsCache.slice(0, 10).map(a => a.title)
     };
   }
@@ -7959,16 +8053,30 @@
     el.className = 'ai-m ' + (role === 'user' ? 'u' : 'a') + (cls ? ' ' + cls : '');
     if(role === 'user'){ el.textContent = text; }
     else {
-      const todos = [], posters = [], buys = []; el.setAttribute('dir', 'auto');
-      const clean = text.replace(/\[\[PURCHASE:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { buys.push(t.trim()); return ''; }).replace(/\[\[POSTER:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { posters.push(t.trim()); return ''; }).replace(/\[\[TODO:\s*(.+?)\]\]/g, (m, t) => { todos.push(t.trim()); return ''; }).trim();
+      const todos = [], dones = [], posters = [], buys = [], sales = [], pays = []; el.setAttribute('dir', 'auto');
+      const clean = text.replace(/\[\[PURCHASE:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { buys.push(t.trim()); return ''; }).replace(/\[\[POSTER:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { posters.push(t.trim()); return ''; })
+        .replace(/\[\[SALE:\s*(\{[\s\S]*?\})\s*\]\]/g, (m, t) => { sales.push(t.trim()); return ''; })
+        .replace(/\[\[PAYMENT:\s*(\{[\s\S]*?\})\s*\]\]/g, (m, t) => { pays.push(t.trim()); return ''; })
+        .replace(/\[\[TODODONE:\s*(.+?)\]\]/g, (m, t) => { dones.push(t.trim()); return ''; })
+        .replace(/\[\[TODO:\s*(.+?)\]\]/g, (m, t) => { todos.push(t.trim()); return ''; }).trim();
       el.innerHTML = aiFmt(clean);
+      const mkBtn = (html, bg) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; if(bg){ b.style.background = bg; b.style.color = '#fff'; } b.innerHTML = html; el.appendChild(b); return b; };
       buys.slice(0, 1).forEach(t => { let spec = null; try{ spec = JSON.parse(t); }catch(e){ return; }
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.style.background = '#0F9484'; b.style.color = '#fff';
-        b.innerHTML = '&#10003; Open purchase form (check &amp; save)'; b.addEventListener('click', () => aiOpenPurchase(spec)); el.appendChild(b); });
+        mkBtn('&#10003; Open purchase form (check &amp; save)', '#0F9484').addEventListener('click', () => aiOpenPurchase(spec)); });
+      sales.slice(0, 1).forEach(t => { let spec = null; try{ spec = JSON.parse(t); }catch(e){ return; }
+        mkBtn('&#10003; Open sale form (check &amp; save)', '#0F9484').addEventListener('click', () => aiOpenSale(spec)); });
+      pays.slice(0, 1).forEach(t => { let spec = null; try{ spec = JSON.parse(t); }catch(e){ return; }
+        mkBtn('&#10003; Open payment form (check &amp; save)', '#0F9484').addEventListener('click', () => aiOpenPayment(spec)); });
       posters.slice(0, 1).forEach(t => { let spec = null; try{ spec = JSON.parse(t); }catch(e){ spec = { product: t.replace(/[{}"]/g, '') }; }
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.style.background = '#0F9484'; b.style.color = '#fff';
-        b.innerHTML = '&#9733; Make &amp; download poster: ' + escapeHtml(spec.product || ''); b.addEventListener('click', () => aiMakePoster(spec)); el.appendChild(b); });
-      todos.slice(0, 2).forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.innerHTML = '<i class="ti ti-plus"></i> Add to to-do: ' + escapeHtml(t); b.addEventListener('click', () => { addTodo(t, '', 'normal'); b.disabled = true; b.style.opacity = '.5'; }); el.appendChild(b); });
+        mkBtn('&#9733; Make &amp; download poster: ' + escapeHtml(spec.product || ''), '#0F9484').addEventListener('click', () => aiMakePoster(spec)); });
+      todos.slice(0, 3).forEach(t => { const parts = t.split('|').map(x => x.trim()); const title = parts[0], due = /^\d{4}-\d{2}-\d{2}$/.test(parts[1] || '') ? parts[1] : '', prio = /high/i.test(parts[2] || '') ? 'high' : 'normal';
+        if(!title) return;
+        const b = mkBtn('<i class="ti ti-plus"></i> Add to to-do: ' + escapeHtml(title) + (due ? ' (' + escapeHtml(due) + ')' : ''));
+        b.addEventListener('click', () => { addTodo(title, due, prio); b.disabled = true; b.style.opacity = '.5'; }); });
+      dones.slice(0, 3).forEach(t => { const n = aiNorm(t); const task = todosCache.find(x => x.status === 'open' && (aiNorm(x.title) === n || aiNorm(x.title).includes(n) || n.includes(aiNorm(x.title))));
+        if(!task) return;
+        const b = mkBtn('<i class="ti ti-check"></i> Mark done: ' + escapeHtml(task.title));
+        b.addEventListener('click', () => { patchTodo(task.id, { status: 'done', done_at: new Date().toISOString(), done_by: currentUser.username }); b.disabled = true; b.style.opacity = '.5'; }); });
     }
     box.appendChild(el); box.scrollTop = box.scrollHeight; return el;
   }
@@ -8003,6 +8111,44 @@
     document.getElementById('purchase-more').open = !!(spec.invoice || spec.date);
     updatePurchaseCalcs();
     showToast(created.length ? 'Filled from bill. New: ' + created.join(', ') + '. Please check, then Save.' : 'Filled from bill. Please check, then Save.');
+  }
+  async function aiOpenSale(spec){
+    const lines = (Array.isArray(spec.lines) ? spec.lines : []).filter(l => l && l.product && Number(l.qty) > 0);
+    if(!lines.length){ aiAdd('assistant', 'I could not read any product and quantity for this sale. Please tell me the product and quantity.', 'err'); return; }
+    const comp = aiFindCompany(spec.customer);
+    if(!comp){ aiAdd('assistant', 'I could not find the customer "' + (spec.customer || '') + '" in your Companies list. Add the company first (Companies page), or tell me the exact name.', 'err'); return; }
+    const prods = lines.map(l => aiFindProduct(l.product));
+    const missing = lines.filter((l, i) => !prods[i]).map(l => l.product);
+    if(missing.length){ aiAdd('assistant', 'These products are not in your Products list: ' + missing.join(', ') + '. Add them first (or use the "+ New product" link in the sale form), or tell me the exact names.', 'err'); return; }
+    document.getElementById('ai-panel').classList.remove('open');
+    const nb = document.querySelector('.nav-item[data-page="sales"]'); if(nb) nb.click();
+    openSaleModal(null);
+    const cs = document.getElementById('sale-company'); cs.value = comp.id; cs.dispatchEvent(new Event('change', { bubbles: true }));
+    renderSaleItemRows(lines.map((l, i) => { const pr = prods[i]; const rate = Number(l.rate) || lastRateForCustomer(comp.id, pr.id) || Number(pr.salesRate) || 0; const qty = Number(l.qty) || 0; return { productId: pr.id, qty: qty, rate: rate, amount: qty * rate }; }));
+    document.getElementById('sale-received').value = Number(spec.received) || '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(spec.date || '')) document.getElementById('sale-date').value = spec.date;
+    recalcSaleTotals();
+    showToast('Sale form filled from your message. Please check, then Save.');
+  }
+  async function aiOpenPayment(spec){
+    const amount = Number(spec.amount) || 0;
+    const comp = aiFindCompany(spec.party || spec.customer || spec.supplier);
+    if(!comp){ aiAdd('assistant', 'I could not find "' + (spec.party || '') + '" in your Companies list. Add the company first, or tell me the exact name.', 'err'); return; }
+    if(!(amount > 0)){ aiAdd('assistant', 'I did not get an amount for this payment. Please tell me how much.', 'err'); return; }
+    document.getElementById('ai-panel').classList.remove('open');
+    const nb = document.querySelector('.nav-item[data-page="payments"]'); if(nb) nb.click();
+    openPaymentModal(null);
+    document.getElementById('payment-type').value = spec.type === 'paid' ? 'paid' : 'received';
+    populatePaymentDropdowns();
+    document.getElementById('payment-company').value = comp.id;
+    populatePaymentApplyToOptions();
+    document.getElementById('payment-amount').value = amount;
+    const ms = document.getElementById('payment-method');
+    if(spec.method){ const o = Array.from(ms.options).find(x => aiNorm(x.value) === aiNorm(spec.method) || aiNorm(x.text) === aiNorm(spec.method)); if(o) ms.value = o.value; }
+    if(/^\d{4}-\d{2}-\d{2}$/.test(spec.date || '')) document.getElementById('payment-date').value = spec.date;
+    if(spec.notes) document.getElementById('payment-notes').value = String(spec.notes);
+    autoPickPaymentInvoice();
+    showToast('Payment form filled from your message. Please check, then Save.');
   }
   function aiMakePoster(spec){
     const name = String(spec.product || '').toLowerCase().trim();
@@ -8067,8 +8213,9 @@
     aiFiles = []; aiRenderFiles();
     const wait = aiAdd('assistant', 'Thinking...', 'ai-typing');
     try{
+      try{ await loadTodos(); }catch(e){}
       const reply = await aiCallFn({ messages: aiHistory.slice(-10), data: aiSnapshot(), today: todayStr(), lang: aiLang(), files: sendFiles.map(f => ({ mime: f.mime, data: f.data })) });
-      wait.remove(); aiAdd('assistant', reply); aiHistory.push({ role: 'assistant', text: reply.replace(/\[\[TODO:.*?\]\]/g, '').trim() });
+      wait.remove(); aiAdd('assistant', reply); aiHistory.push({ role: 'assistant', text: reply.replace(/\[\[[A-Z]+:[\s\S]*?\]\]/g, '').trim() });
     }catch(e){ wait.remove(); aiHistory.pop(); aiAdd('assistant', e.message || 'Something went wrong.', 'err'); }
     aiBusy = false;
   }
@@ -8125,28 +8272,28 @@
       bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।'] } },
     products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: leave it empty and the app works it out itself (about 14 days of your recent sales). Type a number only if you want your own limit.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
       bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: ফাঁকা রাখুন, অ্যাপ নিজে হিসাব করবে (সাম্প্রতিক বিক্রির প্রায় ১৪ দিনের মজুদ)। নিজের সীমা চাইলে তবেই সংখ্যা লিখুন।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
-    recipes: { en: { what: 'For products you MIX yourself. A recipe says which raw materials, and how much of each, make one unit of the finished product.', steps: ['Press "Add recipe".', 'Choose the finished product.', 'Add each raw material with the quantity needed.', 'Save. The recipe is then used automatically in Production Log.'], tips: ['Skip this page if you only buy and resell.'] },
-      bn: { what: 'যেসব পণ্য আপনি নিজে মিশিয়ে বানান তার জন্য। রেসিপি বলে এক ইউনিট তৈরি পণ্যে কোন কাঁচামাল কত লাগে।', steps: ['"Add recipe" চাপুন।', 'তৈরি পণ্যটি বাছুন।', 'প্রতিটি কাঁচামাল ও দরকারি পরিমাণ যোগ করুন।', 'Save করুন। পরে Production Log-এ এটি নিজে থেকে কাজে লাগবে।'], tips: ['শুধু কিনে বিক্রি করলে এই পেজ লাগবে না।'] } },
-    production: { en: { what: 'Record each mixing batch. Raw materials go down, finished product goes up, and the unit cost is worked out for you.', steps: ['Press "Add batch".', 'Choose Date and the Finished product, and the Quantity produced.', 'The materials from the recipe fill in. Change the amounts if the real usage was different.', 'Save. Stock is updated automatically.'], tips: ['Make the recipe first (Mix Recipes).'] },
-      bn: { what: 'প্রতিটি মিক্সিং ব্যাচ লিখে রাখুন। কাঁচামাল কমে, তৈরি পণ্য বাড়ে এবং ইউনিট খরচ নিজে হিসাব হয়।', steps: ['"Add batch" চাপুন।', 'তারিখ, তৈরি পণ্য এবং কত উৎপাদন হলো তা দিন।', 'রেসিপি থেকে কাঁচামাল ভরে যাবে। আসল ব্যবহার আলাদা হলে সংখ্যা বদলান।', 'Save করুন। স্টক নিজে হালনাগাদ হবে।'], tips: ['আগে Mix Recipes-এ রেসিপি বানান।'] } },
+    recipes: { en: { what: 'For products you MIX yourself. A recipe says which raw materials, and how much of each, make ONE unit of the finished product. This is the only thing you must set up for mixed products.', steps: ['Press "Add recipe".', 'Choose the finished product (or create it with "+ New product").', 'Add each raw material with the quantity needed for 1 unit.', 'Save. From now on, when you sell this product and it is not in stock, the app cuts the raw materials from stock by this recipe by itself, and works the profit from the recipe cost.', 'If you edit a recipe later, the numbers change for all past sales too (stock is worked out live).'], tips: ['Skip this page if you only buy and resell.', 'Check the quantities carefully: a wrong recipe gives wrong raw-material stock and wrong profit.'] },
+      bn: { what: 'যেসব পণ্য আপনি নিজে মিশিয়ে বানান তার জন্য। রেসিপি বলে ১ ইউনিট তৈরি পণ্যে কোন কাঁচামাল কত লাগে। মিক্স করা পণ্যের জন্য শুধু এটুকুই আপনাকে ঠিক করে রাখতে হয়।', steps: ['"Add recipe" চাপুন।', 'তৈরি পণ্য বাছুন (না থাকলে "+ New product" দিয়ে বানান)।', 'প্রতিটি কাঁচামাল ও ১ ইউনিটের জন্য দরকারি পরিমাণ যোগ করুন।', 'Save করুন। এরপর এই পণ্য বিক্রির সময় স্টকে না থাকলে অ্যাপ নিজেই রেসিপি অনুযায়ী কাঁচামাল স্টক থেকে কাটে এবং রেসিপির খরচ ধরে লাভ হিসাব করে।', 'পরে রেসিপি বদলালে আগের বিক্রির হিসাবও বদলে যাবে (স্টক সবসময় তাৎক্ষণিক হিসাব হয়)।'], tips: ['শুধু কিনে বিক্রি করলে এই পেজ লাগবে না।', 'পরিমাণ সাবধানে দিন: ভুল রেসিপিতে কাঁচামালের স্টক ও লাভ ভুল আসবে।'] } },
+    production: { en: { what: 'OPTIONAL. You do not need to write anything here for normal selling: raw materials are cut automatically by the recipe when you sell a mixed product that is not in stock. Use this page only when you make a batch AHEAD of selling.', steps: ['Press "Add batch".', 'Choose Date, the Finished product and the Quantity produced.', 'The materials from the recipe fill in. Change the amounts if the real usage was different.', 'Save. Raw materials go down and the finished product goes up. Later sales use this ready stock first; only the shortage is auto-made from the recipe.'], tips: ['The Stock card of a product (Inventory page, graph icon) shows every "Auto-made from recipe" and "Used by recipe (auto)" line.'] },
+      bn: { what: 'ঐচ্ছিক। সাধারণ বিক্রির জন্য এখানে কিছু লিখতে হয় না: মিক্স করা পণ্য স্টকে না থাকলে বিক্রির সময় রেসিপি অনুযায়ী কাঁচামাল নিজে কাটা যায়। শুধু বিক্রির আগেই ব্যাচ বানালে এই পেজ ব্যবহার করুন।', steps: ['"Add batch" চাপুন।', 'তারিখ, তৈরি পণ্য এবং কত উৎপাদন হলো দিন।', 'রেসিপি থেকে কাঁচামাল ভরে যাবে। আসল ব্যবহার আলাদা হলে সংখ্যা বদলান।', 'Save করুন। কাঁচামাল কমে ও তৈরি পণ্য বাড়ে। পরের বিক্রিতে এই মজুদ আগে ব্যবহার হয়; শুধু ঘাটতিটুকু রেসিপি থেকে নিজে তৈরি ধরা হয়।'], tips: ['পণ্যের Stock card-এ (Inventory পেজ, গ্রাফ আইকন) প্রতিটি "Auto-made from recipe" ও "Used by recipe (auto)" লাইন দেখা যায়।'] } },
     purchases: { en: { what: 'Record every time you BUY goods from a supplier. Stock goes up and the supplier\'s balance is updated.', steps: ['Press "New purchase".', 'Choose the Supplier and the Product. Tap "+ New supplier" or "+ New product" if it is not in the list yet.', 'Enter Quantity and Rate per unit. Several products on one bill? Tap "Add another product". The Total is calculated.', 'Easier: tap "Scan bill", take a photo of the supplier bill and the form fills itself (management). Check it, then Save.', 'Paid amount: how much you paid right now. The rest becomes "Due" (you owe the supplier).', 'Save. Pay the due later from the Payments menu.'], tips: ['If the price you enter differs from the product\'s purchase rate, management must approve it.'] },
       bn: { what: 'সরবরাহকারীর কাছ থেকে মাল কিনলে প্রতিবার এখানে লিখুন। স্টক বাড়ে এবং সরবরাহকারীর হিসাব হালনাগাদ হয়।', steps: ['"New purchase" চাপুন।', 'সরবরাহকারী ও পণ্য বাছুন। তালিকায় না থাকলে "+ New supplier" বা "+ New product" চাপুন।', 'পরিমাণ ও প্রতি ইউনিট দাম দিন। একই বিলে একাধিক পণ্য হলে "Add another product" চাপুন। মোট নিজে হিসাব হবে।', 'সহজ উপায়: "Scan bill" চেপে সরবরাহকারীর বিলের ছবি তুলুন, ফর্ম নিজে ভরে যাবে (ম্যানেজমেন্ট)। দেখে নিয়ে Save করুন।', 'Paid amount: এখনই যত টাকা দিলেন। বাকিটা "Due" (সরবরাহকারীকে দিতে হবে)।', 'Save করুন। বাকি টাকা পরে Payments মেনু থেকে দিন।'], tips: ['পণ্যের Purchase rate-এর থেকে আলাদা দাম দিলে ম্যানেজমেন্টকে অনুমোদন দিতে হবে।'] } },
     salesOrders: { en: { what: 'Order Booking: write down what a customer wants to buy. NO bill yet, stock and money do not change.', steps: ['Press "New order".', 'Choose Date and Customer, then add the products and quantities.', 'Save. The order shows as Open.', 'When you are ready to sell, press "Convert to invoice" on that row. A bill is made with the same items.', 'If the customer cancels, mark it Cancelled.'], tips: ['Skip this page if you always bill straight away.'] },
       bn: { what: 'অর্ডার বুকিং: ক্রেতা কী কিনতে চায় তা লিখে রাখুন। এখনো বিল হয়নি, স্টক ও টাকার হিসাব বদলায় না।', steps: ['"New order" চাপুন।', 'তারিখ ও ক্রেতা বাছুন, তারপর পণ্য ও পরিমাণ যোগ করুন।', 'Save করুন। অর্ডার "Open" থাকবে।', 'বিক্রির সময় হলে সারির "Convert to invoice" চাপুন। একই আইটেম দিয়ে বিল তৈরি হবে।', 'ক্রেতা বাতিল করলে Cancelled করে দিন।'], tips: ['সবসময় সরাসরি বিল করলে এই পেজ লাগবে না।'] } },
-    sales: { en: { what: 'Sales Invoice: make the bill when goods are sold. Stock goes down and the customer\'s dues go up.', steps: ['Press "New sale".', 'Choose Date and Customer. Invoice no is suggested for you.', 'Add each product with Quantity and Rate (the list price fills in). Use "Add another item" for more products.', 'Received amount: money the customer paid right now. The rest is "Due".', 'Save. Then use the row buttons to print, download the PDF receipt, or send it on WhatsApp.', 'Delivery: set the status here or later in the Deliveries menu.'], tips: ['A price different from the list price is sent to management for approval. You will see "Pending approval" on the bill.', 'To collect the due later, use Payments, not a new bill.'] },
-      bn: { what: 'সেলস ইনভয়েস: মাল বিক্রি হলে বিল বানান। স্টক কমে এবং ক্রেতার বাকি বাড়ে।', steps: ['"New sale" চাপুন।', 'তারিখ ও ক্রেতা বাছুন। ইনভয়েস নম্বর নিজে থেকে আসবে।', 'প্রতিটি পণ্যের পরিমাণ ও দাম দিন (তালিকা দাম ভরা থাকে)। আরও পণ্যের জন্য "Add another item"।', 'Received amount: ক্রেতা এখনই যত টাকা দিল। বাকিটা "Due"।', 'Save করুন। এরপর সারির বাটনে প্রিন্ট, PDF রসিদ ডাউনলোড বা WhatsApp-এ পাঠান।', 'ডেলিভারির অবস্থা এখানে বা পরে Deliveries মেনুতে ঠিক করুন।'], tips: ['তালিকা দামের থেকে আলাদা দাম দিলে অনুমোদনের জন্য ম্যানেজমেন্টের কাছে যায়। বিলে "Pending approval" দেখাবে।', 'বাকি টাকা পরে নিতে নতুন বিল নয়, Payments ব্যবহার করুন।'] } },
+    sales: { en: { what: 'Sales Invoice: make the bill when goods are sold. Stock goes down and the customer\'s dues go up.', steps: ['Press "New sale".', 'Choose the Customer, then type the product name in the search box, add Quantity and Rate (the customer\'s last rate or list price fills in). Use "Add another item" for more products. No customer or product yet? Tap "+ New customer" / "+ New product".', 'If a mixed product is not in stock, a green note says which raw materials will be used automatically from its recipe. Nothing for you to do.', 'Received amount: money the customer paid right now. The rest is "Due".', 'Save. Then use the row buttons to print, download the PDF receipt, or send it on WhatsApp.', '"More details" holds date, invoice no, challan, notes and delivery. You rarely need it.', 'Faster: tell Ask RAR, e.g. "Sold 20 kg X to Rahim, received 5000". Press the green "Open sale form" button, check and Save.'], tips: ['A price different from the list price is sent to management for approval. You will see "Pending approval" on the bill.', 'To collect the due later, use Payments, not a new bill.'] },
+      bn: { what: 'সেলস ইনভয়েস: মাল বিক্রি হলে বিল বানান। স্টক কমে এবং ক্রেতার বাকি বাড়ে।', steps: ['"New sale" চাপুন।', 'ক্রেতা বাছুন, তারপর সার্চ বক্সে পণ্যের নাম লিখে পরিমাণ ও দাম দিন (ক্রেতার আগের দাম বা তালিকা দাম ভরা থাকে)। আরও পণ্যের জন্য "Add another item"। ক্রেতা বা পণ্য না থাকলে "+ New customer" / "+ New product" চাপুন।', 'মিক্স করা পণ্য স্টকে না থাকলে সবুজ নোটে দেখাবে রেসিপি থেকে কোন কাঁচামাল নিজে ব্যবহার হবে। আপনাকে কিছু করতে হবে না।', 'Received amount: ক্রেতা এখনই যত টাকা দিল। বাকিটা "Due"।', 'Save করুন। এরপর সারির বাটনে প্রিন্ট, PDF রসিদ ডাউনলোড বা WhatsApp-এ পাঠান।', '"More details"-এ তারিখ, ইনভয়েস নম্বর, চালান, নোট ও ডেলিভারি আছে। এটা প্রায় লাগে না।', 'আরও দ্রুত: Ask RAR-কে বলুন, যেমন "রহিমকে ২০ কেজি X বিক্রি, ৫০০০ পেয়েছি"। সবুজ "Open sale form" বাটন চাপুন, দেখে নিয়ে Save করুন।'], tips: ['তালিকা দামের থেকে আলাদা দাম দিলে অনুমোদনের জন্য ম্যানেজমেন্টের কাছে যায়। বিলে "Pending approval" দেখাবে।', 'বাকি টাকা পরে নিতে নতুন বিল নয়, Payments ব্যবহার করুন।'] } },
     deliveries: { en: { what: 'Track whether each sold order has gone out and reached the customer.', steps: ['The list shows each invoice with its status: Pending, Dispatched or Delivered.', 'When the goods leave, mark it Dispatched. Add vehicle/transport.', 'When the customer receives, mark it Delivered and write who received it.', 'Use the filter to see only Pending or Dispatched.'], tips: ['Bills pending for 3+ days appear in your alerts.'] },
       bn: { what: 'বিক্রি করা প্রতিটি মাল পাঠানো হলো কিনা এবং ক্রেতা পেল কিনা তা ট্র্যাক করুন।', steps: ['তালিকায় প্রতিটি ইনভয়েসের অবস্থা: Pending, Dispatched বা Delivered।', 'মাল বের হলে Dispatched করুন। গাড়ি/পরিবহন লিখুন।', 'ক্রেতা বুঝে পেলে Delivered করুন এবং কে গ্রহণ করল লিখুন।', 'ফিল্টার দিয়ে শুধু Pending বা Dispatched দেখুন।'], tips: ['৩ দিনের বেশি Pending থাকলে সতর্কতায় আসে।'] } },
-    payments: { en: { what: 'Record money you RECEIVE from customers or PAY to suppliers (separate from the bill).', steps: ['Press "Add payment".', 'Choose Type: Received (customer paid you) or Paid (you paid a supplier).', 'Choose the Company, Date, Amount and Method (cash, bank, bKash...).', 'Optional but best: "Apply to an outstanding invoice" so that bill\'s due is reduced.', 'Save. A receipt can be printed, downloaded or sent on WhatsApp.'], tips: ['The company balance in Tally Book changes immediately.', 'Money paid at the time of billing is already counted; do not enter it again here.'] },
-      bn: { what: 'ক্রেতার কাছ থেকে টাকা পেলে বা সরবরাহকারীকে দিলে এখানে লিখুন (বিল থেকে আলাদা)।', steps: ['"Add payment" চাপুন।', 'Type বাছুন: Received (ক্রেতা দিল) বা Paid (সরবরাহকারীকে দিলেন)।', 'কোম্পানি, তারিখ, পরিমাণ ও পদ্ধতি (নগদ, ব্যাংক, bKash...) দিন।', 'ভালো হয়: "Apply to an outstanding invoice" বেছে নিলে ওই বিলের বাকি কমে।', 'Save করুন। রসিদ প্রিন্ট, ডাউনলোড বা WhatsApp-এ পাঠানো যায়।'], tips: ['Tally Book-এ কোম্পানির ব্যালেন্স সাথে সাথে বদলায়।', 'বিলের সময় যে টাকা নেওয়া হয়েছে তা আগেই ধরা আছে, এখানে আবার লিখবেন না।'] } },
+    payments: { en: { what: 'Record money you RECEIVE from customers or PAY to suppliers (separate from the bill).', steps: ['Press "Add payment".', 'Choose Type: Received (customer paid you) or Paid (you paid a supplier).', 'Choose the Company, Date, Amount and Method (cash, bank, bKash...).', '"Which bill is this for?" fills itself with the oldest unpaid bill. Change it, or choose "General / advance" if it is not for one bill.', 'Save. A receipt can be printed, downloaded or sent on WhatsApp.', 'Faster: tell Ask RAR, e.g. "Received 20,000 from Rahim by bKash". Press the green "Open payment form" button, check and Save.'], tips: ['The company balance in Tally Book changes immediately.', 'Money paid at the time of billing is already counted; do not enter it again here.'] },
+      bn: { what: 'ক্রেতার কাছ থেকে টাকা পেলে বা সরবরাহকারীকে দিলে এখানে লিখুন (বিল থেকে আলাদা)।', steps: ['"Add payment" চাপুন।', 'Type বাছুন: Received (ক্রেতা দিল) বা Paid (সরবরাহকারীকে দিলেন)।', 'কোম্পানি, তারিখ, পরিমাণ ও পদ্ধতি (নগদ, ব্যাংক, bKash...) দিন।', '"Which bill is this for?" নিজে সবচেয়ে পুরনো বাকি বিল বেছে নেয়। বদলাতে পারেন, বা কোনো এক বিলের জন্য না হলে "General / advance" বাছুন।', 'Save করুন। রসিদ প্রিন্ট, ডাউনলোড বা WhatsApp-এ পাঠানো যায়।', 'আরও দ্রুত: Ask RAR-কে বলুন, যেমন "রহিমের কাছ থেকে bKash-এ ২০,০০০ পেয়েছি"। সবুজ "Open payment form" বাটন চাপুন, দেখে নিয়ে Save করুন।'], tips: ['Tally Book-এ কোম্পানির ব্যালেন্স সাথে সাথে বদলায়।', 'বিলের সময় যে টাকা নেওয়া হয়েছে তা আগেই ধরা আছে, এখানে আবার লিখবেন না।'] } },
     ledger: { en: { what: 'Tally Book: the full account of one company. Every bill and payment in date order with a running balance.', steps: ['Pick a company from the left list (use search).', 'Read the table: Debit = they owe you more, Credit = they paid or you bought from them. Dr = they owe you, Cr = you owe them.', 'Press "Statement" to open a printable statement with the age of dues. Download PDF or Print and send it to the customer.', 'Press "Export" for an Excel/CSV copy.'], tips: ['Red/positive balance = money to collect. Negative = money you must pay.'] },
       bn: { what: 'ট্যালি বুক: একটি কোম্পানির পূর্ণ হিসাব। তারিখ অনুযায়ী প্রতিটি বিল ও পেমেন্ট, সাথে চলতি ব্যালেন্স।', steps: ['বাঁ দিকের তালিকা থেকে কোম্পানি বাছুন (সার্চ করা যায়)।', 'টেবিল পড়ুন: Debit = তারা আপনাকে আরও বেশি দেবে, Credit = তারা দিয়েছে বা আপনি কিনেছেন। Dr = তারা আপনাকে দেবে, Cr = আপনি তাদের দেবেন।', '"Statement" চাপলে বাকির বয়স-সহ প্রিন্টযোগ্য স্টেটমেন্ট খোলে। PDF ডাউনলোড বা প্রিন্ট করে ক্রেতাকে পাঠান।', '"Export" চাপলে Excel/CSV কপি পাবেন।'], tips: ['ধনাত্মক ব্যালেন্স = টাকা পাবেন। ঋণাত্মক = টাকা দিতে হবে।'] } },
     receivables: { en: { what: 'Who owes you money and for how long. Use this every morning to decide whom to call.', steps: ['Top cards: total receivable, overdue over 30 days, over 90 days.', 'Each customer row splits the dues into 0-30, 31-60, 61-90 and 90+ days. Older = more risk.', 'Press "WhatsApp" to send a ready reminder message (Bangla + English).', 'Press "Statement" to send the full account.', 'At the bottom, "Accuracy check" warns if any company\'s balance does not match its bills and payments.'], tips: ['Payments clear the OLDEST bills first.'] },
       bn: { what: 'কে আপনাকে টাকা দেবে এবং কতদিন ধরে বাকি। প্রতিদিন সকালে দেখুন কাকে ফোন করবেন।', steps: ['উপরের কার্ডে মোট বাকি, ৩০ দিনের বেশি এবং ৯০ দিনের বেশি পুরনো বাকি।', 'প্রতিটি ক্রেতার বাকি 0-30, 31-60, 61-90 ও 90+ দিনে ভাগ করা। যত পুরনো, তত ঝুঁকি।', '"WhatsApp" চাপলে তৈরি রিমাইন্ডার মেসেজ যায় (বাংলা + English)।', '"Statement" চাপলে পুরো হিসাব পাঠানো যায়।', 'নিচের "Accuracy check" কোনো কোম্পানির ব্যালেন্স বিল ও পেমেন্টের সাথে না মিললে সতর্ক করে।'], tips: ['পেমেন্ট আগে সবচেয়ে পুরনো বিল মেটায়।'] } },
-    todo: { en: { what: 'Smart alerts and your task list in one place (management only).', steps: ['Left side: alerts the app finds by itself: late payments, low stock, undelivered bills, sales below cost, price approvals waiting.', 'Press "Open" on an alert to go to the right page.', 'Press "+ To-do" to turn an alert into a task.', 'Right side: type a task, pick a due date and priority, press Enter.', 'Tick the box when done. "Show completed" brings finished tasks back.'], tips: ['The red number on this menu and on the bell shows how much needs attention.'] },
-      bn: { what: 'স্মার্ট সতর্কতা ও কাজের তালিকা এক জায়গায় (শুধু ম্যানেজমেন্ট)।', steps: ['বাঁ দিকে অ্যাপ নিজে যা খুঁজে পায়: দেরির বাকি, কম স্টক, অডেলিভার্ড বিল, ক্ষতিতে বিক্রি, অপেক্ষমাণ price approval।', 'সতর্কতার "Open" চাপলে সঠিক পেজে যাবেন।', '"+ To-do" চাপলে সতর্কতা কাজ হয়ে যায়।', 'ডান দিকে কাজ লিখুন, তারিখ ও গুরুত্ব বেছে Enter চাপুন।', 'শেষ হলে টিক দিন। "Show completed" চাপলে শেষ হওয়া কাজ দেখা যায়।'], tips: ['এই মেনু ও ঘণ্টার লাল সংখ্যা বলে কতটা মনোযোগ দরকার।'] } },
-    inventory: { en: { what: 'How much of each product you have in stock and what it is worth.', steps: ['Each row shows opening stock, bought, produced, sold and current stock.', 'Status: In stock, Low stock (at or below reorder level) or Out of stock.', 'Use search and the stock filter to find products.', 'Stock changes automatically when you save purchases, sales and production. You never edit it here.'], tips: ['If the number looks wrong, check the product\'s Opening stock and the latest bills.'] },
-      bn: { what: 'প্রতিটি পণ্যের কতটা মজুদ আছে এবং তার মূল্য কত।', steps: ['প্রতিটি সারিতে opening stock, কেনা, উৎপাদন, বিক্রি এবং বর্তমান স্টক।', 'অবস্থা: In stock, Low stock (reorder level বা তার নিচে) বা Out of stock।', 'সার্চ ও স্টক ফিল্টার দিয়ে পণ্য খুঁজুন।', 'কেনা, বিক্রি ও উৎপাদন Save করলে স্টক নিজে বদলায়। এখানে হাতে বদলাতে হয় না।'], tips: ['সংখ্যা ভুল মনে হলে পণ্যের Opening stock ও সাম্প্রতিক বিল দেখুন।'] } },
+    todo: { en: { what: 'Smart alerts and your task list in one place (management only).', steps: ['Left side: alerts the app finds by itself: late payments, low stock, undelivered bills, sales below cost, price approvals waiting.', 'Press "Open" on an alert to go to the right page.', 'Press "+ To-do" to turn an alert into a task.', 'Right side: type a task, pick a due date and priority, press Enter.', 'Tick the box when done. "Show completed" brings finished tasks back.', 'By chat: tell Ask RAR "Remind me to call Rahim tomorrow, high priority". Press the "Add to to-do" button it shows. To finish one, say "Call Rahim is done" and press "Mark done". Ask "what are my open tasks?" to hear the list.'], tips: ['The red number on this menu and on the bell shows how much needs attention.', 'Run phase_b_todos.sql once in Supabase if tasks do not save.'] },
+      bn: { what: 'স্মার্ট সতর্কতা ও কাজের তালিকা এক জায়গায় (শুধু ম্যানেজমেন্ট)।', steps: ['বাঁ দিকে অ্যাপ নিজে যা খুঁজে পায়: দেরির বাকি, কম স্টক, অডেলিভার্ড বিল, ক্ষতিতে বিক্রি, অপেক্ষমাণ price approval।', 'সতর্কতার "Open" চাপলে সঠিক পেজে যাবেন।', '"+ To-do" চাপলে সতর্কতা কাজ হয়ে যায়।', 'ডান দিকে কাজ লিখুন, তারিখ ও গুরুত্ব বেছে Enter চাপুন।', 'শেষ হলে টিক দিন। "Show completed" চাপলে শেষ হওয়া কাজ দেখা যায়।', 'চ্যাটে: Ask RAR-কে বলুন "কাল রহিমকে ফোন করার কথা মনে করিয়ে দাও, জরুরি"। যে "Add to to-do" বাটন আসবে সেটা চাপুন। শেষ হলে বলুন "রহিমকে ফোন করা হয়ে গেছে" আর "Mark done" চাপুন। "আমার খোলা কাজ কী কী?" জিজ্ঞেস করলে তালিকা পাবেন।'], tips: ['এই মেনু ও ঘণ্টার লাল সংখ্যা বলে কতটা মনোযোগ দরকার।', 'কাজ Save না হলে Supabase-এ একবার phase_b_todos.sql চালান।'] } },
+    inventory: { en: { what: 'How much of each product you have in stock and what it is worth.', steps: ['Each row shows opening stock, bought, sold and current stock.', 'Status: In stock, Low stock (at or below reorder level, which the app works out itself unless you typed one) or Out of stock.', 'Use search and the stock filter to find products.', 'Press the graph icon on a row for its sales history, monthly trend and Stock card (every in and out, including recipe auto-made and auto-used lines).', 'Stock changes automatically when you save purchases and sales. For mixed products, raw materials are cut by the recipe when you sell without stock. You never edit stock here.'], tips: ['If the number looks wrong, check the product\'s Opening stock, its recipe and the latest bills.'] },
+      bn: { what: 'প্রতিটি পণ্যের কতটা মজুদ আছে এবং তার মূল্য কত।', steps: ['প্রতিটি সারিতে opening stock, কেনা, বিক্রি এবং বর্তমান স্টক।', 'অবস্থা: In stock, Low stock (reorder level বা তার নিচে; আপনি না লিখলে অ্যাপ নিজে হিসাব করে) বা Out of stock।', 'সার্চ ও স্টক ফিল্টার দিয়ে পণ্য খুঁজুন।', 'সারির গ্রাফ আইকনে বিক্রির ইতিহাস, মাসিক ট্রেন্ড ও Stock card (প্রতিটি ঢোকা-বেরোনো, রেসিপির auto-made ও auto-used লাইন সহ) দেখুন।', 'কেনা ও বিক্রি Save করলে স্টক নিজে বদলায়। মিক্স করা পণ্য স্টক ছাড়া বিক্রি হলে রেসিপি অনুযায়ী কাঁচামাল কাটা হয়। এখানে হাতে স্টক বদলাতে হয় না।'], tips: ['সংখ্যা ভুল মনে হলে পণ্যের Opening stock, রেসিপি ও সাম্প্রতিক বিল দেখুন।'] } },
     reports: { en: { what: 'Reports and data export.', steps: ['Monthly management report (management only): choose a Month, press View, then Download PDF.', 'Business summary: choose From and To dates to see sales, purchases and profit for that period.', 'Company-wise and Product-wise tables: press Export for an Excel/CSV copy.', 'Full data backup: "Export" saves everything to a file. Do this regularly and keep the file safe. "Import" restores a backup.'], tips: ['Take a full backup at least once a week.'] },
       bn: { what: 'রিপোর্ট ও ডেটা এক্সপোর্ট।', steps: ['মাসিক ম্যানেজমেন্ট রিপোর্ট (শুধু ম্যানেজমেন্ট): মাস বাছুন, View চাপুন, তারপর PDF ডাউনলোড।', 'Business summary: From ও To তারিখ দিলে ওই সময়ের বিক্রি, কেনা ও লাভ দেখা যায়।', 'কোম্পানি ও পণ্য অনুযায়ী টেবিল: Export চাপলে Excel/CSV পাবেন।', 'Full data backup: "Export" সব তথ্য একটি ফাইলে রাখে। নিয়মিত করুন এবং ফাইল নিরাপদে রাখুন। "Import" ব্যাকআপ ফেরত আনে।'], tips: ['অন্তত সপ্তাহে একবার ফুল ব্যাকআপ নিন।'] } },
     approvals: { en: { what: 'Price Approvals (management only). When staff use a price different from the list price, it waits here.', steps: ['Each request shows the product, the price used, and the list price.', 'Press Approve if the price is fine, or Reject (you can write a reason).', 'The staff member sees the decision on their bell.', 'The bell at the top also lets you approve quickly.'], tips: ['Every decision is saved in the Audit Log.'] },
@@ -8155,6 +8302,8 @@
       bn: { what: 'অডিট লগ (শুধু ম্যানেজমেন্ট): কে কী যোগ, বদল বা মুছেছে এবং কখন।', steps: ['সর্বশেষটা উপরে। প্রতিটিতে ইউজার, কাজ (insert / update / delete), রেকর্ড ও পরিবর্তন।', 'রেকর্ডের ধরন, ইউজার বা তারিখ দিয়ে ফিল্টার করুন অথবা সার্চ করুন।', 'Export চাপলে CSV কপি।'], tips: ['কোনো সংখ্যা ভুল মনে হলে কে বদলেছে খুঁজতে এটা ব্যবহার করুন।'] } },
     settings: { en: { what: 'Your business details, your account and (for admin) the users.', steps: ['Business profile: name, address, phone, email. These appear on bills and statements.', 'Logo, photo and login page: upload your logo and change the login picture.', 'My account: change your own password.', 'User management (admin): "Add user", choose a role. Staff get only the pages you tick. Management sees everything including approvals.'], tips: ['Give each person their own login. Never share one password.'] },
       bn: { what: 'ব্যবসার তথ্য, আপনার একাউন্ট এবং (অ্যাডমিনের জন্য) ইউজার ব্যবস্থাপনা।', steps: ['Business profile: নাম, ঠিকানা, ফোন, ইমেইল। এগুলো বিল ও স্টেটমেন্টে ছাপা হয়।', 'লোগো, ছবি ও লগইন পেজ: লোগো আপলোড ও লগইন ছবি বদলান।', 'My account: নিজের পাসওয়ার্ড বদলান।', 'User management (অ্যাডমিন): "Add user" চাপুন, Role বাছুন। Staff শুধু আপনার টিক দেওয়া পেজ দেখবে। Management সব দেখে, approval সহ।'], tips: ['প্রত্যেককে আলাদা লগইন দিন। একটি পাসওয়ার্ড শেয়ার করবেন না।'] } },
+    assistant: { en: { what: 'Ask RAR: your AI assistant (management only). Press the round "Ask RAR" button at the bottom right. It answers from your own data and prepares entries for you. It never saves anything by itself.', steps: ['Ask about money and stock, e.g. "Who owes me the most?", "How is this month\'s profit?", "Which products will run out soon?". Pick your language (English, Bangla, Chinese...) at the top of the panel.', 'Record a sale: "Sold 20 kg X to Rahim at 120, received 5000". Press the green "Open sale form" button, check, then Save.', 'Record a payment: "Received 20,000 from Rahim by bank". Press "Open payment form", check, Save.', 'Record a supplier bill: use the paperclip to attach the bill photo/PDF and ask it to record the purchase. Or use "Scan bill" on the Purchases page.', 'Tasks: "Remind me to order Dye X on Sunday". Press "Add to to-do". Say a task is done and press "Mark done".', 'Poster: "Make a poster for Softener S9". Attach a datasheet for better text. Press the poster button and download.', 'Use the microphone to speak, and the new-chat icon to start fresh.'], tips: ['If the customer or product name is not found, add it first (Companies / Products) or give the exact name.', 'Always check the filled form before saving. The assistant can misread a name or number.'] },
+      bn: { what: 'Ask RAR: আপনার AI সহকারী (শুধু ম্যানেজমেন্ট)। ডান-নিচের গোল "Ask RAR" বাটন চাপুন। এটি আপনার নিজের ডেটা থেকে উত্তর দেয় এবং এন্ট্রি তৈরি করে দেয়। নিজে থেকে কিছু Save করে না।', steps: ['টাকা ও স্টক নিয়ে জিজ্ঞেস করুন, যেমন "কার কাছে সবচেয়ে বেশি বাকি?", "এই মাসের লাভ কেমন?", "কোন পণ্য শেষ হতে যাচ্ছে?"। প্যানেলের উপরে ভাষা বাছুন (English, Bangla, Chinese...)।', 'বিক্রি লিখতে: "রহিমকে ২০ কেজি X ১২০ টাকায় বিক্রি, ৫০০০ পেয়েছি"। সবুজ "Open sale form" বাটন চাপুন, দেখে নিয়ে Save করুন।', 'পেমেন্ট লিখতে: "রহিমের কাছ থেকে ব্যাংকে ২০,০০০ পেয়েছি"। "Open payment form" চাপুন, দেখে Save করুন।', 'সরবরাহকারীর বিল লিখতে: ক্লিপ আইকনে বিলের ছবি/PDF দিয়ে কেনা লিখতে বলুন। অথবা Purchases পেজের "Scan bill" ব্যবহার করুন।', 'কাজ: "রবিবার Dye X অর্ডারের কথা মনে করিয়ে দাও"। "Add to to-do" চাপুন। কাজ শেষ হলে বলুন, তারপর "Mark done" চাপুন।', 'পোস্টার: "Softener S9-এর পোস্টার বানাও"। ভালো লেখার জন্য datasheet দিন। পোস্টার বাটন চেপে ডাউনলোড করুন।', 'কথা বলতে মাইক্রোফোন এবং নতুন চ্যাটের জন্য নতুন-চ্যাট আইকন ব্যবহার করুন।'], tips: ['ক্রেতা বা পণ্যের নাম না পেলে আগে যোগ করুন (Companies / Products) বা সঠিক নাম দিন।', 'Save করার আগে সবসময় ভরা ফর্ম দেখে নিন। সহকারী নাম বা সংখ্যা ভুল পড়তে পারে।'] } },
     manual: { en: { what: 'This manual. Every menu is explained here.', steps: ['Pick English or বাংলা at the top.', 'Search a word to find a topic.', 'On any page, press the "?" button at the top right to see that page\'s guide.'], tips: ['Ask the "Ask RAR" assistant if you are stuck.'] },
       bn: { what: 'এই ম্যানুয়াল। প্রতিটি মেনু এখানে বোঝানো আছে।', steps: ['উপরে English বা বাংলা বাছুন।', 'শব্দ সার্চ করে বিষয় খুঁজুন।', 'যেকোনো পেজে উপরে ডানের "?" বাটনে ওই পেজের গাইড দেখুন।'], tips: ['আটকে গেলে "Ask RAR" সহকারীকে জিজ্ঞেস করুন।'] } }
   };
@@ -8164,12 +8313,12 @@
     const m = MANUAL[key], t = m && (m[manLang] || m.en); if(!t) return '';
     return '<div class="man-what">' + escapeHtml(t.what) + '</div><ol class="man-steps">' + t.steps.map(x => '<li>' + escapeHtml(x) + '</li>').join('') + '</ol>' + (t.tips && t.tips.length ? '<div class="man-tips"><b>' + (manLang === 'bn' ? 'টিপস' : 'Tips') + '</b>' + t.tips.map(x => '<div>' + escapeHtml(x) + '</div>').join('') + '</div>' : '');
   }
-  function manTitle(key){ const el = document.querySelector('.nav-item[data-page="' + key + '"]'); return el ? el.textContent.replace(/\s+/g, ' ').replace(/\d+$/, '').trim() : key; }
+  function manTitle(key){ if(key === 'assistant') return 'Ask RAR (assistant)'; const el = document.querySelector('.nav-item[data-page="' + key + '"]'); return el ? el.textContent.replace(/\s+/g, ' ').replace(/\d+$/, '').trim() : key; }
   function renderManualPage(){
     const box = document.getElementById('man-list'); if(!box) return;
     const q = document.getElementById('man-search').value.trim().toLowerCase();
     document.querySelectorAll('#man-lang button').forEach(b => b.classList.toggle('on', b.getAttribute('data-l') === manLang));
-    const keys = Object.keys(MANUAL).filter(k => k === 'manual' || k === 'dashboard' || canView(k) || ((k === 'approvals' || k === 'audit' || k === 'todo' || k === 'receivables') && isPriceController()));
+    const keys = Object.keys(MANUAL).filter(k => k === 'manual' || k === 'dashboard' || canView(k) || ((k === 'approvals' || k === 'audit' || k === 'todo' || k === 'receivables' || k === 'assistant') && isPriceController()));
     const html = keys.map(k => { const body = manItemHtml(k), title = manTitle(k); if(q && !(title + ' ' + body.replace(/<[^>]+>/g, ' ')).toLowerCase().includes(q)) return '';
       return '<details class="man-card" id="man-' + k + '"' + (q ? ' open' : '') + '><summary>' + escapeHtml(title) + '</summary>' + body + '</details>'; }).join('');
     box.innerHTML = html || '<div class="empty-row">Nothing found.</div>';
