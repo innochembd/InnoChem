@@ -1373,7 +1373,7 @@
           <div class="table-wrap">
             <table class="data-table" id="sale-table">
               <thead><tr>
-                <th>Date</th><th>Invoice</th><th>Company</th><th>Items</th><th>Total</th><th>Profit</th><th>Received</th><th>Due</th><th style="width:120px;">Actions</th>
+                <th>Date</th><th>Invoice</th><th>Company</th><th>Items</th><th>Total</th><th>Profit</th><th>Received</th><th>Due</th><th style="width:160px;">Actions</th>
               </tr></thead>
               <tbody id="sale-tbody"></tbody>
             </table>
@@ -1534,6 +1534,7 @@
             <div class="m-value" id="inventory-summary-low">0</div>
           </div>
         </div>
+        <div id="inv-expiry"></div>
         <div class="card">
           <div class="table-wrap">
             <table class="data-table" id="inventory-table">
@@ -2068,6 +2069,10 @@
           </div>
         </div>
         <div class="field">
+          <label>Expiry date (optional)</label>
+          <div class="field-input-wrap"><i class="ti ti-calendar"></i><input type="date" id="production-expiry"></div>
+        </div>
+        <div class="field">
           <label>Finished product <span class="required-mark">*</span></label>
           <select id="production-product" required></select>
           <div class="field-hint" id="production-no-recipe-hint" style="display:none;color:var(--danger);">No products with a mix recipe yet — add one on the Mix Recipes page first.</div>
@@ -2156,6 +2161,17 @@
             <div class="field-input-wrap"><i class="ti ti-file-invoice"></i><input type="text" id="purchase-invoice" placeholder="e.g. PUR-1001"></div>
           </div>
         </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Batch / lot no (optional)</label>
+            <div class="field-input-wrap"><i class="ti ti-tag"></i><input type="text" id="purchase-lot" placeholder="From the supplier's label"></div>
+          </div>
+          <div class="field">
+            <label>Expiry date (optional)</label>
+            <div class="field-input-wrap"><i class="ti ti-calendar"></i><input type="date" id="purchase-expiry"></div>
+          </div>
+        </div>
+        <div class="field-hint" style="margin:-6px 0 12px;">Applies to every product on this bill. If products have different expiry dates, enter them as separate bills.</div>
         <div class="field">
           <label>Notes</label>
           <textarea id="purchase-notes" placeholder="Any additional notes"></textarea>
@@ -2250,6 +2266,8 @@
     <form id="sale-form">
       <div class="modal-body">
         <input type="hidden" id="sale-id">
+        <input type="hidden" id="sale-cn-of">
+        <div class="an-ins warn" id="sale-cn-banner" style="display:none;margin-bottom:12px;"></div>
         <div class="field">
           <label>Customer <span class="required-mark">*</span> <a href="#" class="qa-link" data-qa="company" data-ctx="sale">+ New customer</a></label>
           <select id="sale-company" required></select>
@@ -2278,7 +2296,8 @@
         </div>
         <div class="field-hint" id="sale-due-hint" style="margin-bottom:4px;">Due: ৳0</div>
         <div class="field-hint" id="sale-profit-hint" style="margin-bottom:4px;">Estimated cost/profit: ৳0 / ৳0</div>
-        <div class="field-hint" id="sale-auto-hint" style="margin-bottom:14px;display:none;color:var(--ic-green-dark);"></div>
+        <div class="field-hint" id="sale-auto-hint" style="margin-bottom:6px;display:none;color:var(--ic-green-dark);"></div>
+        <div class="field-hint" id="sale-lot-hint" style="margin-bottom:14px;display:none;color:var(--ic-green-dark);"></div>
         <details class="more-details" id="sale-more"><summary>More details (date, invoice no, challan, notes, delivery)</summary>
         <div class="form-row">
           <div class="field">
@@ -2852,8 +2871,8 @@
       toDb: p => Object.assign({ id:p.id, name:p.name, category:p.category, unit:p.unit, opening_stock:p.openingStock, purchase_rate:p.purchaseRate, sales_rate:p.salesRate, reorder_level:p.reorderLevel, notes:p.notes }, p.minMargin > 0 ? { min_margin:p.minMargin } : {})
     },
     purchases: {
-      fromDb: r => ({ id:r.id, date:r.date, invoiceNo:r.invoice_no||'', companyId:r.company_id, companyName:r.company_name, productId:r.product_id, productName:r.product_name, qty:Number(r.qty)||0, rate:Number(r.rate)||0, total:Number(r.total)||0, paid:Number(r.paid)||0, due:Number(r.due)||0, notes:r.notes||'', created_at:epoch(r.created_at) }),
-      toDb: x => ({ id:x.id, date:x.date, invoice_no:x.invoiceNo, company_id:x.companyId||null, company_name:x.companyName, product_id:x.productId||null, product_name:x.productName, qty:x.qty, rate:x.rate, total:x.total, paid:x.paid, due:x.due, notes:x.notes })
+      fromDb: r => ({ id:r.id, date:r.date, invoiceNo:r.invoice_no||'', companyId:r.company_id, companyName:r.company_name, productId:r.product_id, productName:r.product_name, qty:Number(r.qty)||0, rate:Number(r.rate)||0, total:Number(r.total)||0, paid:Number(r.paid)||0, due:Number(r.due)||0, notes:r.notes||'', lotNo:r.lot_no||'', expiry:r.expiry_date||'', created_at:epoch(r.created_at) }),
+      toDb: x => Object.assign({ id:x.id, date:x.date, invoice_no:x.invoiceNo, company_id:x.companyId||null, company_name:x.companyName, product_id:x.productId||null, product_name:x.productName, qty:x.qty, rate:x.rate, total:x.total, paid:x.paid, due:x.due, notes:x.notes }, x.lotNo ? { lot_no:x.lotNo } : {}, x.expiry ? { expiry_date:x.expiry } : {})
     },
     payments: {
       fromDb: r => ({ id:r.id, receiptNo:r.receipt_no||'', date:r.date, type:r.type, companyId:r.company_id, companyName:r.company_name, companyAddress:r.company_address||'', companyPhone:r.company_phone||'', amount:Number(r.amount)||0, method:r.method||'Cash', appliedId:r.applied_id||null, appliedLabel:r.applied_label||'', notes:r.notes||'', created_at:epoch(r.created_at) }),
@@ -2957,8 +2976,18 @@
   async function deleteByIds(table, col, ids){
     for(let i = 0; i < ids.length; i += 50){ await sbFetch(table + '?' + col + '=in.(' + ids.slice(i, i + 50).join(',') + ')', { method: 'DELETE', headers: sbHeaders() }); }
   }
+  /* Supabase returns at most 1000 rows per request, so read big tables page by page. */
+  async function sbFetchAll(path){
+    const all = [], seen = new Set();
+    for(let off = 0; off < 200000; off += 1000){
+      const rows = await sbFetch(path + (path.indexOf('?') >= 0 ? '&' : '?') + 'limit=1000&offset=' + off, { headers: sbHeaders() }) || [];
+      let fresh = 0; rows.forEach(r => { const k = r && r.id; if(k && seen.has(k)) return; if(k) seen.add(k); all.push(r); fresh++; });
+      if(rows.length < 1000 || fresh === 0) break;
+    }
+    return all;
+  }
   async function fetchFlatTable(key){
-    const rows = await sbFetch(TABLE_NAMES[key] + '?select=*&order=created_at.asc', { headers: sbHeaders() });
+    const rows = await sbFetchAll(TABLE_NAMES[key] + '?select=*&order=created_at.asc,id.asc');
     return (rows || []).map(FIELD_MAPS[key].fromDb);
   }
   async function syncFlatTable(key, arr, ch){
@@ -2983,7 +3012,7 @@
 
   /* ---- sales: header + nested line items, needs custom handling ---- */
   async function fetchSalesTable(){
-    const rows = await sbFetch('sales?select=*,sale_items(*)&order=created_at.asc', { headers: sbHeaders() });
+    const rows = await sbFetchAll('sales?select=*,sale_items(*)&order=created_at.asc,id.asc');
     return (rows || []).map(r => ({
       id:r.id, date:r.date, invoiceNo:r.invoice_no, challanNo:r.challan_no||'', companyId:r.company_id, companyName:r.company_name,
       companyAddress:r.company_address||'', companyPhone:r.company_phone||'',
@@ -3024,7 +3053,7 @@
 
   /* ---- sales orders: pre-invoice stage, mirrors the sales table pattern ---- */
   async function fetchSalesOrdersTable(){
-    const rows = await sbFetch('sales_orders?select=*,sales_order_items(*)&order=created_at.asc', { headers: sbHeaders() });
+    const rows = await sbFetchAll('sales_orders?select=*,sales_order_items(*)&order=created_at.asc,id.asc');
     return (rows || []).map(r => ({
       id:r.id, orderNo:r.order_no, date:r.date, companyId:r.company_id, companyName:r.company_name,
       companyAddress:r.company_address||'', companyPhone:r.company_phone||'',
@@ -3063,7 +3092,7 @@
 
   /* ---- mix recipes: grouped by finished product, one group = its full component list ---- */
   async function fetchRecipesTable(){
-    const rows = await sbFetch('product_recipes?select=*&order=finished_product_id.asc,sort_order.asc', { headers: sbHeaders() });
+    const rows = await sbFetchAll('product_recipes?select=*&order=finished_product_id.asc,sort_order.asc,id.asc');
     const groups = {};
     (rows || []).forEach(r => {
       if(!groups[r.finished_product_id]){
@@ -3100,11 +3129,11 @@
 
   /* ---- production batches: header + component-consumption items ---- */
   async function fetchProductionTable(){
-    const rows = await sbFetch('production_batches?select=*,production_batch_items(*)&order=created_at.asc', { headers: sbHeaders() });
+    const rows = await sbFetchAll('production_batches?select=*,production_batch_items(*)&order=created_at.asc,id.asc');
     return (rows || []).map(r => ({
       id:r.id, date:r.date, batchNo:r.batch_no||'', productId:r.product_id, productName:r.product_name,
       qtyProduced:Number(r.qty_produced)||0, totalMaterialCost:Number(r.total_material_cost)||0, unitCost:Number(r.unit_cost)||0,
-      notes:r.notes||'', created_at:epoch(r.created_at),
+      notes:r.notes||'', expiry:r.expiry_date||'', created_at:epoch(r.created_at),
       items:(r.production_batch_items||[]).map(it => ({
         componentProductId:it.component_product_id, componentName:it.component_name,
         rate:Number(it.rate)||0, usedQty:Number(it.used_qty)||0, cost:Number(it.cost)||0
@@ -3113,10 +3142,10 @@
   }
   async function syncProductionTable(arr, ch){
     const work = ch ? ch.up : arr;
-    const headers = work.map(b => ({
+    const headers = work.map(b => Object.assign({
       id:b.id, date:b.date, batch_no:b.batchNo, product_id:b.productId||null, product_name:b.productName,
       qty_produced:b.qtyProduced, total_material_cost:b.totalMaterialCost, unit_cost:b.unitCost, notes:b.notes
-    }));
+    }, b.expiry ? { expiry_date:b.expiry } : {}) );
     if(headers.length > 0){
       await sbFetch('production_batches?on_conflict=id', {
         method:'POST', headers: sbHeaders({ 'Prefer':'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(headers)
@@ -3803,6 +3832,7 @@
         <td>
           <div class="row-actions">
             ${canView('ledger') ? `<button data-id="${c.id}" class="company-statement-btn" aria-label="Statement"><i class="ti ti-file-invoice"></i></button>` : ''}
+            ${canEdit('companies') && isPriceController() && c.type !== 'Supplier' ? `<button data-id="${c.id}" class="company-price-btn" aria-label="Special prices" title="Special prices"><i class="ti ti-tag"></i></button>` : ''}
             ${canEdit('companies') ? `<button data-id="${c.id}" class="company-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>` : ''}
             ${canDelete('companies') ? `<button data-id="${c.id}" class="company-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : ''}
           </div>
@@ -3816,6 +3846,7 @@
       if(ledger) openStatementModal(ledger);
     }));
     tbody.querySelectorAll('.company-edit-btn').forEach(b => b.addEventListener('click', () => openCompanyModal(b.getAttribute('data-id'))));
+    tbody.querySelectorAll('.company-price-btn').forEach(b => b.addEventListener('click', () => openPriceList(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.company-delete-btn').forEach(b => b.addEventListener('click', () => {
       const id = b.getAttribute('data-id');
       const c = companiesCache.find(x => x.id === id);
@@ -4408,6 +4439,7 @@
       document.getElementById('production-product').value = b.productId;
       document.getElementById('production-qty').value = b.qtyProduced;
       document.getElementById('production-notes').value = b.notes || '';
+      document.getElementById('production-expiry').value = b.expiry || '';
     } else {
       document.getElementById('production-modal-title').textContent = 'Log production';
       document.getElementById('production-id').value = '';
@@ -4453,6 +4485,7 @@
         productId, productName: product ? product.name : '',
         qtyProduced, totalMaterialCost: totalCost, unitCost,
         notes: document.getElementById('production-notes').value.trim(),
+        expiry: document.getElementById('production-expiry').value || '',
         created_at: id ? (productionCache.find(x=>x.id===id)||{}).created_at || Date.now() : Date.now(),
         items: items.map(it => ({ componentProductId: it.componentProductId, componentName: it.componentName, rate: it.rate, usedQty: it.usedQty, cost: it.cost }))
       };
@@ -4624,6 +4657,9 @@
       document.getElementById('purchase-rate').value = p.rate;
       document.getElementById('purchase-paid').value = p.paid;
       document.getElementById('purchase-notes').value = p.notes || '';
+      document.getElementById('purchase-lot').value = p.lotNo || '';
+      document.getElementById('purchase-expiry').value = p.expiry || '';
+      if(p.lotNo || p.expiry){ const pm = document.getElementById('purchase-more'); if(pm) pm.open = true; }
     } else {
       document.getElementById('purchase-modal-title').textContent = 'Add purchase';
       document.getElementById('purchase-id').value = '';
@@ -4688,6 +4724,7 @@
       const date = document.getElementById('purchase-date').value || todayStr();
       const invoiceNo = document.getElementById('purchase-invoice').value.trim();
       const notes = document.getElementById('purchase-notes').value.trim();
+      const lotNo = document.getElementById('purchase-lot').value.trim(), expiry = document.getElementById('purchase-expiry').value || '';
       let remaining = paidTotal;
       const saved = lines.map((l, i) => {
         const product = productsCache.find(p => p.id === l.productId);
@@ -4698,7 +4735,7 @@
           id: (id && i === 0) ? id : uid(), date, invoiceNo,
           companyId, companyName: company ? company.name : '(deleted company)',
           productId: l.productId, productName: product ? product.name : '(deleted product)',
-          qty: l.qty, rate: l.rate, total, paid, due: Math.max(total - paid, 0), notes,
+          qty: l.qty, rate: l.rate, total, paid, due: Math.max(total - paid, 0), notes, lotNo, expiry,
           created_at: (id && i === 0) ? ((purchasesCache.find(x => x.id === id) || {}).created_at || Date.now()) : Date.now() + i
         };
       });
@@ -4849,6 +4886,7 @@
       lowEl.innerHTML = low.length
         ? low.map(r => `<div class="dash-row"><div><div class="dr-name">${escapeHtml(r.product.name)}</div><div class="dr-sub">Reorder at ${Number(r.reorderEff).toLocaleString()} ${escapeHtml(r.product.unit)}${r.reorderAuto ? ' (auto)' : ''}</div></div><div class="dr-val late">${r.currentStock.toLocaleString()} ${escapeHtml(r.product.unit)}</div></div>`).join('')
         : '<div class="empty-row"><i class="ti ti-circle-check" style="color:var(--success);"></i> Nothing running low. Alerts work out by themselves from your sales pace.</div>';
+      try{ const ex = expiryAlerts().slice(0, 5); if(ex.length) lowEl.innerHTML += '<div class="dr-name" style="margin:12px 0 4px;"><i class="ti ti-clock"></i> Expiry</div>' + ex.map(l => `<div class="dash-row"><div><div class="dr-name">${escapeHtml(l.product.name)}</div><div class="dr-sub">${l.lot ? 'Lot ' + escapeHtml(l.lot) + ', ' : ''}${escapeHtml(l.expiry)}</div></div><div class="dr-val late">${l.days < 0 ? 'expired' : l.days + ' d'}</div></div>`).join(''); }catch(e){}
     }
   }
 
@@ -4999,6 +5037,20 @@
     return `${escapeHtml(items[0].productName)} <span class="cell-sub">+${items.length - 1} more item${items.length - 1 > 1 ? 's' : ''}</span>`;
   }
 
+  /* ---- Sales return / credit note: a bill with negative quantities and invoice no CN-... ---- */
+  function isCN(s){ return !!s && String(s.invoiceNo || '').indexOf('CN-') === 0; }
+  function cnOriginalNo(s){ const m = /^\[RETURN:([^\]]+)\]/.exec(String((s && s.notes) || '')); return m ? m[1] : ''; }
+  function nextCreditNo(){
+    const prefix = 'CN-' + yearMonthPrefix() + '-';
+    const count = salesCache.filter(s => (s.invoiceNo || '').startsWith(prefix)).length;
+    return prefix + String(count + 1).padStart(4, '0');
+  }
+  /* quantity of each product already returned against an invoice (positive numbers) */
+  function returnedQtyFor(invoiceNo, exceptId){
+    const got = {};
+    salesCache.forEach(c => { if(!isCN(c) || c.id === exceptId || cnOriginalNo(c) !== invoiceNo) return; (c.items || []).forEach(it => { got[it.productId] = (got[it.productId] || 0) + Math.abs(Number(it.qty) || 0); }); });
+    return got;
+  }
   function saleProfit(s){
     return (s.items||[]).reduce((sum, it) => sum + ((Number(it.amount)||0) - (Number(it.cost)||0) * (Number(it.qty)||0)), 0);
   }
@@ -5043,7 +5095,7 @@
       const profit = saleProfit(s);
       return `<tr>
         <td>${escapeHtml(s.date)}</td>
-        <td><b>${escapeHtml(s.invoiceNo)}</b>${approvalBadge('sale', s.id)}</td>
+        <td><b>${escapeHtml(s.invoiceNo)}</b>${isCN(s) ? ' <span class="an-chip warn">Return</span>' : ''}${approvalBadge('sale', s.id)}${isCN(s) && cnOriginalNo(s) ? '<div class="cell-sub">against ' + escapeHtml(cnOriginalNo(s)) + '</div>' : ''}</td>
         <td><div class="cell-name">${escapeHtml(s.companyName)}</div></td>
         <td>${summarizeItems(s.items)}</td>
         <td><b>${fmtMoney(s.total)}</b></td>
@@ -5053,8 +5105,9 @@
         <td>
           <div class="row-actions">
             <button data-id="${s.id}" class="sale-receipt-btn" aria-label="View receipt" title="View invoice"><i class="ti ti-receipt"></i></button>
-            <button data-id="${s.id}" class="sale-challan-btn" aria-label="View challan" title="View delivery challan"><i class="ti ti-truck-delivery"></i></button>
-            ${canEdit('sales') ? `<button data-id="${s.id}" class="sale-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>` : ''}
+            ${isCN(s) ? '' : `<button data-id="${s.id}" class="sale-challan-btn" aria-label="View challan" title="View delivery challan"><i class="ti ti-truck-delivery"></i></button>`}
+            ${!isCN(s) && canEdit('sales') ? `<button data-id="${s.id}" class="sale-return-btn" aria-label="Return" title="Sales return / credit note"><i class="ti ti-receipt-off"></i></button>` : ''}
+            ${!isCN(s) && canEdit('sales') ? `<button data-id="${s.id}" class="sale-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>` : ''}
             ${canDelete('sales') ? `<button data-id="${s.id}" class="sale-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : ''}
           </div>
         </td>
@@ -5062,6 +5115,7 @@
     }).join('');
 
     tbody.querySelectorAll('.sale-edit-btn').forEach(b => b.addEventListener('click', () => openSaleModal(b.getAttribute('data-id'))));
+    tbody.querySelectorAll('.sale-return-btn').forEach(b => b.addEventListener('click', () => openCreditNote(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.sale-receipt-btn').forEach(b => b.addEventListener('click', () => openReceiptModal(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.sale-challan-btn').forEach(b => b.addEventListener('click', () => openChallanModal(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.sale-delete-btn').forEach(b => b.addEventListener('click', () => {
@@ -5100,6 +5154,41 @@
         <input type="text" class="sale-item-amount" readonly placeholder="৳0" value="${item.amount ? fmtMoney(item.amount) : ''}">
         <button type="button" class="sale-item-remove" aria-label="Remove item"><i class="ti ti-trash"></i></button>
       </div>`;
+  }
+
+  /* ---- Customer price list: a fixed rate for one customer + product. Kept in its own table; if the table is missing the app simply works without it. ---- */
+  let customerPricesCache = [], customerPricesOk = true;
+  async function loadCustomerPrices(){
+    if(!currentUser || !navigator.onLine) return;
+    try{ const rows = await sbFetch('customer_prices?select=*&limit=5000', { headers: sbHeaders() }); customerPricesCache = (rows || []).map(r => ({ id: r.id, companyId: r.company_id, productId: r.product_id, rate: Number(r.rate) || 0 })); customerPricesOk = true; }
+    catch(e){ customerPricesCache = []; customerPricesOk = false; }
+  }
+  function specialRateFor(companyId, productId){
+    const x = customerPricesCache.find(c => c.companyId === companyId && c.productId === productId);
+    return x ? x.rate : 0;
+  }
+  function openPriceList(companyId){
+    const c = companiesCache.find(x => x.id === companyId); if(!c) return;
+    if(!customerPricesOk){ showToast('Price lists need a one-time database update. Ask your developer to run phase_h_new_features.sql'); return; }
+    let m = document.getElementById('price-list-modal');
+    if(!m){ m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'price-list-modal'; document.body.appendChild(m); }
+    const prods = productsCache.slice().sort((a, b) => a.name.localeCompare(b.name));
+    m.innerHTML = '<div class="modal" style="max-width:640px;"><div class="modal-head"><h3>Special prices: ' + escapeHtml(c.name) + '</h3><button class="modal-close" id="pl-x"><i class="ti ti-x"></i></button></div><div class="modal-body" style="padding:18px;max-height:70vh;overflow:auto;"><div class="cell-sub" style="margin-bottom:10px;">Type a rate only for products where this customer has an agreed price. Leave blank to use the normal rate. The sale form fills this rate by itself, and staff do not need approval for it.</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th class="r">Normal rate</th><th class="r">Last billed</th><th class="r" style="width:130px;">Special rate</th></tr></thead><tbody>' +
+      prods.map(p => { const sp = specialRateFor(companyId, p.id), last = lastRateForCustomer(companyId, p.id); return '<tr><td><b>' + escapeHtml(p.name) + '</b> <span class="cell-sub">' + escapeHtml(p.unit || '') + '</span></td><td class="r">' + (p.salesRate ? fmtMoney(p.salesRate) : '-') + '</td><td class="r">' + (last ? fmtMoney(last) : '-') + '</td><td class="r"><input type="number" step="0.01" min="0" class="pl-rate" data-pid="' + p.id + '" data-last="' + (last || '') + '" value="' + (sp || '') + '" style="width:110px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:8px;"></td></tr>'; }).join('') +
+      '</tbody></table></div></div><div class="modal-foot"><button type="button" class="btn-secondary" id="pl-fill">Fill empty ones from last billed rates</button><button type="button" class="btn-primary sm" id="pl-save"><i class="ti ti-device-floppy"></i> Save prices</button></div></div>';
+    m.classList.add('open');
+    m.querySelector('#pl-x').onclick = () => m.classList.remove('open');
+    m.querySelector('#pl-fill').onclick = () => m.querySelectorAll('.pl-rate').forEach(i => { if(!i.value && i.dataset.last) i.value = i.dataset.last; });
+    m.querySelector('#pl-save').onclick = async () => {
+      const up = [], del = [];
+      m.querySelectorAll('.pl-rate').forEach(i => { const pid = i.dataset.pid, v = parseFloat(i.value) || 0, old = customerPricesCache.find(x => x.companyId === companyId && x.productId === pid);
+        if(v > 0 && (!old || Math.abs(old.rate - v) > 0.0001)) up.push({ company_id: companyId, product_id: pid, rate: v }); if(!(v > 0) && old) del.push(old.id); });
+      try{
+        if(up.length) await sbFetch('customer_prices?on_conflict=company_id,product_id', { method: 'POST', headers: sbHeaders({ Prefer: 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(up) });
+        if(del.length) await deleteByIds('customer_prices', 'id', del);
+        await loadCustomerPrices(); m.classList.remove('open'); showToast('Prices saved: ' + (up.length + del.length) + ' change' + (up.length + del.length === 1 ? '' : 's'));
+      }catch(e){ console.error(e); showToast('Could not save prices. Check the connection or run phase_h_new_features.sql'); }
+    };
   }
 
   /* The rate this customer was last charged for a product (most recent sale first). */
@@ -5147,10 +5236,10 @@
         const opt = this.options[this.selectedIndex];
         // Fill the rate only if it's empty or was auto-filled earlier (never overwrite a rate typed by hand).
         if(opt && (!rateInput.value || rateInput.dataset.auto === '1')){
-          const last = lastRateForCustomer(document.getElementById('sale-company').value, this.value);
-          rateInput.value = last || opt.getAttribute('data-rate') || '';
+          const cid = document.getElementById('sale-company').value, special = specialRateFor(cid, this.value), last = lastRateForCustomer(cid, this.value);
+          rateInput.value = special || last || opt.getAttribute('data-rate') || '';
           rateInput.dataset.auto = '1';
-          if(last) rateInput.title = 'Last rate charged to this customer';
+          rateInput.title = special ? "This customer's agreed price" : (last ? 'Last rate charged to this customer' : '');
         }
         recalcSaleTotals();
       };
@@ -5217,12 +5306,14 @@
     const received = parseFloat(document.getElementById('sale-received').value) || 0;
     const due = Math.max(total - received, 0);
     document.getElementById('sale-total-display').value = fmtMoney(total);
-    document.getElementById('sale-due-hint').textContent = 'Due: ' + fmtMoney(due) + (received > total ? '  (received exceeds total)' : '');
+    const cnMode = !!(document.getElementById('sale-cn-of') && document.getElementById('sale-cn-of').value);
+    document.getElementById('sale-due-hint').textContent = cnMode ? 'Credit to the customer: ' + fmtMoney(total) : 'Due: ' + fmtMoney(due) + (received > total ? '  (received exceeds total)' : '');
     const profit = total - totalCost;
     const profitHint = document.getElementById('sale-profit-hint');
     profitHint.textContent = 'Estimated cost/profit: ' + fmtMoney(totalCost) + ' / ' + fmtMoney(profit);
     profitHint.style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
     updateSaleAutoHint();
+    updateSaleLotHint();
   }
   /* new sale only: tell the user when stock is short and the recipe will cut raw materials by itself */
   function updateSaleAutoHint(){
@@ -5257,9 +5348,36 @@
     if(lines.length){ el.textContent = 'Auto from recipe → ' + lines.join(' | '); el.style.display = ''; }
   }
 
+  function cnReset(){
+    const a = document.getElementById('sale-cn-of'); if(a) a.value = '';
+    const b = document.getElementById('sale-cn-banner'); if(b){ b.style.display = 'none'; b.textContent = ''; }
+    const c = document.getElementById('sale-company'); if(c) c.disabled = false;
+    const r = document.getElementById('sale-received'); if(r) r.disabled = false;
+  }
+  function openCreditNote(saleId){
+    const o = salesCache.find(x => x.id === saleId); if(!o || isCN(o)) return;
+    openSaleModal(null);
+    document.getElementById('sale-modal-title').textContent = 'Sales return / credit note';
+    document.getElementById('sale-cn-of').value = o.id;
+    document.getElementById('sale-company').value = o.companyId;
+    document.getElementById('sale-company').disabled = true;
+    document.getElementById('sale-invoice').value = nextCreditNo();
+    document.getElementById('sale-challan').value = '';
+    document.getElementById('sale-received').value = ''; document.getElementById('sale-received').disabled = true;
+    document.getElementById('sale-notes').value = '';
+    const done = returnedQtyFor(o.invoiceNo);
+    const items = (o.items || []).map(it => ({ productId: it.productId, qty: Math.max((Number(it.qty) || 0) - (done[it.productId] || 0), 0), rate: Number(it.rate) || 0, amount: 0 })).filter(it => it.qty > 0);
+    renderSaleItemRows(items.length ? items : null);
+    const b = document.getElementById('sale-cn-banner');
+    b.innerHTML = '<b>Return against ' + escapeHtml(o.invoiceNo) + '</b> (' + escapeHtml(o.companyName) + '). Change the quantity to what the customer is really sending back, and delete lines that are not returned. The goods go back into your stock and the customer balance goes down by this amount. If you also give money back, record it in Payments as Paid.';
+    b.style.display = '';
+    document.getElementById('sale-due-hint').textContent = 'Credit to the customer: ' + fmtMoney(items.reduce((a, it) => a + it.qty * it.rate, 0));
+    const sm = document.getElementById('sale-more'); if(sm) sm.open = false;
+  }
   function openSaleModal(id){
     const form = document.getElementById('sale-form');
     form.reset();
+    cnReset();
     populateSaleDropdowns();
     if(id){
       const s = salesCache.find(x => x.id === id);
@@ -5299,6 +5417,7 @@
     document.getElementById('sale-search').addEventListener('input', renderSales);
     document.getElementById('sale-company-filter').addEventListener('change', renderSales);
     document.getElementById('sale-received').addEventListener('input', recalcSaleTotals);
+    document.getElementById('sale-company').addEventListener('change', () => { document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => { const r = row.querySelector('.sale-item-rate'), ps = row.querySelector('.sale-item-product'); if(ps.value && r.dataset.auto === '1'){ r.value = ''; ps.onchange && ps.onchange(); } }); });
     document.getElementById('sale-add-item-btn').addEventListener('click', () => {
       document.getElementById('sale-items-wrap').insertAdjacentHTML('beforeend', createSaleItemRow(null));
       wireSaleItemRowEvents();
@@ -5335,24 +5454,33 @@
       if(!invoiceNo){ showToast('Invoice number is required'); return; }
       if(items.length === 0){ showToast('Add at least one item with a product and quantity'); return; }
       const company = companiesCache.find(c => c.id === companyId);
-      const received = parseFloat(document.getElementById('sale-received').value) || 0;
+      const cnOf = document.getElementById('sale-cn-of').value, cnOrig = cnOf ? salesCache.find(x => x.id === cnOf) : null;
+      if(cnOf && !cnOrig){ showToast('The original bill was not found'); return; }
+      if(cnOrig){
+        const sold = {}; (cnOrig.items || []).forEach(it => { sold[it.productId] = (sold[it.productId] || 0) + (Number(it.qty) || 0); });
+        const got = returnedQtyFor(cnOrig.invoiceNo), taken = {};
+        for(const it of items){ taken[it.productId] = (taken[it.productId] || 0) + it.qty; const left = (sold[it.productId] || 0) - (got[it.productId] || 0);
+          if(taken[it.productId] > left + 0.0001){ showToast('"' + it.productName + '": only ' + (Math.round(left * 1000) / 1000) + ' ' + (it.unit || '') + ' can still be returned on ' + cnOrig.invoiceNo); return; } }
+        items.forEach(it => { const oi = (cnOrig.items || []).find(x => x.productId === it.productId); const cost = oi && Number(oi.cost) > 0 ? Number(oi.cost) : it.cost; it.qty = -it.qty; it.amount = -it.amount; it.cost = cost; });
+      }
+      const received = cnOrig ? 0 : (parseFloat(document.getElementById('sale-received').value) || 0);
       const total = items.reduce((s, it) => s + it.amount, 0);
-      const due = Math.max(total - received, 0);
+      const due = cnOrig ? 0 : Math.max(total - received, 0);
       const id = document.getElementById('sale-id').value;
-      if(saleWarnOk){ saleWarnOk = false; }
+      if(cnOrig || saleWarnOk){ saleWarnOk = false; }
       else { const warns = saleRiskWarnings(companyId, items, total, received, id); if(warns.length){ openConfirm('Check before saving', warns.join('\n'), () => { saleWarnOk = true; document.getElementById('sale-form').requestSubmit(); }, 'Save anyway'); return; } }
       const data = {
         id: id || uid(),
         date: document.getElementById('sale-date').value || todayStr(),
         invoiceNo,
-        challanNo: document.getElementById('sale-challan').value.trim() || nextChallanNo(),
+        challanNo: cnOrig ? '' : (document.getElementById('sale-challan').value.trim() || nextChallanNo()),
         companyId, companyName: company ? company.name : '(deleted company)',
         companyAddress: company ? company.address : '',
         companyPhone: company ? company.phone : '',
         items, total, received, due,
-        notes: document.getElementById('sale-notes').value.trim(),
-        deliveryStatus: document.getElementById('sale-delivery-status').value || 'pending',
-        deliveryDate: document.getElementById('sale-delivery-date').value || '',
+        notes: (cnOrig ? '[RETURN:' + cnOrig.invoiceNo + '] ' : '') + document.getElementById('sale-notes').value.trim(),
+        deliveryStatus: cnOrig ? 'delivered' : (document.getElementById('sale-delivery-status').value || 'pending'),
+        deliveryDate: cnOrig ? (document.getElementById('sale-date').value || todayStr()) : (document.getElementById('sale-delivery-date').value || ''),
         deliveryVehicle: document.getElementById('sale-delivery-vehicle').value.trim(),
         deliveryReceiver: document.getElementById('sale-delivery-receiver').value.trim(),
         created_at: id ? (salesCache.find(x=>x.id===id)||{}).created_at || Date.now() : Date.now()
@@ -5369,11 +5497,11 @@
       } else {
         if(!queueOfflineSale(data)){ return; }
       }
-      priceApprovalHook('sale', data);
+      if(!cnOrig) priceApprovalHook('sale', data);
       closeSaleModal();
       renderSales();
       refreshDashboard();
-      showToast(saved ? (id ? 'Sale updated' : 'Sale recorded') : 'Saved offline — will sync when internet returns');
+      showToast(saved ? (cnOrig ? 'Credit note recorded' : id ? 'Sale updated' : 'Sale recorded') : 'Saved offline — will sync when internet returns');
       openReceiptModal(data.id);
     });
   }
@@ -5401,7 +5529,7 @@
     if(!searchEl || !statusEl) return;
     const search = searchEl.value.trim().toLowerCase();
     const statusFilter = statusEl.value;
-    let rows = salesCache.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
+    let rows = salesCache.filter(s => !isCN(s)).sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
     if(search){
       rows = rows.filter(s =>
         (s.invoiceNo||'').toLowerCase().includes(search) ||
@@ -5417,7 +5545,7 @@
 
     document.getElementById('delivery-summary-pending').textContent = salesCache.filter(s=>(s.deliveryStatus||'pending')==='pending').length;
     document.getElementById('delivery-summary-dispatched').textContent = salesCache.filter(s=>s.deliveryStatus==='dispatched').length;
-    document.getElementById('delivery-summary-delivered').textContent = salesCache.filter(s=>s.deliveryStatus==='delivered').length;
+    document.getElementById('delivery-summary-delivered').textContent = salesCache.filter(s=>!isCN(s) && s.deliveryStatus==='delivered').length;
 
     const tbody = document.getElementById('delivery-tbody');
     const table = document.getElementById('delivery-table');
@@ -5928,7 +6056,7 @@
         ${profileCache.bin ? `<span>BIN/TIN: ${escapeHtml(profileCache.bin)}</span>` : ''}
       </div>
 
-      <div class="rc-doctitle-row"><span class="rc-doc-pill">Commercial invoice</span></div>
+      <div class="rc-doctitle-row"><span class="rc-doc-pill">${isCN(sale) ? 'Credit note (sales return)' : 'Commercial invoice'}</span></div>
 
       <div class="rc-meta-row">
         <div class="rc-billto">
@@ -6602,9 +6730,10 @@
       const itemDesc = (s.items && s.items.length)
         ? (s.items.length === 1 ? s.items[0].productName : `${s.items.length} items`)
         : '';
+      const stot = Number(s.total) || 0;
       entries.push({ date: s.date, created_at: s.created_at, type:'sale',
-        particulars: `Sale — ${s.invoiceNo} — ${itemDesc}`,
-        debit: Number(s.total)||0, credit: 0 });
+        particulars: `${isCN(s) ? 'Credit note (return)' : 'Sale'} — ${s.invoiceNo} — ${itemDesc}`,
+        debit: Math.max(stot, 0), credit: Math.max(-stot, 0) });
       const sb = saleAtBilling(s);
       if(sb > 0) entries.push({ date: s.date, created_at: (s.created_at||0) + 1, type:'payment',
         particulars: `Received at billing — ${s.invoiceNo}`, debit: 0, credit: sb });
@@ -6929,12 +7058,52 @@
       return { product: p, reorderEff, reorderAuto: !(Number(p.reorderLevel) > 0) && autoLevel > 0, purchasedQty, soldQty, producedQty, consumedQty, autoMadeQty, autoUsedQty, openingQty, currentStock, avgCost, stockValue, status };
     });
   }
+  /* ---- Batch / expiry: lots that carry an expiry date. Stock that left (sold, used) is taken from the earliest expiry first (FEFO). ---- */
+  function computeLots(){
+    const inv = {}; computeInventory().forEach(r => { inv[r.product.id] = r; });
+    const by = {};
+    purchasesCache.forEach(x => { if(x.expiry && x.productId) (by[x.productId] = by[x.productId] || []).push({ lot: x.lotNo || x.invoiceNo || '', expiry: x.expiry, qty: Number(x.qty) || 0, date: x.date || '', src: 'Purchase ' + (x.invoiceNo || '') }); });
+    (productionCache || []).forEach(b => { if(b.expiry && b.productId) (by[b.productId] = by[b.productId] || []).push({ lot: b.batchNo || '', expiry: b.expiry, qty: Number(b.qtyProduced) || 0, date: b.date || '', src: 'Production ' + (b.batchNo || '') }); });
+    const today = todayStr(), out = [];
+    Object.keys(by).forEach(pid => {
+      const r = inv[pid]; if(!r) return;
+      let go = Math.max((r.soldQty || 0) + (r.consumedQty || 0) + (r.autoUsedQty || 0), 0);
+      by[pid].sort((a, b) => a.expiry.localeCompare(b.expiry) || a.date.localeCompare(b.date)).forEach(l => {
+        const take = Math.min(go, l.qty); go -= take;
+        const left = l.qty - take; if(left <= 0.0005) return;
+        const days = daysBetweenStr(today, l.expiry);
+        out.push({ product: r.product, lot: l.lot, src: l.src, expiry: l.expiry, qty: l.qty, left: left, days: days, cost: r.avgCost, value: left * r.avgCost, status: days < 0 ? 'expired' : days <= 60 ? 'soon' : 'ok' });
+      });
+    });
+    return out.sort((a, b) => a.expiry.localeCompare(b.expiry));
+  }
+  function expiryAlerts(){ return computeLots().filter(l => l.status !== 'ok'); }
+  function expiryLine(l){ return l.product.name + (l.lot ? ' (lot ' + l.lot + ')' : '') + ': ' + (Math.round(l.left * 100) / 100).toLocaleString() + ' ' + (l.product.unit || '') + (l.days < 0 ? ' expired ' + (-l.days) + ' days ago' : ' expires in ' + l.days + ' days (' + l.expiry + ')'); }
+  function renderExpiryWatch(){
+    const el = document.getElementById('inv-expiry'); if(!el) return;
+    const lots = computeLots();
+    if(!lots.length){ el.innerHTML = '<div class="cell-sub" style="margin:0 0 16px;"><i class="ti ti-info-circle"></i> Expiry tracking is off for now. Enter a batch no and expiry date when you record a purchase or a production batch, and expiring stock will be listed here.</div>'; return; }
+    const lab = { expired: ['Expired', 'bad'], soon: ['Expiring soon', 'warn'], ok: ['OK', 'good'] }, bad = lots.filter(l => l.status === 'expired').reduce((a, l) => a + l.value, 0), soon = lots.filter(l => l.status === 'soon').reduce((a, l) => a + l.value, 0);
+    el.innerHTML = '<div class="card card-pad" style="margin-bottom:16px;"><div class="section-title"><i class="ti ti-clock"></i> Expiry watch' + (bad > 0 ? ' <span class="an-chip bad">Expired ' + fmtMoney(bad) + '</span>' : '') + (soon > 0 ? ' <span class="an-chip warn">Expiring in 60 days ' + fmtMoney(soon) + '</span>' : '') + '</div><div class="cell-sub" style="margin-bottom:8px;">Sell the earliest expiry first. Quantities assume stock leaves in expiry order.</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th>Batch / lot</th><th>Expiry</th><th class="r">Left</th><th class="r">Value</th><th>Status</th></tr></thead><tbody>' +
+      lots.map(l => '<tr><td><b>' + escapeHtml(l.product.name) + '</b></td><td>' + escapeHtml(l.lot || '-') + '</td><td>' + escapeHtml(l.expiry) + ' <span class="cell-sub">(' + (l.days < 0 ? (-l.days) + ' d ago' : l.days + ' d') + ')</span></td><td class="r">' + (Math.round(l.left * 100) / 100).toLocaleString() + ' ' + escapeHtml(l.product.unit || '') + '</td><td class="r">' + fmtMoney(l.value) + '</td><td><span class="an-chip ' + lab[l.status][1] + '">' + lab[l.status][0] + '</span></td></tr>').join('') + '</tbody></table></div></div>';
+  }
+  /* sale form: tell which lot to send first */
+  function updateSaleLotHint(){
+    const el = document.getElementById('sale-lot-hint'); if(!el) return;
+    el.style.display = 'none'; if(document.getElementById('sale-cn-of') && document.getElementById('sale-cn-of').value) return;
+    const ids = {}; document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => { const pid = row.querySelector('.sale-item-product').value; if(pid) ids[pid] = 1; });
+    const keys = Object.keys(ids); if(!keys.length) return;
+    let lots; try{ lots = computeLots(); }catch(e){ return; }
+    const lines = []; keys.forEach(pid => { const l = lots.find(x => x.product.id === pid); if(l) lines.push(l.product.name + ': send lot ' + (l.lot || '(no number)') + ' first, ' + (Math.round(l.left * 100) / 100).toLocaleString() + ' ' + (l.product.unit || '') + ' left, expiry ' + l.expiry + (l.status === 'expired' ? ' (EXPIRED)' : l.status === 'soon' ? ' (soon)' : '')); });
+    if(lines.length){ el.textContent = 'Batch → ' + lines.join(' | '); el.style.display = ''; el.style.color = lots.some(l => l.status === 'expired' && keys.indexOf(l.product.id) >= 0) ? 'var(--danger)' : 'var(--ic-green-dark)'; }
+  }
   function avgCostForProduct(productId){
     const row = computeInventory().find(i => i.product.id === productId);
     return row ? row.avgCost : 0;
   }
 
   function renderInventory(){
+    try{ renderExpiryWatch(); }catch(e){ console.error(e); }
     const search = document.getElementById('inventory-search').value.trim().toLowerCase();
     const stockFilter = document.getElementById('inventory-stock-filter').value;
     let rows = computeInventory().sort((a,b)=> a.product.name.localeCompare(b.product.name));
@@ -7655,10 +7824,11 @@
   function apprOutboxRead(){ try{ return JSON.parse(localStorage.getItem(APPR_OUTBOX) || '[]'); }catch(e){ return []; } }
   function apprOutboxWrite(a){ try{ localStorage.setItem(APPR_OUTBOX, JSON.stringify(a)); }catch(e){} }
 
-  function priceDeviations(kind, items){
+  function priceDeviations(kind, items, companyId){
     return (items || []).map(it => {
       const p = productsCache.find(x => x.id === it.productId);
-      const list = p ? (Number(kind === 'sale' ? p.salesRate : p.purchaseRate) || 0) : 0;
+      let list = p ? (Number(kind === 'sale' ? p.salesRate : p.purchaseRate) || 0) : 0;
+      if(kind === 'sale' && companyId){ const sp = specialRateFor(companyId, it.productId); if(sp > 0) list = sp; }
       return { product: it.productName || '', qty: Number(it.qty) || 0, rate: Number(it.rate) || 0, list_rate: list };
     }).filter(l => Math.abs(l.rate - l.list_rate) > 0.0001);
   }
@@ -7694,7 +7864,7 @@
       if(isPriceController()){
         if(existing && existing.status !== 'approved') await apprCall('clear_price_approval', { p_kind: kind, p_record_id: rec.id });
       } else {
-        const lines = priceDeviations(kind, items);
+        const lines = priceDeviations(kind, items, rec.companyId);
         if(lines.length){
           if(existing && existing.status === 'approved' && apprRateSig(existing.lines) === apprRateSig(lines)){ /* same prices already approved */ }
           else {
@@ -8024,7 +8194,7 @@
     if(pend.length) out.push({ key: 'dlv:' + today, sev: 'med', icon: 'ti-truck-delivery', page: 'deliveries', title: pend.length + ' sale' + (pend.length > 1 ? 's' : '') + ' not dispatched for 3+ days', sub: pend.slice(0, 4).map(s => s.invoiceNo + ' (' + (s.companyName || '') + ')').join(', ') + (pend.length > 4 ? ' ...' : ''), todo: 'Dispatch ' + pend.length + ' pending deliveries' });
     // 4) sales below cost in the last 7 days
     const w = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    const loss = salesCache.filter(s => (s.date || '') >= w && (s.items || []).some(it => Number(it.cost) > 0) && saleProfit(s) < 0);
+    const loss = salesCache.filter(s => !isCN(s) && (s.date || '') >= w && (s.items || []).some(it => Number(it.cost) > 0) && saleProfit(s) < 0);
     if(loss.length) out.push({ key: 'loss:' + today, sev: 'high', icon: 'ti-alert-triangle', page: 'sales', title: loss.length + ' sale' + (loss.length > 1 ? 's' : '') + ' below cost this week', sub: loss.slice(0, 4).map(s => s.invoiceNo + ' (' + fmtMoney(saleProfit(s)) + ')').join(', '), todo: 'Review below-cost sales' });
     // 5) price approvals waiting
     const pa = approvalsCache.filter(a => a.status === 'pending').length;
@@ -8547,7 +8717,7 @@
     if(prev.sales > 0 && Math.abs(cur.margin - prev.margin) >= 2) add(cur.margin < prev.margin ? 'bad' : 'good', 'Gross margin ' + (cur.margin < prev.margin ? 'dropped' : 'improved') + ' from ' + anPct(prev.margin) + ' to ' + anPct(cur.margin) + '.');
     const cs = Object.keys(cust).sort((a, b) => cust[b] - cust[a]), top3 = cs.slice(0, 3).reduce((s, k) => s + cust[k], 0);
     const tot = cs.reduce((s, k) => s + cust[k], 0); if(cs.length >= 3 && tot > 0 && top3 / tot > 0.6) add('warn', 'Your top 3 customers (' + cs.slice(0, 3).map(escapeHtml).join(', ') + ') bring ' + anPct(top3 / tot * 100) + ' of sales. Losing one would hurt.');
-    let loss = 0, below = 0; anSalesIn(r.from, r.to).forEach(s => { if(saleProfit(s) < 0) loss++; (s.items || []).forEach(it => { if((Number(it.rate) || 0) < anCost(it) && anCost(it) > 0) below++; }); });
+    let loss = 0, below = 0; anSalesIn(r.from, r.to).forEach(s => { if(!isCN(s) && saleProfit(s) < 0) loss++; (s.items || []).forEach(it => { if((Number(it.rate) || 0) < anCost(it) && anCost(it) > 0) below++; }); });
     if(loss) add('bad', '<b>' + loss + ' invoice(s) sold at a loss</b> in this period. See the Profit tab.'); else if(below) add('warn', below + ' item(s) were sold below cost.');
     if(cur.exp > 0 && cur.gp > 0 && cur.exp / cur.gp > 0.5) add('warn', 'Running expenses are ' + anPct(cur.exp / cur.gp * 100) + ' of your gross profit.');
     if(cur.net < 0) add('bad', 'Net profit is negative (' + fmtMoney(cur.net) + ') in this period.');
@@ -8604,11 +8774,11 @@
     const buckets = {};
     ss.forEach(s => { const d = new Date((s.date || '') + 'T00:00:00'); let k;
       if(an.gran === 'day') k = s.date; else if(an.gran === 'week'){ const w = new Date(d.getTime() - ((d.getDay() + 6) % 7) * 86400000); k = anDS(w); } else k = (s.date || '').slice(0, 7);
-      const e = buckets[k] = buckets[k] || { sales: 0, profit: 0, inv: 0 }; e.sales += Number(s.total) || 0; e.profit += saleProfit(s); e.inv++; });
+      const e = buckets[k] = buckets[k] || { sales: 0, profit: 0, inv: 0 }; e.sales += Number(s.total) || 0; e.profit += saleProfit(s); if(!isCN(s)) e.inv++; });
     const keys = Object.keys(buckets).sort().slice(-60), lab = k => an.gran === 'month' ? anMonLabel(k) : an.gran === 'week' ? 'wk ' + k.slice(5) : k.slice(5);
     let h = '<div class="card card-pad" style="margin-bottom:16px;"><div class="section-title"><i class="ti ti-chart-bar"></i> Sales over time <select id="an-gran" style="margin-left:auto;"><option value="day"' + (an.gran === 'day' ? ' selected' : '') + '>Daily</option><option value="week"' + (an.gran === 'week' ? ' selected' : '') + '>Weekly</option><option value="month"' + (an.gran === 'month' ? ' selected' : '') + '>Monthly</option></select></div>' +
       (keys.length ? anChart(keys.map(lab), [{ name: 'Sales', type: 'bar', color: '#7fc8bf', values: keys.map(k => buckets[k].sales) }, { name: 'Profit', type: 'line', color: '#0F9484', values: keys.map(k => buckets[k].profit) }]) : '<div class="empty-row">No sales in this period.</div>') + '</div>';
-    const cust = {}; ss.forEach(s => { const c = cust[s.companyId || s.companyName] = cust[s.companyId || s.companyName] || { name: s.companyName, sales: 0, profit: 0, inv: 0, first: '' }; c.sales += Number(s.total) || 0; c.profit += saleProfit(s); c.inv++; });
+    const cust = {}; ss.forEach(s => { const c = cust[s.companyId || s.companyName] = cust[s.companyId || s.companyName] || { name: s.companyName, sales: 0, profit: 0, inv: 0, first: '' }; c.sales += Number(s.total) || 0; c.profit += saleProfit(s); if(!isCN(s)) c.inv++; });
     const firstSale = {}; salesCache.forEach(s => { const k = s.companyId || s.companyName; if(!firstSale[k] || s.date < firstSale[k]) firstSale[k] = s.date; });
     let newC = 0, newAmt = 0, repC = 0, repAmt = 0; Object.keys(cust).forEach(k => { if(firstSale[k] >= r.from){ newC++; newAmt += cust[k].sales; } else { repC++; repAmt += cust[k].sales; } });
     const dow = [0, 0, 0, 0, 0, 0, 0]; ss.forEach(s => { dow[(new Date(s.date + 'T00:00:00').getDay() + 6) % 7] += Number(s.total) || 0; });
@@ -8808,12 +8978,14 @@
     const today = anDS(new Date()), d365 = anDS(new Date(new Date().getTime() - 365 * 86400000)), out = [];
     let tot12 = 0;
     companiesCache.forEach(c => {
-      const bills = salesCache.filter(s => s.companyId === c.id).sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.created_at || 0) - (b.created_at || 0));
+      const allBills = salesCache.filter(s => s.companyId === c.id).sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.created_at || 0) - (b.created_at || 0));
+      const bills = allBills.filter(s => !isCN(s));
       const rec = paymentsCache.filter(p => p.companyId === c.id && p.type === 'received');
-      if(!bills.length && !rec.length) return;
+      if(!allBills.length && !rec.length) return;
       const opening = Number(c.opening) || 0, ev = [];
       if(opening < 0) ev.push({ d: '0000-00-00', a: -opening });
       bills.forEach(s => { const sb = saleAtBilling(s); if(sb > 0) ev.push({ d: s.date || '', a: sb }); });
+      allBills.forEach(s => { if(isCN(s)) ev.push({ d: s.date || '', a: -(Number(s.total) || 0) }); });
       rec.forEach(p => ev.push({ d: p.date || '', a: Number(p.amount) || 0 }));
       ev.sort((a, b) => a.d.localeCompare(b.d)); let cp = 0; ev.forEach(e => { cp += e.a; e.cum = cp; });
       const totalPaid = cp; let cumB = opening > 0 ? opening : 0, wDays = 0, wAmt = 0; const open = [];
@@ -8823,8 +8995,8 @@
         if(hit){ const days = Math.max(anDaysBetween(s.date, hit.d.length === 10 && hit.d > '0001' ? hit.d : s.date), 0); wDays += days * amt; wAmt += amt; }
         else { const rem = Math.min(amt, Math.max(cumB - totalPaid, 0)); if(rem > 0.5) open.push({ date: s.date || '', rem: rem }); } });
       const dates = bills.map(s => s.date).filter(Boolean), gaps = []; for(let i = 1; i < dates.length; i++) gaps.push(anDaysBetween(dates[i - 1], dates[i]));
-      const last = dates.length ? dates[dates.length - 1] : '', first = dates[0] || '', b12 = bills.filter(s => (s.date || '') >= d365);
-      const sales12 = b12.reduce((a, s) => a + (Number(s.total) || 0), 0), profit12 = b12.reduce((a, s) => a + saleProfit(s), 0);
+      const last = dates.length ? dates[dates.length - 1] : '', first = dates[0] || '', b12 = bills.filter(s => (s.date || '') >= d365), b12all = allBills.filter(s => (s.date || '') >= d365);
+      const sales12 = b12all.reduce((a, s) => a + (Number(s.total) || 0), 0), profit12 = b12all.reduce((a, s) => a + saleProfit(s), 0);
       const L = computeCompanyLedger(c.id), bal = L ? L.closingBalance : 0, openTot = open.reduce((a, x) => a + x.rem, 0);
       const over30 = open.filter(x => !x.date || anDaysBetween(x.date, today) > 30).reduce((a, x) => a + x.rem, 0);
       const e = { id: c.id, name: c.name, sales12: sales12, profit12: profit12, inv12: b12.length, invAll: bills.length, last: last, first: first, daysSince: last ? anDaysBetween(last, today) : null,
@@ -8889,8 +9061,8 @@
   }
   function anOpsTab(r){
     const ss = anSalesIn(r.from, r.to), today = anDS(new Date()), st = { pending: 0, dispatched: 0, delivered: 0 }; let dsum = 0, dn = 0, loss = 0;
-    ss.forEach(s => { const k = s.deliveryStatus || 'pending'; st[k] = (st[k] || 0) + 1; if(k === 'delivered' && s.deliveryDate && s.date){ const d = anDaysBetween(s.date, s.deliveryDate); if(d >= 0){ dsum += d; dn++; } } if(saleProfit(s) < 0) loss++; });
-    const stuck = salesCache.filter(s => (s.deliveryStatus || 'pending') !== 'delivered' && anDaysBetween(s.date || today, today) > 3).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    ss.forEach(s => { if(isCN(s)) return; const k = s.deliveryStatus || 'pending'; st[k] = (st[k] || 0) + 1; if(k === 'delivered' && s.deliveryDate && s.date){ const d = anDaysBetween(s.date, s.deliveryDate); if(d >= 0){ dsum += d; dn++; } } if(saleProfit(s) < 0) loss++; });
+    const stuck = salesCache.filter(s => !isCN(s) && (s.deliveryStatus || 'pending') !== 'delivered' && anDaysBetween(s.date || today, today) > 3).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     const ap = (typeof approvalsCache !== 'undefined' ? approvalsCache : []).filter(a => (a.requested_at || '').slice(0, 10) >= r.from && (a.requested_at || '').slice(0, 10) <= r.to), by = {}; let hs = 0, hn = 0;
     ap.forEach(a => { const k = a.requested_by || '?'; by[k] = by[k] || { n: 0, ok: 0, no: 0 }; by[k].n++; if(a.status === 'approved') by[k].ok++; if(a.status === 'rejected') by[k].no++; if(a.decided_at && a.requested_at){ const hrs = (new Date(a.decided_at) - new Date(a.requested_at)) / 3600000; if(hrs >= 0){ hs += hrs; hn++; } } });
     const pend = (typeof approvalsCache !== 'undefined' ? approvalsCache : []).filter(a => a.status === 'pending').length;
@@ -8959,6 +9131,7 @@
     const add = (key, title, level, page, items, hint) => { if(items.length) out.push({ key: key, title: title, level: level, page: page, items: items, hint: hint }); };
     const zero = {}; salesCache.forEach(s => (s.items || []).forEach(it => { if(!(Number(it.cost) > 0) && !(getAvgCost(it.productId) > 0)) zero[it.productName || '?'] = (zero[it.productName || '?'] || 0) + 1; }));
     add('zerocost', 'Sold items with no cost (profit is wrong)', 'bad', 'products', Object.keys(zero).map(k => k + ': ' + zero[k] + ' sale line(s)'), 'Open Products and set the Purchase rate, or add a purchase or a recipe for the product.');
+    try{ const ex = expiryAlerts(); add('expiry', 'Stock that is expired or close to expiry', ex.some(l => l.status === 'expired') ? 'bad' : 'warn', 'inventory', ex.map(expiryLine), 'Sell the earliest expiry first, offer a discount, or write the stock off. Open Inventory to see every lot.'); }catch(e){}
     add('negstock', 'Negative stock', 'bad', 'inventory', computeInventory().filter(r => r.currentStock < -0.001).map(r => r.product.name + ': ' + anQty(r.currentStock) + ' ' + (r.product.unit || '')), 'A purchase or opening stock is missing, or the product was sold more than you hold. Add the missing purchase, or fix Opening stock on the product.');
     add('norate', 'Products without a selling price', 'warn', 'products', productsCache.filter(p => !(Number(p.salesRate) > 0)).map(p => p.name), 'Set the Sales rate. Price approvals and the margin checks compare against it.');
     add('nopurch', 'Products without a purchase rate', 'warn', 'products', productsCache.filter(p => !(Number(p.purchaseRate) > 0) && !(getAvgCost(p.id) > 0)).map(p => p.name), 'Set the Purchase rate so profit can be worked out.');
@@ -8973,7 +9146,7 @@
     purchasesCache.forEach(x => { if(x.companyId && !cids.has(x.companyId)) orph.push('Purchase ' + (x.invoiceNo || '') + ' (' + (x.companyName || '?') + ')'); });
     paymentsCache.forEach(p => { if(p.companyId && !cids.has(p.companyId)) orph.push('Payment ' + (p.receiptNo || '') + ' (' + (p.companyName || '?') + ')'); });
     add('orphan', 'Bills or payments of a company that no longer exists', 'bad', 'companies', orph.slice(0, 20), 'The company was deleted. Create it again with the same name, then reopen the bill.');
-    const d90 = anDS(new Date(new Date().getTime() - 90 * 86400000)); let loss = 0; salesCache.forEach(s => { if((s.date || '') >= d90 && saleProfit(s) < 0) loss++; });
+    const d90 = anDS(new Date(new Date().getTime() - 90 * 86400000)); let loss = 0; salesCache.forEach(s => { if(!isCN(s) && (s.date || '') >= d90 && saleProfit(s) < 0) loss++; });
     add('loss', 'Invoices sold at a loss (last 90 days)', 'warn', 'analyst', loss ? [loss + ' invoice(s)'] : [], 'Open Business Analyst, then the Profit tab, to see which ones.');
     const bad = []; companiesCache.forEach(c => { if(!(c.name || '').trim()) bad.push('A company has no name'); if(c.type !== 'Supplier' && salesCache.some(s => s.companyId === c.id) && !(c.phone || '').trim()) bad.push(c.name + ': no phone (WhatsApp reminders will not work)'); });
     add('phone', 'Customers without a phone number', 'info', 'companies', bad.slice(0, 20), 'Add the phone so you can send reminders and statements on WhatsApp.');
@@ -9080,6 +9253,7 @@
     L.push('', 'To collect: ' + fmtMoney(recv) + ' (older than 30 days: ' + fmtMoney(late) + ')');
     ags.slice(0, 3).forEach((a, i) => L.push((i + 1) + '. ' + a.company.name + ': ' + fmtMoney(a.balance) + (a.oldestDays ? ', oldest ' + a.oldestDays + ' days' : '')));
     try{ const P = anPlan(), low = P.buyList.filter(x => isFinite(x.daysLeft) && x.daysLeft < 14).slice(0, 5); if(low.length){ L.push('', 'Running out soon:'); low.forEach(x => L.push('- ' + x.p.name + ': ' + anQty(x.stock) + ' ' + (x.p.unit || '') + ' left, about ' + Math.max(Math.round(x.daysLeft), 0) + ' days')); } }catch(e){}
+    try{ const ex = expiryAlerts().slice(0, 5); if(ex.length){ L.push('', 'Expiry:'); ex.forEach(l => L.push('- ' + expiryLine(l))); } }catch(e){}
     const stuck = salesCache.filter(s => (s.deliveryStatus || 'pending') !== 'delivered' && anDaysBetween(s.date || today, today) > 3).length; if(stuck) L.push('', 'Deliveries waiting over 3 days: ' + stuck);
     const pa = (typeof approvalsCache !== 'undefined' ? approvalsCache : []).filter(a => a.status === 'pending').length; if(pa) L.push('Price approvals waiting: ' + pa);
     const td = (todosCache || []).filter(x => x.status === 'open' && x.due_date && x.due_date <= today); if(td.length){ L.push('', 'To-do due today or late:'); td.slice(0, 6).forEach(x => L.push('- ' + x.title + ' (' + x.due_date + ')')); }
@@ -9182,20 +9356,20 @@
   const MANUAL = {
     dashboard: { en: { what: 'Your business at a glance. Nothing to type here, just look.', steps: ['Top cards: total purchases, sales, profit, today\'s sales, this month vs last month.', '"Money to collect" lists the customers who owe you most. Call them first.', '"Low stock alerts" shows products that are running out.', '"Recent activity" and the 6-month chart show what happened lately.'], tips: ['Click the bell at the top for things that need attention today.', 'New company? A "Get started" box at the top lists the first steps (details, products, customers, supplier, first purchase and sale). Press Hide this to remove it.'] },
       bn: { what: 'এক নজরে পুরো ব্যবসা। এখানে কিছু লিখতে হয় না, শুধু দেখুন।', steps: ['উপরের কার্ডে মোট কেনা, বিক্রি, লাভ, আজকের বিক্রি এবং এই মাস বনাম গত মাস।', '"Money to collect"-এ যাদের কাছে সবচেয়ে বেশি টাকা পাবেন তাদের নাম। আগে তাদের ফোন করুন।', '"Low stock alerts"-এ যেসব পণ্য শেষ হয়ে আসছে।', '"Recent activity" ও ৬ মাসের চার্টে সাম্প্রতিক অবস্থা।'], tips: ['উপরের ঘণ্টা আইকনে আজকের জরুরি বিষয় দেখা যায়।', 'নতুন কোম্পানির জন্য উপরে "Get started" বাক্স প্রথম ধাপগুলো (তথ্য, পণ্য, ক্রেতা, সরবরাহকারী, প্রথম কেনা ও বিক্রি) দেখায়। সরাতে Hide this চাপুন।'] } },
-    companies: { en: { what: 'Your address book of customers (Buyers) and suppliers. Every bill and payment is linked to a company.', steps: ['Credit limit (optional): the most you want a customer to owe you. When a new bill takes them above it, or they have bills older than 60 days, the app asks you to confirm before saving. Run phase_d_limits.sql in Supabase once to use it.', 'Press "Add company".', 'Fill the Name and choose Type: Buyer (you sell to them), Supplier (you buy from them) or Both.', 'Add phone and address. The phone is used for WhatsApp messages.', 'Opening balance: money already pending BEFORE you started using this app. Positive = they owe you. Negative = you owe them. Leave 0 if none.', 'Press Save. To fix a mistake, use the pencil icon in the row.'], tips: ['Create the company first, then you can bill or pay it.', 'Do not create the same company twice. Search before adding.'] },
-      bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['Credit limit (ঐচ্ছিক): একজন ক্রেতা আপনাকে সর্বোচ্চ কত বাকি রাখতে পারবে। নতুন বিলে সীমা পার হলে বা ৬০ দিনের বেশি পুরনো বাকি থাকলে Save করার আগে অ্যাপ নিশ্চিত করতে বলবে। ব্যবহার করতে Supabase-এ একবার phase_d_limits.sql চালান।', '"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।'] } },
+    companies: { en: { what: 'Your address book of customers (Buyers) and suppliers. Every bill and payment is linked to a company.', steps: ['Credit limit (optional): the most you want a customer to owe you. When a new bill takes them above it, or they have bills older than 60 days, the app asks you to confirm before saving. Run phase_d_limits.sql in Supabase once to use it.', 'Press "Add company".', 'Fill the Name and choose Type: Buyer (you sell to them), Supplier (you buy from them) or Both.', 'Add phone and address. The phone is used for WhatsApp messages.', 'Opening balance: money already pending BEFORE you started using this app. Positive = they owe you. Negative = you owe them. Leave 0 if none.', 'Press Save. To fix a mistake, use the pencil icon in the row.'], tips: ['Create the company first, then you can bill or pay it.', 'Do not create the same company twice. Search before adding.', 'For a customer with agreed prices, press the tag button on their row and type the special rate per product. The sale form then fills it in and no price approval is needed.'] },
+      bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['Credit limit (ঐচ্ছিক): একজন ক্রেতা আপনাকে সর্বোচ্চ কত বাকি রাখতে পারবে। নতুন বিলে সীমা পার হলে বা ৬০ দিনের বেশি পুরনো বাকি থাকলে Save করার আগে অ্যাপ নিশ্চিত করতে বলবে। ব্যবহার করতে Supabase-এ একবার phase_d_limits.sql চালান।', '"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।', 'যে ক্রেতার নির্ধারিত দাম আছে, তার সারির ট্যাগ বাটন চেপে পণ্যভিত্তিক বিশেষ দাম লিখুন। সেলস ফর্মে সেটা নিজে বসবে, মূল্য অনুমোদন লাগবে না।'] } },
     products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Minimum margin % (under "More details", optional): if a sale is priced below this margin the app warns you before saving. Needs phase_d_limits.sql run once.', 'Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: leave it empty and the app works it out itself (about 14 days of your recent sales). Type a number only if you want your own limit.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
       bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['Minimum margin % ("More details"-এ, ঐচ্ছিক): বিক্রির দাম এই margin-এর নিচে হলে Save করার আগে অ্যাপ সতর্ক করে। phase_d_limits.sql একবার চালাতে হবে।', '"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: ফাঁকা রাখুন, অ্যাপ নিজে হিসাব করবে (সাম্প্রতিক বিক্রির প্রায় ১৪ দিনের মজুদ)। নিজের সীমা চাইলে তবেই সংখ্যা লিখুন।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
     recipes: { en: { what: 'For products you MIX yourself. A recipe says which raw materials, and how much of each, make ONE unit of the finished product. This is the only thing you must set up for mixed products.', steps: ['Press "Add recipe".', 'Choose the finished product (or create it with "+ New product").', 'Add each raw material with the quantity needed for 1 unit.', 'Save. From now on, when you sell this product and it is not in stock, the app cuts the raw materials from stock by this recipe by itself, and works the profit from the recipe cost.', 'If you edit a recipe later, the numbers change for all past sales too (stock is worked out live).'], tips: ['Skip this page if you only buy and resell.', 'Check the quantities carefully: a wrong recipe gives wrong raw-material stock and wrong profit.'] },
       bn: { what: 'যেসব পণ্য আপনি নিজে মিশিয়ে বানান তার জন্য। রেসিপি বলে ১ ইউনিট তৈরি পণ্যে কোন কাঁচামাল কত লাগে। মিক্স করা পণ্যের জন্য শুধু এটুকুই আপনাকে ঠিক করে রাখতে হয়।', steps: ['"Add recipe" চাপুন।', 'তৈরি পণ্য বাছুন (না থাকলে "+ New product" দিয়ে বানান)।', 'প্রতিটি কাঁচামাল ও ১ ইউনিটের জন্য দরকারি পরিমাণ যোগ করুন।', 'Save করুন। এরপর এই পণ্য বিক্রির সময় স্টকে না থাকলে অ্যাপ নিজেই রেসিপি অনুযায়ী কাঁচামাল স্টক থেকে কাটে এবং রেসিপির খরচ ধরে লাভ হিসাব করে।', 'পরে রেসিপি বদলালে আগের বিক্রির হিসাবও বদলে যাবে (স্টক সবসময় তাৎক্ষণিক হিসাব হয়)।'], tips: ['শুধু কিনে বিক্রি করলে এই পেজ লাগবে না।', 'পরিমাণ সাবধানে দিন: ভুল রেসিপিতে কাঁচামালের স্টক ও লাভ ভুল আসবে।'] } },
     production: { en: { what: 'OPTIONAL. You do not need to write anything here for normal selling: raw materials are cut automatically by the recipe when you sell a mixed product that is not in stock. Use this page only when you make a batch AHEAD of selling.', steps: ['Press "Add batch".', 'Choose Date, the Finished product and the Quantity produced.', 'The materials from the recipe fill in. Change the amounts if the real usage was different.', 'Save. Raw materials go down and the finished product goes up. Later sales use this ready stock first; only the shortage is auto-made from the recipe.'], tips: ['The Stock card of a product (Inventory page, graph icon) shows every "Auto-made from recipe" and "Used by recipe (auto)" line.'] },
       bn: { what: 'ঐচ্ছিক। সাধারণ বিক্রির জন্য এখানে কিছু লিখতে হয় না: মিক্স করা পণ্য স্টকে না থাকলে বিক্রির সময় রেসিপি অনুযায়ী কাঁচামাল নিজে কাটা যায়। শুধু বিক্রির আগেই ব্যাচ বানালে এই পেজ ব্যবহার করুন।', steps: ['"Add batch" চাপুন।', 'তারিখ, তৈরি পণ্য এবং কত উৎপাদন হলো দিন।', 'রেসিপি থেকে কাঁচামাল ভরে যাবে। আসল ব্যবহার আলাদা হলে সংখ্যা বদলান।', 'Save করুন। কাঁচামাল কমে ও তৈরি পণ্য বাড়ে। পরের বিক্রিতে এই মজুদ আগে ব্যবহার হয়; শুধু ঘাটতিটুকু রেসিপি থেকে নিজে তৈরি ধরা হয়।'], tips: ['পণ্যের Stock card-এ (Inventory পেজ, গ্রাফ আইকন) প্রতিটি "Auto-made from recipe" ও "Used by recipe (auto)" লাইন দেখা যায়।'] } },
-    purchases: { en: { what: 'Record every time you BUY goods from a supplier. Stock goes up and the supplier\'s balance is updated.', steps: ['Press "New purchase".', 'Choose the Supplier and the Product. Tap "+ New supplier" or "+ New product" if it is not in the list yet.', 'Enter Quantity and Rate per unit. Several products on one bill? Tap "Add another product". The Total is calculated.', 'Easier: tap "Scan bill", take a photo of the supplier bill and the form fills itself (management). Check it, then Save.', 'Paid amount: how much you paid right now. The rest becomes "Due" (you owe the supplier).', 'Save. Pay the due later from the Payments menu.'], tips: ['If the price you enter differs from the product\'s purchase rate, management must approve it.'] },
-      bn: { what: 'সরবরাহকারীর কাছ থেকে মাল কিনলে প্রতিবার এখানে লিখুন। স্টক বাড়ে এবং সরবরাহকারীর হিসাব হালনাগাদ হয়।', steps: ['"New purchase" চাপুন।', 'সরবরাহকারী ও পণ্য বাছুন। তালিকায় না থাকলে "+ New supplier" বা "+ New product" চাপুন।', 'পরিমাণ ও প্রতি ইউনিট দাম দিন। একই বিলে একাধিক পণ্য হলে "Add another product" চাপুন। মোট নিজে হিসাব হবে।', 'সহজ উপায়: "Scan bill" চেপে সরবরাহকারীর বিলের ছবি তুলুন, ফর্ম নিজে ভরে যাবে (ম্যানেজমেন্ট)। দেখে নিয়ে Save করুন।', 'Paid amount: এখনই যত টাকা দিলেন। বাকিটা "Due" (সরবরাহকারীকে দিতে হবে)।', 'Save করুন। বাকি টাকা পরে Payments মেনু থেকে দিন।'], tips: ['পণ্যের Purchase rate-এর থেকে আলাদা দাম দিলে ম্যানেজমেন্টকে অনুমোদন দিতে হবে।'] } },
+    purchases: { en: { what: 'Record every time you BUY goods from a supplier. Stock goes up and the supplier\'s balance is updated.', steps: ['Press "New purchase".', 'Choose the Supplier and the Product. Tap "+ New supplier" or "+ New product" if it is not in the list yet.', 'Enter Quantity and Rate per unit. Several products on one bill? Tap "Add another product". The Total is calculated.', 'Easier: tap "Scan bill", take a photo of the supplier bill and the form fills itself (management). Check it, then Save.', 'Paid amount: how much you paid right now. The rest becomes "Due" (you owe the supplier).', 'Save. Pay the due later from the Payments menu.'], tips: ['If the price you enter differs from the product\'s purchase rate, management must approve it.', 'More details has Batch / lot no and Expiry date. Fill them for products that expire. They apply to every product on that bill, so enter products with different expiry dates as separate bills.'] },
+      bn: { what: 'সরবরাহকারীর কাছ থেকে মাল কিনলে প্রতিবার এখানে লিখুন। স্টক বাড়ে এবং সরবরাহকারীর হিসাব হালনাগাদ হয়।', steps: ['"New purchase" চাপুন।', 'সরবরাহকারী ও পণ্য বাছুন। তালিকায় না থাকলে "+ New supplier" বা "+ New product" চাপুন।', 'পরিমাণ ও প্রতি ইউনিট দাম দিন। একই বিলে একাধিক পণ্য হলে "Add another product" চাপুন। মোট নিজে হিসাব হবে।', 'সহজ উপায়: "Scan bill" চেপে সরবরাহকারীর বিলের ছবি তুলুন, ফর্ম নিজে ভরে যাবে (ম্যানেজমেন্ট)। দেখে নিয়ে Save করুন।', 'Paid amount: এখনই যত টাকা দিলেন। বাকিটা "Due" (সরবরাহকারীকে দিতে হবে)।', 'Save করুন। বাকি টাকা পরে Payments মেনু থেকে দিন।'], tips: ['পণ্যের Purchase rate-এর থেকে আলাদা দাম দিলে ম্যানেজমেন্টকে অনুমোদন দিতে হবে।', 'More details-এ ব্যাচ নম্বর ও মেয়াদ আছে। মেয়াদি পণ্যের জন্য ভরুন। এটা ওই বিলের সব পণ্যে লাগে, তাই আলাদা মেয়াদের পণ্য আলাদা বিলে লিখুন।'] } },
     salesOrders: { en: { what: 'Order Booking: write down what a customer wants to buy. NO bill yet, stock and money do not change.', steps: ['Press "New order".', 'Choose Date and Customer, then add the products and quantities.', 'Save. The order shows as Open.', 'When you are ready to sell, press "Convert to invoice" on that row. A bill is made with the same items.', 'If the customer cancels, mark it Cancelled.'], tips: ['Skip this page if you always bill straight away.'] },
       bn: { what: 'অর্ডার বুকিং: ক্রেতা কী কিনতে চায় তা লিখে রাখুন। এখনো বিল হয়নি, স্টক ও টাকার হিসাব বদলায় না।', steps: ['"New order" চাপুন।', 'তারিখ ও ক্রেতা বাছুন, তারপর পণ্য ও পরিমাণ যোগ করুন।', 'Save করুন। অর্ডার "Open" থাকবে।', 'বিক্রির সময় হলে সারির "Convert to invoice" চাপুন। একই আইটেম দিয়ে বিল তৈরি হবে।', 'ক্রেতা বাতিল করলে Cancelled করে দিন।'], tips: ['সবসময় সরাসরি বিল করলে এই পেজ লাগবে না।'] } },
-    sales: { en: { what: 'Sales Invoice: make the bill when goods are sold. Stock goes down and the customer\'s dues go up.', steps: ['Press "New sale".', 'Choose the Customer, then type the product name in the search box, add Quantity and Rate (the customer\'s last rate or list price fills in). Use "Add another item" for more products. No customer or product yet? Tap "+ New customer" / "+ New product".', 'If a mixed product is not in stock, a green note says which raw materials will be used automatically from its recipe. Nothing for you to do.', 'Received amount: money the customer paid right now. The rest is "Due".', 'Save. Then use the row buttons to print, download the PDF receipt, or send it on WhatsApp.', '"More details" holds date, invoice no, challan, notes and delivery. You rarely need it.', 'Faster: tell Ask RAR, e.g. "Sold 20 kg X to Rahim, received 5000". Press the green "Open sale form" button, check and Save.'], tips: ['A price different from the list price is sent to management for approval. You will see "Pending approval" on the bill.', 'To collect the due later, use Payments, not a new bill.'] },
-      bn: { what: 'সেলস ইনভয়েস: মাল বিক্রি হলে বিল বানান। স্টক কমে এবং ক্রেতার বাকি বাড়ে।', steps: ['"New sale" চাপুন।', 'ক্রেতা বাছুন, তারপর সার্চ বক্সে পণ্যের নাম লিখে পরিমাণ ও দাম দিন (ক্রেতার আগের দাম বা তালিকা দাম ভরা থাকে)। আরও পণ্যের জন্য "Add another item"। ক্রেতা বা পণ্য না থাকলে "+ New customer" / "+ New product" চাপুন।', 'মিক্স করা পণ্য স্টকে না থাকলে সবুজ নোটে দেখাবে রেসিপি থেকে কোন কাঁচামাল নিজে ব্যবহার হবে। আপনাকে কিছু করতে হবে না।', 'Received amount: ক্রেতা এখনই যত টাকা দিল। বাকিটা "Due"।', 'Save করুন। এরপর সারির বাটনে প্রিন্ট, PDF রসিদ ডাউনলোড বা WhatsApp-এ পাঠান।', '"More details"-এ তারিখ, ইনভয়েস নম্বর, চালান, নোট ও ডেলিভারি আছে। এটা প্রায় লাগে না।', 'আরও দ্রুত: Ask RAR-কে বলুন, যেমন "রহিমকে ২০ কেজি X বিক্রি, ৫০০০ পেয়েছি"। সবুজ "Open sale form" বাটন চাপুন, দেখে নিয়ে Save করুন।'], tips: ['তালিকা দামের থেকে আলাদা দাম দিলে অনুমোদনের জন্য ম্যানেজমেন্টের কাছে যায়। বিলে "Pending approval" দেখাবে।', 'বাকি টাকা পরে নিতে নতুন বিল নয়, Payments ব্যবহার করুন।'] } },
+    sales: { en: { what: 'Sales Invoice: make the bill when goods are sold. Stock goes down and the customer\'s dues go up.', steps: ['Press "New sale".', 'Choose the Customer, then type the product name in the search box, add Quantity and Rate (the customer\'s last rate or list price fills in). Use "Add another item" for more products. No customer or product yet? Tap "+ New customer" / "+ New product".', 'If a mixed product is not in stock, a green note says which raw materials will be used automatically from its recipe. Nothing for you to do.', 'Received amount: money the customer paid right now. The rest is "Due".', 'Save. Then use the row buttons to print, download the PDF receipt, or send it on WhatsApp.', '"More details" holds date, invoice no, challan, notes and delivery. You rarely need it.', 'Faster: tell Ask RAR, e.g. "Sold 20 kg X to Rahim, received 5000". Press the green "Open sale form" button, check and Save.'], tips: ['A price different from the list price is sent to management for approval. You will see "Pending approval" on the bill.', 'To collect the due later, use Payments, not a new bill.', 'Customer sent goods back? Press the return button (arrow icon) on that bill. It makes a credit note (CN number): the goods go back into stock and the customer balance goes down. If you also give money back, record it in Payments as Paid.', 'If the customer has an agreed price (Companies > price tag button), it fills in by itself and needs no approval. If the product has batches with expiry, a green note tells which batch to send first.'] },
+      bn: { what: 'সেলস ইনভয়েস: মাল বিক্রি হলে বিল বানান। স্টক কমে এবং ক্রেতার বাকি বাড়ে।', steps: ['"New sale" চাপুন।', 'ক্রেতা বাছুন, তারপর সার্চ বক্সে পণ্যের নাম লিখে পরিমাণ ও দাম দিন (ক্রেতার আগের দাম বা তালিকা দাম ভরা থাকে)। আরও পণ্যের জন্য "Add another item"। ক্রেতা বা পণ্য না থাকলে "+ New customer" / "+ New product" চাপুন।', 'মিক্স করা পণ্য স্টকে না থাকলে সবুজ নোটে দেখাবে রেসিপি থেকে কোন কাঁচামাল নিজে ব্যবহার হবে। আপনাকে কিছু করতে হবে না।', 'Received amount: ক্রেতা এখনই যত টাকা দিল। বাকিটা "Due"।', 'Save করুন। এরপর সারির বাটনে প্রিন্ট, PDF রসিদ ডাউনলোড বা WhatsApp-এ পাঠান।', '"More details"-এ তারিখ, ইনভয়েস নম্বর, চালান, নোট ও ডেলিভারি আছে। এটা প্রায় লাগে না।', 'আরও দ্রুত: Ask RAR-কে বলুন, যেমন "রহিমকে ২০ কেজি X বিক্রি, ৫০০০ পেয়েছি"। সবুজ "Open sale form" বাটন চাপুন, দেখে নিয়ে Save করুন।'], tips: ['তালিকা দামের থেকে আলাদা দাম দিলে অনুমোদনের জন্য ম্যানেজমেন্টের কাছে যায়। বিলে "Pending approval" দেখাবে।', 'বাকি টাকা পরে নিতে নতুন বিল নয়, Payments ব্যবহার করুন।', 'ক্রেতা মাল ফেরত দিলে সেই বিলের ফেরত বাটন (তীর আইকন) চাপুন। এতে ক্রেডিট নোট (CN নম্বর) হয়: মাল স্টকে ফিরে আসে আর ক্রেতার বাকি কমে। টাকাও ফেরত দিলে Payments-এ Paid হিসেবে লিখুন।', 'ক্রেতার জন্য নির্ধারিত দাম থাকলে (Companies > ট্যাগ বাটন) সেটা নিজে বসে যায়, অনুমোদন লাগে না। পণ্যের ব্যাচে মেয়াদ থাকলে সবুজ নোটে বলে কোন ব্যাচ আগে পাঠাবেন।'] } },
     deliveries: { en: { what: 'Track whether each sold order has gone out and reached the customer.', steps: ['The list shows each invoice with its status: Pending, Dispatched or Delivered.', 'When the goods leave, mark it Dispatched. Add vehicle/transport.', 'When the customer receives, mark it Delivered and write who received it.', 'Use the filter to see only Pending or Dispatched.'], tips: ['Bills pending for 3+ days appear in your alerts.'] },
       bn: { what: 'বিক্রি করা প্রতিটি মাল পাঠানো হলো কিনা এবং ক্রেতা পেল কিনা তা ট্র্যাক করুন।', steps: ['তালিকায় প্রতিটি ইনভয়েসের অবস্থা: Pending, Dispatched বা Delivered।', 'মাল বের হলে Dispatched করুন। গাড়ি/পরিবহন লিখুন।', 'ক্রেতা বুঝে পেলে Delivered করুন এবং কে গ্রহণ করল লিখুন।', 'ফিল্টার দিয়ে শুধু Pending বা Dispatched দেখুন।'], tips: ['৩ দিনের বেশি Pending থাকলে সতর্কতায় আসে।'] } },
     payments: { en: { what: 'Record money you RECEIVE from customers or PAY to suppliers (separate from the bill).', steps: ['Press "Add payment".', 'Choose Type: Received (customer paid you) or Paid (you paid a supplier).', 'Choose the Company, Date, Amount and Method (cash, bank, bKash...).', '"Which bill is this for?" fills itself with the oldest unpaid bill. Change it, or choose "General / advance" if it is not for one bill.', 'Save. A receipt can be printed, downloaded or sent on WhatsApp.', 'Faster: tell Ask RAR, e.g. "Received 20,000 from Rahim by bKash". Press the green "Open payment form" button, check and Save.'], tips: ['The company balance in Tally Book changes immediately.', 'Money paid at the time of billing is already counted; do not enter it again here.'] },
@@ -9206,8 +9380,8 @@
       bn: { what: 'কে আপনাকে টাকা দেবে এবং কতদিন ধরে বাকি। প্রতিদিন সকালে দেখুন কাকে ফোন করবেন।', steps: ['উপরের কার্ডে মোট বাকি, ৩০ দিনের বেশি এবং ৯০ দিনের বেশি পুরনো বাকি।', 'প্রতিটি ক্রেতার বাকি 0-30, 31-60, 61-90 ও 90+ দিনে ভাগ করা। যত পুরনো, তত ঝুঁকি।', '"WhatsApp" চাপলে তৈরি রিমাইন্ডার মেসেজ যায় (বাংলা + English)।', '"Statement" চাপলে পুরো হিসাব পাঠানো যায়।', 'নিচের "Accuracy check" কোনো কোম্পানির ব্যালেন্স বিল ও পেমেন্টের সাথে না মিললে সতর্ক করে।'], tips: ['পেমেন্ট আগে সবচেয়ে পুরনো বিল মেটায়।'] } },
     todo: { en: { what: 'Smart alerts and your task list in one place (management only).', steps: ['Left side: alerts the app finds by itself: late payments, low stock, undelivered bills, sales below cost, price approvals waiting.', 'Press "Open" on an alert to go to the right page.', 'Press "+ To-do" to turn an alert into a task.', 'Right side: type a task, pick a due date and priority, press Enter.', 'Tick the box when done. "Show completed" brings finished tasks back.', 'By chat: tell Ask RAR "Remind me to call Rahim tomorrow, high priority". Press the "Add to to-do" button it shows. To finish one, say "Call Rahim is done" and press "Mark done". Ask "what are my open tasks?" to hear the list.'], tips: ['The red number on this menu and on the bell shows how much needs attention.', 'Run phase_b_todos.sql once in Supabase if tasks do not save.'] },
       bn: { what: 'স্মার্ট সতর্কতা ও কাজের তালিকা এক জায়গায় (শুধু ম্যানেজমেন্ট)।', steps: ['বাঁ দিকে অ্যাপ নিজে যা খুঁজে পায়: দেরির বাকি, কম স্টক, অডেলিভার্ড বিল, ক্ষতিতে বিক্রি, অপেক্ষমাণ price approval।', 'সতর্কতার "Open" চাপলে সঠিক পেজে যাবেন।', '"+ To-do" চাপলে সতর্কতা কাজ হয়ে যায়।', 'ডান দিকে কাজ লিখুন, তারিখ ও গুরুত্ব বেছে Enter চাপুন।', 'শেষ হলে টিক দিন। "Show completed" চাপলে শেষ হওয়া কাজ দেখা যায়।', 'চ্যাটে: Ask RAR-কে বলুন "কাল রহিমকে ফোন করার কথা মনে করিয়ে দাও, জরুরি"। যে "Add to to-do" বাটন আসবে সেটা চাপুন। শেষ হলে বলুন "রহিমকে ফোন করা হয়ে গেছে" আর "Mark done" চাপুন। "আমার খোলা কাজ কী কী?" জিজ্ঞেস করলে তালিকা পাবেন।'], tips: ['এই মেনু ও ঘণ্টার লাল সংখ্যা বলে কতটা মনোযোগ দরকার।', 'কাজ Save না হলে Supabase-এ একবার phase_b_todos.sql চালান।'] } },
-    inventory: { en: { what: 'How much of each product you have in stock and what it is worth.', steps: ['Each row shows opening stock, bought, sold and current stock.', 'Status: In stock, Low stock (at or below reorder level, which the app works out itself unless you typed one) or Out of stock.', 'Use search and the stock filter to find products.', 'Press the graph icon on a row for its sales history, monthly trend and Stock card (every in and out, including recipe auto-made and auto-used lines).', 'Stock changes automatically when you save purchases and sales. For mixed products, raw materials are cut by the recipe when you sell without stock. You never edit stock here.'], tips: ['If the number looks wrong, check the product\'s Opening stock, its recipe and the latest bills.'] },
-      bn: { what: 'প্রতিটি পণ্যের কতটা মজুদ আছে এবং তার মূল্য কত।', steps: ['প্রতিটি সারিতে opening stock, কেনা, বিক্রি এবং বর্তমান স্টক।', 'অবস্থা: In stock, Low stock (reorder level বা তার নিচে; আপনি না লিখলে অ্যাপ নিজে হিসাব করে) বা Out of stock।', 'সার্চ ও স্টক ফিল্টার দিয়ে পণ্য খুঁজুন।', 'সারির গ্রাফ আইকনে বিক্রির ইতিহাস, মাসিক ট্রেন্ড ও Stock card (প্রতিটি ঢোকা-বেরোনো, রেসিপির auto-made ও auto-used লাইন সহ) দেখুন।', 'কেনা ও বিক্রি Save করলে স্টক নিজে বদলায়। মিক্স করা পণ্য স্টক ছাড়া বিক্রি হলে রেসিপি অনুযায়ী কাঁচামাল কাটা হয়। এখানে হাতে স্টক বদলাতে হয় না।'], tips: ['সংখ্যা ভুল মনে হলে পণ্যের Opening stock, রেসিপি ও সাম্প্রতিক বিল দেখুন।'] } },
+    inventory: { en: { what: 'How much of each product you have in stock and what it is worth.', steps: ['Each row shows opening stock, bought, sold and current stock.', 'Status: In stock, Low stock (at or below reorder level, which the app works out itself unless you typed one) or Out of stock.', 'Use search and the stock filter to find products.', 'Press the graph icon on a row for its sales history, monthly trend and Stock card (every in and out, including recipe auto-made and auto-used lines).', 'Stock changes automatically when you save purchases and sales. For mixed products, raw materials are cut by the recipe when you sell without stock. You never edit stock here.'], tips: ['If the number looks wrong, check the product\'s Opening stock, its recipe and the latest bills.', 'Expiry watch (top of this page) lists batches with an expiry date. Enter a batch no and expiry date when you record a purchase or a production batch. Stock is assumed to leave in expiry order.'] },
+      bn: { what: 'প্রতিটি পণ্যের কতটা মজুদ আছে এবং তার মূল্য কত।', steps: ['প্রতিটি সারিতে opening stock, কেনা, বিক্রি এবং বর্তমান স্টক।', 'অবস্থা: In stock, Low stock (reorder level বা তার নিচে; আপনি না লিখলে অ্যাপ নিজে হিসাব করে) বা Out of stock।', 'সার্চ ও স্টক ফিল্টার দিয়ে পণ্য খুঁজুন।', 'সারির গ্রাফ আইকনে বিক্রির ইতিহাস, মাসিক ট্রেন্ড ও Stock card (প্রতিটি ঢোকা-বেরোনো, রেসিপির auto-made ও auto-used লাইন সহ) দেখুন।', 'কেনা ও বিক্রি Save করলে স্টক নিজে বদলায়। মিক্স করা পণ্য স্টক ছাড়া বিক্রি হলে রেসিপি অনুযায়ী কাঁচামাল কাটা হয়। এখানে হাতে স্টক বদলাতে হয় না।'], tips: ['সংখ্যা ভুল মনে হলে পণ্যের Opening stock, রেসিপি ও সাম্প্রতিক বিল দেখুন।', 'এই পাতার উপরের Expiry watch-এ মেয়াদসহ ব্যাচ দেখায়। ক্রয় বা প্রোডাকশন লেখার সময় ব্যাচ নম্বর ও মেয়াদ দিন। ধরা হয় আগে মেয়াদ শেষ হওয়া মাল আগে বেরিয়ে যায়।'] } },
     reports: { en: { what: 'Reports and data export.', steps: ['Monthly management report (management only): choose a Month, press View, then Download PDF.', 'Business summary: choose From and To dates to see sales, purchases and profit for that period.', 'Company-wise and Product-wise tables: press Export for an Excel/CSV copy.', 'Full data backup: "Export" saves everything to a file. Do this regularly and keep the file safe. "Import" restores a backup.'], tips: ['Take a full backup at least once a week.'] },
       bn: { what: 'রিপোর্ট ও ডেটা এক্সপোর্ট।', steps: ['মাসিক ম্যানেজমেন্ট রিপোর্ট (শুধু ম্যানেজমেন্ট): মাস বাছুন, View চাপুন, তারপর PDF ডাউনলোড।', 'Business summary: From ও To তারিখ দিলে ওই সময়ের বিক্রি, কেনা ও লাভ দেখা যায়।', 'কোম্পানি ও পণ্য অনুযায়ী টেবিল: Export চাপলে Excel/CSV পাবেন।', 'Full data backup: "Export" সব তথ্য একটি ফাইলে রাখে। নিয়মিত করুন এবং ফাইল নিরাপদে রাখুন। "Import" ব্যাকআপ ফেরত আনে।'], tips: ['অন্তত সপ্তাহে একবার ফুল ব্যাকআপ নিন।'] } },
     approvals: { en: { what: 'Price Approvals (management only). When staff use a price different from the list price, it waits here.', steps: ['Each request shows the product, the price used, and the list price.', 'Press Approve if the price is fine, or Reject (you can write a reason).', 'The staff member sees the decision on their bell.', 'The bell at the top also lets you approve quickly.'], tips: ['Every decision is saved in the Audit Log.'] },
@@ -9976,6 +10150,7 @@
     flushOutbox();
     loadApprovals(); flushApprovalOutbox();
     loadStockSummary();
+    loadCustomerPrices();
     loadCompanies().then(populateCompanyDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(populatePaymentDropdowns).then(refreshLedger).then(refreshReports);
     loadProducts().then(populateProductDropdowns).then(populateSaleDropdowns).then(populateOrderDropdowns).then(renderInventory).then(refreshReports).then(loadRecipes).then(loadProductionLog);
     loadPurchases().then(populatePaymentDropdowns).then(refreshLedger).then(renderInventory).then(refreshReports);
