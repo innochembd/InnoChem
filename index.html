@@ -895,6 +895,7 @@
 .qa-link{font-size:11.5px;font-weight:700;color:var(--ic-green-dark,#0F7A6D);text-decoration:none;margin-left:6px;white-space:nowrap;} .qa-link:hover{text-decoration:underline;}
 .more-details{border-top:1px solid var(--border);margin-top:14px;padding-top:10px;} .more-details>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text-secondary);padding:4px 0 10px;}
 </style>
+<style id="pe-css">.pe-row{display:grid;grid-template-columns:2fr 1fr 1fr 34px;gap:8px;margin-bottom:8px;} .pe-row select,.pe-row input{padding:9px 10px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:var(--bg-card,#fff);color:var(--text-primary);font-family:inherit;min-width:0;} .pe-del{border:none;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;}</style>
 </head>
 <body>
 <div id="wco-bar"><img data-rar-logo alt="RAR TECH"><span>RAR TECH</span></div>
@@ -1233,6 +1234,7 @@
           <div class="tb-filters">
             <select id="purchase-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="purchase-export-btn"><i class="ti ti-download"></i> Export CSV</button>
+            <button class="btn-secondary sm" id="purchase-scan-btn" style="display:none" title="Take a photo of the supplier bill and let the assistant fill the form"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10"/></svg> Scan bill</button>
             <button class="btn-primary sm" id="purchase-add-btn"><i class="ti ti-plus"></i> Add purchase</button>
           </div>
         </div>
@@ -1900,10 +1902,6 @@
         </div>
         <div class="form-row">
           <div class="field">
-            <label>Category</label>
-            <div class="field-input-wrap"><i class="ti ti-category"></i><input type="text" id="product-category" placeholder="e.g. Dyes, Auxiliaries"></div>
-          </div>
-          <div class="field">
             <label>Unit <span class="required-mark">*</span></label>
             <select id="product-unit" required>
               <option value="kg">kg</option>
@@ -1914,29 +1912,35 @@
               <option value="pcs">pcs</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="field">
             <label>Opening stock</label>
             <div class="field-input-wrap"><i class="ti ti-packages"></i><input type="number" id="product-opening-stock" step="0.01" placeholder="0"></div>
           </div>
+        </div>
+        <div class="form-row">
           <div class="field">
             <label>Purchase rate (৳/unit)</label>
             <div class="field-input-wrap"><i class="ti ti-tag"></i><input type="number" id="product-purchase-rate" step="0.01" placeholder="0"></div>
           </div>
+          <div class="field">
+            <label>Sales rate (৳/unit)</label>
+            <div class="field-input-wrap"><i class="ti ti-tag"></i><input type="number" id="product-sales-rate" step="0.01" placeholder="0"></div>
+          </div>
+        </div>
+        <details class="more-details"><summary>More details (category, reorder level, notes)</summary>
+        <div class="field">
+          <label>Category</label>
+          <div class="field-input-wrap"><i class="ti ti-category"></i><input type="text" id="product-category" placeholder="e.g. Dyes, Auxiliaries"></div>
         </div>
         <div class="field">
-          <label>Sales rate (৳/unit)</label>
-          <div class="field-input-wrap"><i class="ti ti-tag"></i><input type="number" id="product-sales-rate" step="0.01" placeholder="0"></div>
-        </div>
-        <div class="field">
-          <label>Reorder level (optional)</label>
-          <div class="field-input-wrap"><i class="ti ti-alert-triangle"></i><input type="number" id="product-reorder-level" step="0.01" placeholder="e.g. 50 — flags low stock below this"></div>
+          <label>Reorder level (leave empty = automatic)</label>
+          <div class="field-input-wrap"><i class="ti ti-alert-triangle"></i><input type="number" id="product-reorder-level" step="0.01" placeholder="Automatic from your sales pace"></div>
         </div>
         <div class="field">
           <label>Notes</label>
           <textarea id="product-notes" placeholder="Any additional notes"></textarea>
         </div>
+        </details>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn-secondary" id="product-cancel-btn">Cancel</button>
@@ -2089,6 +2093,8 @@
             <div class="field-input-wrap"><i class="ti ti-tag"></i><input type="number" id="purchase-rate" step="0.01" min="0" required></div>
           </div>
         </div>
+        <div id="purchase-extra-wrap"></div>
+        <button type="button" class="btn-secondary" id="purchase-add-line-btn" style="margin:-4px 0 12px;"><i class="ti ti-plus"></i> Add another product (same bill)</button>
         <div class="form-row">
           <div class="field">
             <label>Total amount</label>
@@ -4449,11 +4455,31 @@
     }));
   }
 
+  function purchaseExtraLines(){
+    return Array.from(document.querySelectorAll('#purchase-extra-wrap .pe-row')).map(r => ({
+      productId: r.querySelector('.pe-product').value, qty: parseFloat(r.querySelector('.pe-qty').value) || 0, rate: parseFloat(r.querySelector('.pe-rate').value) || 0 }));
+  }
+  function addPurchaseExtraRow(pre){
+    const wrap = document.getElementById('purchase-extra-wrap');
+    const sorted = productsCache.slice().sort((a, b) => a.name.localeCompare(b.name));
+    const row = document.createElement('div'); row.className = 'pe-row';
+    row.innerHTML = '<select class="pe-product">' + sorted.map(p => `<option value="${p.id}" data-rate="${p.purchaseRate || 0}">${escapeHtml(p.name)} (${escapeHtml(p.unit)})</option>`).join('') +
+      '</select><input type="number" class="pe-qty" step="0.01" min="0" placeholder="Qty"><input type="number" class="pe-rate" step="0.01" min="0" placeholder="Rate"><button type="button" class="pe-del" aria-label="Remove">&times;</button>';
+    wrap.appendChild(row);
+    const sel = row.querySelector('.pe-product'), rate = row.querySelector('.pe-rate'), qty = row.querySelector('.pe-qty');
+    if(pre && pre.productId) sel.value = pre.productId;
+    if(pre && pre.qty) qty.value = pre.qty;
+    rate.value = (pre && pre.rate) || (sel.selectedOptions[0] && sel.selectedOptions[0].getAttribute('data-rate')) || '';
+    sel.addEventListener('change', () => { rate.value = sel.selectedOptions[0].getAttribute('data-rate') || ''; updatePurchaseCalcs(); });
+    [qty, rate].forEach(i => i.addEventListener('input', updatePurchaseCalcs));
+    row.querySelector('.pe-del').addEventListener('click', () => { row.remove(); updatePurchaseCalcs(); });
+    updatePurchaseCalcs();
+  }
   function updatePurchaseCalcs(){
     const qty = parseFloat(document.getElementById('purchase-qty').value) || 0;
     const rate = parseFloat(document.getElementById('purchase-rate').value) || 0;
     const paid = parseFloat(document.getElementById('purchase-paid').value) || 0;
-    const total = qty * rate;
+    const total = qty * rate + purchaseExtraLines().reduce((a, l) => a + l.qty * l.rate, 0);
     const due = Math.max(total - paid, 0);
     document.getElementById('purchase-total-display').value = fmtMoney(total);
     document.getElementById('purchase-due-hint').textContent = 'Due: ' + fmtMoney(due) + (paid > total ? '  (paid exceeds total)' : '');
@@ -4487,6 +4513,8 @@
         document.getElementById('purchase-rate').value = opt.getAttribute('data-rate') || '';
       }
     }
+    document.getElementById('purchase-extra-wrap').innerHTML = '';
+    document.getElementById('purchase-add-line-btn').style.display = id ? 'none' : '';
     updatePurchaseCalcs();
     const pm = document.getElementById('purchase-more'); if(pm) pm.open = false;
     document.getElementById('purchase-modal').classList.add('open');
@@ -4519,6 +4547,7 @@
       showToast('Purchases exported');
     });
 
+    document.getElementById('purchase-add-line-btn').addEventListener('click', () => addPurchaseExtraRow());
     document.getElementById('purchase-form').addEventListener('submit', async function(e){
       e.preventDefault();
       const companyId = document.getElementById('purchase-company').value;
@@ -4527,33 +4556,39 @@
       const rate = parseFloat(document.getElementById('purchase-rate').value) || 0;
       if(!companyId || !productId){ showToast('Select a supplier and a product'); return; }
       if(qty <= 0){ showToast('Quantity must be greater than 0'); return; }
-      const company = companiesCache.find(c => c.id === companyId);
-      const product = productsCache.find(p => p.id === productId);
-      const paid = parseFloat(document.getElementById('purchase-paid').value) || 0;
-      const total = qty * rate;
-      const due = Math.max(total - paid, 0);
       const id = document.getElementById('purchase-id').value;
-      const data = {
-        id: id || uid(),
-        date: document.getElementById('purchase-date').value || todayStr(),
-        invoiceNo: document.getElementById('purchase-invoice').value.trim(),
-        companyId, companyName: company ? company.name : '(deleted company)',
-        productId, productName: product ? product.name : '(deleted product)',
-        qty, rate, total, paid, due,
-        notes: document.getElementById('purchase-notes').value.trim(),
-        created_at: id ? (purchasesCache.find(x=>x.id===id)||{}).created_at || Date.now() : Date.now()
-      };
-      if(id){
-        purchasesCache = purchasesCache.map(p => p.id === id ? data : p);
-      } else {
-        purchasesCache.push(data);
+      const lines = [{ productId, qty, rate }];
+      if(!id){
+        const extras = purchaseExtraLines().filter(l => l.productId && (l.qty > 0 || l.rate > 0));
+        for(const l of extras){ if(l.qty <= 0){ showToast('Enter a quantity for every product line'); return; } lines.push(l); }
       }
+      const company = companiesCache.find(c => c.id === companyId);
+      const paidTotal = parseFloat(document.getElementById('purchase-paid').value) || 0;
+      const date = document.getElementById('purchase-date').value || todayStr();
+      const invoiceNo = document.getElementById('purchase-invoice').value.trim();
+      const notes = document.getElementById('purchase-notes').value.trim();
+      let remaining = paidTotal;
+      const saved = lines.map((l, i) => {
+        const product = productsCache.find(p => p.id === l.productId);
+        const total = l.qty * l.rate;
+        let paid = Math.min(remaining, total); remaining -= paid;
+        if(i === lines.length - 1 && remaining > 0){ paid += remaining; remaining = 0; }   // never lose money entered
+        return {
+          id: (id && i === 0) ? id : uid(), date, invoiceNo,
+          companyId, companyName: company ? company.name : '(deleted company)',
+          productId: l.productId, productName: product ? product.name : '(deleted product)',
+          qty: l.qty, rate: l.rate, total, paid, due: Math.max(total - paid, 0), notes,
+          created_at: (id && i === 0) ? ((purchasesCache.find(x => x.id === id) || {}).created_at || Date.now()) : Date.now() + i
+        };
+      });
+      if(id) purchasesCache = purchasesCache.map(p => p.id === id ? saved[0] : p);
+      else saved.forEach(d => purchasesCache.push(d));
       await setList('purchases', purchasesCache);
-      priceApprovalHook('purchase', data);
+      saved.forEach(d => priceApprovalHook('purchase', d));
       closePurchaseModal();
       renderPurchases();
       refreshDashboard();
-      showToast(id ? 'Purchase updated' : 'Purchase added');
+      showToast(id ? 'Purchase updated' : (saved.length > 1 ? saved.length + ' purchase lines added' : 'Purchase added'));
     });
   }
 
@@ -4687,11 +4722,11 @@
     // Low stock: only products where a reorder level has been set (avoids false alarms)
     const lowEl = document.getElementById('dash-low-stock');
     if(lowEl){
-      const low = computeInventory().filter(r => Number(r.product.reorderLevel) > 0 && (r.status === 'lowstock' || r.status === 'outstock'))
+      const low = computeInventory().filter(r => r.reorderEff > 0 && (r.status === 'lowstock' || r.status === 'outstock'))
         .sort((a,b) => a.currentStock - b.currentStock).slice(0,5);
       lowEl.innerHTML = low.length
-        ? low.map(r => `<div class="dash-row"><div><div class="dr-name">${escapeHtml(r.product.name)}</div><div class="dr-sub">Reorder at ${Number(r.product.reorderLevel).toLocaleString()} ${escapeHtml(r.product.unit)}</div></div><div class="dr-val late">${r.currentStock.toLocaleString()} ${escapeHtml(r.product.unit)}</div></div>`).join('')
-        : '<div class="empty-row"><i class="ti ti-circle-check" style="color:var(--success);"></i> Nothing running low (set a reorder level on products to get alerts).</div>';
+        ? low.map(r => `<div class="dash-row"><div><div class="dr-name">${escapeHtml(r.product.name)}</div><div class="dr-sub">Reorder at ${Number(r.reorderEff).toLocaleString()} ${escapeHtml(r.product.unit)}${r.reorderAuto ? ' (auto)' : ''}</div></div><div class="dr-val late">${r.currentStock.toLocaleString()} ${escapeHtml(r.product.unit)}</div></div>`).join('')
+        : '<div class="empty-row"><i class="ti ti-circle-check" style="color:var(--success);"></i> Nothing running low. Alerts work out by themselves from your sales pace.</div>';
     }
   }
 
@@ -6724,10 +6759,15 @@
       const totalInQty = openingQty + purchasedQty + producedQty;
       const avgCost = totalInQty > 0 ? (openingCost + purchasedCost + producedCost) / totalInQty : (Number(p.purchaseRate) || 0);
       const stockValue = Math.max(currentStock, 0) * avgCost;
+      // Reorder level: use the one typed on the product; if none, work it out = about 14 days of the last 30 days' selling pace
+      const since30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      const sold30 = salesCache.filter(x => (x.date || '') >= since30).reduce((a, x) => a + (x.items || []).filter(it => it.productId === p.id).reduce((b, it) => b + (Number(it.qty) || 0), 0), 0);
+      const autoLevel = sold30 > 0 ? Math.ceil(sold30 / 30 * 14) : 0;
+      const reorderEff = Number(p.reorderLevel) > 0 ? Number(p.reorderLevel) : autoLevel;
       let status = 'instock';
       if(currentStock <= 0) status = 'outstock';
-      else if(p.reorderLevel && currentStock <= Number(p.reorderLevel)) status = 'lowstock';
-      return { product: p, purchasedQty, soldQty, producedQty, consumedQty, openingQty, currentStock, avgCost, stockValue, status };
+      else if(reorderEff > 0 && currentStock <= reorderEff) status = 'lowstock';
+      return { product: p, reorderEff, reorderAuto: !(Number(p.reorderLevel) > 0) && autoLevel > 0, purchasedQty, soldQty, producedQty, consumedQty, openingQty, currentStock, avgCost, stockValue, status };
     });
   }
   function avgCostForProduct(productId){
@@ -7795,7 +7835,7 @@
     computeInventory().forEach(r => {
       const sold30 = salesCache.filter(x => (x.date || '') >= since).reduce((a, x) => a + (x.items || []).filter(it => it.productId === r.product.id).reduce((b, it) => b + (Number(it.qty) || 0), 0), 0);
       const perDay = sold30 / 30, days = perDay > 0 ? r.currentStock / perDay : Infinity;
-      const lowByLevel = Number(r.product.reorderLevel) > 0 && r.currentStock <= Number(r.product.reorderLevel);
+      const lowByLevel = r.reorderEff > 0 && r.currentStock <= r.reorderEff;
       if(r.currentStock <= 0 && sold30 > 0) out.push({ key: 'stk:' + r.product.id, sev: 'high', icon: 'ti-packages', page: 'inventory', title: r.product.name + ' is out of stock', sub: 'Sold ' + sold30.toLocaleString() + ' ' + r.product.unit + ' in the last 30 days. Reorder now.', todo: 'Order ' + r.product.name });
       else if(r.currentStock > 0 && (lowByLevel || days <= 10)) out.push({ key: 'stk:' + r.product.id, sev: days <= 5 ? 'high' : 'med', icon: 'ti-packages', page: 'inventory', title: r.product.name + ' running low (' + Math.round(r.currentStock).toLocaleString() + ' ' + r.product.unit + ')', sub: isFinite(days) ? 'About ' + Math.max(Math.floor(days), 0) + ' days of stock left at the current pace.' : 'Below the reorder level.', todo: 'Order ' + r.product.name });
     });
@@ -7891,7 +7931,7 @@
     const top = (o, n) => Object.values(o).sort((a, b) => b.sales - a.sales).slice(0, n).map(x => Object.assign({}, x, { sales: r0(x.sales), profit: r0(x.profit), qty: x.qty !== undefined ? Math.round(x.qty * 100) / 100 : undefined }));
     const stock = computeInventory().map(r => {
       const sold30 = salesCache.filter(x => (x.date || '') >= since30).reduce((a, x) => a + (x.items || []).filter(it => it.productId === r.product.id).reduce((b, it) => b + (Number(it.qty) || 0), 0), 0);
-      return { product: r.product.name, unit: r.product.unit, in_stock: Math.round(r.currentStock * 100) / 100, reorder_level: r.product.reorderLevel || 0, avg_cost: r0(r.avgCost), list_sale_rate: r0(r.product.salesRate), sold_last_30d: Math.round(sold30 * 100) / 100, days_left: sold30 > 0 ? Math.round(r.currentStock / (sold30 / 30)) : null };
+      return { product: r.product.name, unit: r.product.unit, in_stock: Math.round(r.currentStock * 100) / 100, reorder_level: r.reorderEff || 0, avg_cost: r0(r.avgCost), list_sale_rate: r0(r.product.salesRate), sold_last_30d: Math.round(sold30 * 100) / 100, days_left: sold30 > 0 ? Math.round(r.currentStock / (sold30 / 30)) : null };
     });
     const months = []; for(let i = 5; i >= 0; i--){ const dt = new Date(); dt.setDate(1); dt.setMonth(dt.getMonth() - i); const y = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0'); const st = mrStats(y); months.push(Object.assign({ month: y }, mstat(st))); }
     return {
@@ -7901,6 +7941,7 @@
       this_month: mstat(cur), last_month: mstat(prev), last_6_months: months,
       customers_owing_us: recv.slice(0, 40).map(a => ({ name: a.company.name, phone: a.company.phone || '', balance: r0(a.balance), d0_30: r0(a.b0), d31_60: r0(a.b31), d61_90: r0(a.b61), d90_plus: r0(a.b90), oldest_days: a.oldestDays, last_payment_date: a.lastReceived || null })),
       we_owe_suppliers: pay.slice(0, 20),
+      companies: companiesCache.slice(0, 400).map(c => ({ name: c.name, type: c.type })),
       stock: stock,
       top_products_90d: top(byProd, 15), top_customers_90d: top(byCust, 15),
       recent_sales: salesCache.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 25).map(s => ({ invoice: s.invoiceNo, date: s.date, customer: s.companyName, total: r0(s.total), received: r0(s.received), due: r0(s.due), delivery: s.deliveryStatus || 'pending', profit: r0(saleProfit(s)) })),
@@ -7918,15 +7959,50 @@
     el.className = 'ai-m ' + (role === 'user' ? 'u' : 'a') + (cls ? ' ' + cls : '');
     if(role === 'user'){ el.textContent = text; }
     else {
-      const todos = [], posters = []; el.setAttribute('dir', 'auto');
-      const clean = text.replace(/\[\[POSTER:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { posters.push(t.trim()); return ''; }).replace(/\[\[TODO:\s*(.+?)\]\]/g, (m, t) => { todos.push(t.trim()); return ''; }).trim();
+      const todos = [], posters = [], buys = []; el.setAttribute('dir', 'auto');
+      const clean = text.replace(/\[\[PURCHASE:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { buys.push(t.trim()); return ''; }).replace(/\[\[POSTER:\s*([\s\S]*?)\]\]\s*$/g, (m, t) => { posters.push(t.trim()); return ''; }).replace(/\[\[TODO:\s*(.+?)\]\]/g, (m, t) => { todos.push(t.trim()); return ''; }).trim();
       el.innerHTML = aiFmt(clean);
+      buys.slice(0, 1).forEach(t => { let spec = null; try{ spec = JSON.parse(t); }catch(e){ return; }
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.style.background = '#0F9484'; b.style.color = '#fff';
+        b.innerHTML = '&#10003; Open purchase form (check &amp; save)'; b.addEventListener('click', () => aiOpenPurchase(spec)); el.appendChild(b); });
       posters.slice(0, 1).forEach(t => { let spec = null; try{ spec = JSON.parse(t); }catch(e){ spec = { product: t.replace(/[{}"]/g, '') }; }
         const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.style.background = '#0F9484'; b.style.color = '#fff';
         b.innerHTML = '&#9733; Make &amp; download poster: ' + escapeHtml(spec.product || ''); b.addEventListener('click', () => aiMakePoster(spec)); el.appendChild(b); });
       todos.slice(0, 2).forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ai-todo'; b.innerHTML = '<i class="ti ti-plus"></i> Add to to-do: ' + escapeHtml(t); b.addEventListener('click', () => { addTodo(t, '', 'normal'); b.disabled = true; b.style.opacity = '.5'; }); el.appendChild(b); });
     }
     box.appendChild(el); box.scrollTop = box.scrollHeight; return el;
+  }
+  function aiNorm(x){ return String(x || '').toLowerCase().replace(/[^a-z0-9\u0980-\u09ff]+/g, ' ').trim(); }
+  function aiFindCompany(name){ const n = aiNorm(name); if(!n) return null; return companiesCache.find(c => aiNorm(c.name) === n) || companiesCache.find(c => { const m = aiNorm(c.name); return m.includes(n) || n.includes(m); }) || null; }
+  function aiFindProduct(name){ const n = aiNorm(name); if(!n) return null; return productsCache.find(p => aiNorm(p.name) === n) || productsCache.find(p => { const m = aiNorm(p.name); return m.length > 2 && (m.includes(n) || n.includes(m)); }) || null; }
+  async function aiOpenPurchase(spec){
+    const lines = (Array.isArray(spec.lines) ? spec.lines : []).filter(l => l && l.product);
+    if(!lines.length){ aiAdd('assistant', 'I could not read any product lines from the bill. Please try a clearer photo.', 'err'); return; }
+    const created = [];
+    let comp = aiFindCompany(spec.supplier);
+    if(!comp && spec.supplier){ comp = { id: uid(), name: String(spec.supplier).trim(), type: 'Supplier', opening: 0, contact: '', phone: '', email: '', address: '', notes: '', created_at: Date.now() }; companiesCache.push(comp); created.push('supplier ' + comp.name); }
+    const prods = [];
+    for(const l of lines){
+      let pr = aiFindProduct(l.product);
+      if(!pr){ pr = { id: uid(), name: String(l.product).trim(), category: '', unit: 'kg', openingStock: 0, purchaseRate: Number(l.rate) || 0, salesRate: 0, reorderLevel: 0, notes: '', created_at: Date.now() }; productsCache.push(pr); created.push('product ' + pr.name); }
+      prods.push(pr);
+    }
+    if(created.length){ await setList('companies', companiesCache); await setList('products', productsCache); renderCompanies(); renderProducts(); }
+    document.getElementById('ai-panel').classList.remove('open');
+    const nb = document.querySelector('.nav-item[data-page="purchases"]'); if(nb) nb.click();
+    openPurchaseModal(null);
+    if(comp) document.getElementById('purchase-company').value = comp.id;
+    const f = lines[0];
+    document.getElementById('purchase-product').value = prods[0].id;
+    document.getElementById('purchase-qty').value = Number(f.qty) || '';
+    document.getElementById('purchase-rate').value = Number(f.rate) || prods[0].purchaseRate || '';
+    for(let i = 1; i < lines.length; i++) addPurchaseExtraRow({ productId: prods[i].id, qty: Number(lines[i].qty) || '', rate: Number(lines[i].rate) || '' });
+    document.getElementById('purchase-paid').value = Number(spec.paid) || '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(spec.date || '')) document.getElementById('purchase-date').value = spec.date;
+    if(spec.invoice) document.getElementById('purchase-invoice').value = String(spec.invoice);
+    document.getElementById('purchase-more').open = !!(spec.invoice || spec.date);
+    updatePurchaseCalcs();
+    showToast(created.length ? 'Filled from bill. New: ' + created.join(', ') + '. Please check, then Save.' : 'Filled from bill. Please check, then Save.');
   }
   function aiMakePoster(spec){
     const name = String(spec.product || '').toLowerCase().trim();
@@ -7948,7 +8024,7 @@
     'Urdu (اردو)': { hi: 'السلام علیکم! میں RAR Assistant ہوں۔ بقایا، اسٹاک، سیلز، منافع پوچھیں یا کسی پروڈکٹ کا پوسٹر بنوائیں۔', ph: 'یہاں لکھیں...', sr: 'ur-PK', chips: ['سب سے زیادہ بقایا کس کا ہے؟', 'اس مہینے کی سیلز اور منافع؟', 'کون سی پروڈکٹس جلد ختم ہوں گی؟', 'میرے ٹاپ 5 گاہک کون ہیں؟', 'آج مجھے کیا کرنا چاہیے؟'] }
   };
   function aiLang(){ const v = document.getElementById('ai-lang').value; return AI_LANGS[v] ? v : 'auto'; }
-  let aiFiles = [];
+  let aiFiles = [], aiAutoSend = '';
   function aiRenderFiles(){
     const box = document.getElementById('ai-files');
     box.innerHTML = aiFiles.map((f, i) => '<div class="ai-fchip">' + (f.thumb ? '<img src="' + f.thumb + '">' : '') + '<span>' + escapeHtml(f.name) + '</span><b data-rm="' + i + '">&times;</b></div>').join('');
@@ -8003,7 +8079,7 @@
     const c = document.getElementById('ai-chips'); c.style.display = ''; c.innerHTML = chips.map(x => '<button type="button">' + escapeHtml(x) + '</button>').join('');
     c.querySelectorAll('button').forEach(b => b.addEventListener('click', () => aiAsk(b.textContent)));
   }
-  function aiShowFab(){ const f = document.getElementById('ai-fab'); if(f) f.style.display = (currentUser && isPriceController()) ? '' : 'none'; if(f && f.style.display === 'none') document.getElementById('ai-panel').classList.remove('open'); }
+  function aiShowFab(){ const f = document.getElementById('ai-fab'); const sb = document.getElementById('purchase-scan-btn'); if(sb) sb.style.display = (currentUser && isPriceController()) ? '' : 'none'; if(f) f.style.display = (currentUser && isPriceController()) ? '' : 'none'; if(f && f.style.display === 'none') document.getElementById('ai-panel').classList.remove('open'); }
   (function initAssistant(){
     const fab = document.getElementById('ai-fab'); if(!fab) return;
     const panel = document.getElementById('ai-panel'), inp = document.getElementById('ai-input');
@@ -8014,12 +8090,15 @@
     ls.addEventListener('change', () => { try{ localStorage.setItem('ic_ai_lang', ls.value); }catch(e){} aiReset(); });
     const fi = document.getElementById('ai-file');
     document.getElementById('ai-attach').addEventListener('click', () => fi.click());
+    const sbtn = document.getElementById('purchase-scan-btn');
+    if(sbtn) sbtn.addEventListener('click', () => { panel.classList.add('open'); if(!document.getElementById('ai-msgs').children.length) aiReset(); aiAutoSend = 'Read this supplier bill and prepare the purchase form from it.'; fi.click(); });
     fi.addEventListener('change', async () => {
       for(const f of Array.from(fi.files)){
         if(aiFiles.length >= 4){ showToast('Max 4 files'); break; }
         try{ const r = await aiReadFile(f); if(aiFiles.reduce((a, x) => a + x.data.length, 0) + r.data.length > 5000000){ showToast('Files too large (max about 3.5 MB total)'); break; } aiFiles.push(r); }catch(e){ showToast(e.message); }
       }
       fi.value = ''; aiRenderFiles();
+      if(aiAutoSend && aiFiles.length){ const t = aiAutoSend; aiAutoSend = ''; aiAsk(t); } else aiAutoSend = '';
     });
     document.getElementById('ai-form').addEventListener('submit', ev => { ev.preventDefault(); const v = inp.value; inp.value = ''; inp.style.height = ''; aiAsk(v); });
     inp.addEventListener('keydown', ev => { if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); document.getElementById('ai-form').requestSubmit(); } });
@@ -8044,14 +8123,14 @@
       bn: { what: 'এক নজরে পুরো ব্যবসা। এখানে কিছু লিখতে হয় না, শুধু দেখুন।', steps: ['উপরের কার্ডে মোট কেনা, বিক্রি, লাভ, আজকের বিক্রি এবং এই মাস বনাম গত মাস।', '"Money to collect"-এ যাদের কাছে সবচেয়ে বেশি টাকা পাবেন তাদের নাম। আগে তাদের ফোন করুন।', '"Low stock alerts"-এ যেসব পণ্য শেষ হয়ে আসছে।', '"Recent activity" ও ৬ মাসের চার্টে সাম্প্রতিক অবস্থা।'], tips: ['উপরের ঘণ্টা আইকনে আজকের জরুরি বিষয় দেখা যায়।'] } },
     companies: { en: { what: 'Your address book of customers (Buyers) and suppliers. Every bill and payment is linked to a company.', steps: ['Press "Add company".', 'Fill the Name and choose Type: Buyer (you sell to them), Supplier (you buy from them) or Both.', 'Add phone and address. The phone is used for WhatsApp messages.', 'Opening balance: money already pending BEFORE you started using this app. Positive = they owe you. Negative = you owe them. Leave 0 if none.', 'Press Save. To fix a mistake, use the pencil icon in the row.'], tips: ['Create the company first, then you can bill or pay it.', 'Do not create the same company twice. Search before adding.'] },
       bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।'] } },
-    products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: when stock falls to this number you get a low-stock alert.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
-      bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: মজুদ এই সংখ্যায় নামলে low-stock সতর্কতা আসবে।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
+    products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: leave it empty and the app works it out itself (about 14 days of your recent sales). Type a number only if you want your own limit.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
+      bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: ফাঁকা রাখুন, অ্যাপ নিজে হিসাব করবে (সাম্প্রতিক বিক্রির প্রায় ১৪ দিনের মজুদ)। নিজের সীমা চাইলে তবেই সংখ্যা লিখুন।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
     recipes: { en: { what: 'For products you MIX yourself. A recipe says which raw materials, and how much of each, make one unit of the finished product.', steps: ['Press "Add recipe".', 'Choose the finished product.', 'Add each raw material with the quantity needed.', 'Save. The recipe is then used automatically in Production Log.'], tips: ['Skip this page if you only buy and resell.'] },
       bn: { what: 'যেসব পণ্য আপনি নিজে মিশিয়ে বানান তার জন্য। রেসিপি বলে এক ইউনিট তৈরি পণ্যে কোন কাঁচামাল কত লাগে।', steps: ['"Add recipe" চাপুন।', 'তৈরি পণ্যটি বাছুন।', 'প্রতিটি কাঁচামাল ও দরকারি পরিমাণ যোগ করুন।', 'Save করুন। পরে Production Log-এ এটি নিজে থেকে কাজে লাগবে।'], tips: ['শুধু কিনে বিক্রি করলে এই পেজ লাগবে না।'] } },
     production: { en: { what: 'Record each mixing batch. Raw materials go down, finished product goes up, and the unit cost is worked out for you.', steps: ['Press "Add batch".', 'Choose Date and the Finished product, and the Quantity produced.', 'The materials from the recipe fill in. Change the amounts if the real usage was different.', 'Save. Stock is updated automatically.'], tips: ['Make the recipe first (Mix Recipes).'] },
       bn: { what: 'প্রতিটি মিক্সিং ব্যাচ লিখে রাখুন। কাঁচামাল কমে, তৈরি পণ্য বাড়ে এবং ইউনিট খরচ নিজে হিসাব হয়।', steps: ['"Add batch" চাপুন।', 'তারিখ, তৈরি পণ্য এবং কত উৎপাদন হলো তা দিন।', 'রেসিপি থেকে কাঁচামাল ভরে যাবে। আসল ব্যবহার আলাদা হলে সংখ্যা বদলান।', 'Save করুন। স্টক নিজে হালনাগাদ হবে।'], tips: ['আগে Mix Recipes-এ রেসিপি বানান।'] } },
-    purchases: { en: { what: 'Record every time you BUY goods from a supplier. Stock goes up and the supplier\'s balance is updated.', steps: ['Press "New purchase".', 'Choose Date, Supplier and Product. Enter Invoice/bill no.', 'Enter Quantity and Rate per unit. The Total is calculated.', 'Paid amount: how much you paid right now. The rest becomes "Due" (you owe the supplier).', 'Save. Pay the due later from the Payments menu.'], tips: ['If the price you enter differs from the product\'s purchase rate, management must approve it.'] },
-      bn: { what: 'সরবরাহকারীর কাছ থেকে মাল কিনলে প্রতিবার এখানে লিখুন। স্টক বাড়ে এবং সরবরাহকারীর হিসাব হালনাগাদ হয়।', steps: ['"New purchase" চাপুন।', 'তারিখ, সরবরাহকারী ও পণ্য বাছুন। ইনভয়েস/বিল নম্বর দিন।', 'পরিমাণ ও প্রতি ইউনিট দাম দিন। মোট নিজে হিসাব হবে।', 'Paid amount: এখনই যত টাকা দিলেন। বাকিটা "Due" (সরবরাহকারীকে দিতে হবে)।', 'Save করুন। বাকি টাকা পরে Payments মেনু থেকে দিন।'], tips: ['পণ্যের Purchase rate-এর থেকে আলাদা দাম দিলে ম্যানেজমেন্টকে অনুমোদন দিতে হবে।'] } },
+    purchases: { en: { what: 'Record every time you BUY goods from a supplier. Stock goes up and the supplier\'s balance is updated.', steps: ['Press "New purchase".', 'Choose the Supplier and the Product. Tap "+ New supplier" or "+ New product" if it is not in the list yet.', 'Enter Quantity and Rate per unit. Several products on one bill? Tap "Add another product". The Total is calculated.', 'Easier: tap "Scan bill", take a photo of the supplier bill and the form fills itself (management). Check it, then Save.', 'Paid amount: how much you paid right now. The rest becomes "Due" (you owe the supplier).', 'Save. Pay the due later from the Payments menu.'], tips: ['If the price you enter differs from the product\'s purchase rate, management must approve it.'] },
+      bn: { what: 'সরবরাহকারীর কাছ থেকে মাল কিনলে প্রতিবার এখানে লিখুন। স্টক বাড়ে এবং সরবরাহকারীর হিসাব হালনাগাদ হয়।', steps: ['"New purchase" চাপুন।', 'সরবরাহকারী ও পণ্য বাছুন। তালিকায় না থাকলে "+ New supplier" বা "+ New product" চাপুন।', 'পরিমাণ ও প্রতি ইউনিট দাম দিন। একই বিলে একাধিক পণ্য হলে "Add another product" চাপুন। মোট নিজে হিসাব হবে।', 'সহজ উপায়: "Scan bill" চেপে সরবরাহকারীর বিলের ছবি তুলুন, ফর্ম নিজে ভরে যাবে (ম্যানেজমেন্ট)। দেখে নিয়ে Save করুন।', 'Paid amount: এখনই যত টাকা দিলেন। বাকিটা "Due" (সরবরাহকারীকে দিতে হবে)।', 'Save করুন। বাকি টাকা পরে Payments মেনু থেকে দিন।'], tips: ['পণ্যের Purchase rate-এর থেকে আলাদা দাম দিলে ম্যানেজমেন্টকে অনুমোদন দিতে হবে।'] } },
     salesOrders: { en: { what: 'Order Booking: write down what a customer wants to buy. NO bill yet, stock and money do not change.', steps: ['Press "New order".', 'Choose Date and Customer, then add the products and quantities.', 'Save. The order shows as Open.', 'When you are ready to sell, press "Convert to invoice" on that row. A bill is made with the same items.', 'If the customer cancels, mark it Cancelled.'], tips: ['Skip this page if you always bill straight away.'] },
       bn: { what: 'অর্ডার বুকিং: ক্রেতা কী কিনতে চায় তা লিখে রাখুন। এখনো বিল হয়নি, স্টক ও টাকার হিসাব বদলায় না।', steps: ['"New order" চাপুন।', 'তারিখ ও ক্রেতা বাছুন, তারপর পণ্য ও পরিমাণ যোগ করুন।', 'Save করুন। অর্ডার "Open" থাকবে।', 'বিক্রির সময় হলে সারির "Convert to invoice" চাপুন। একই আইটেম দিয়ে বিল তৈরি হবে।', 'ক্রেতা বাতিল করলে Cancelled করে দিন।'], tips: ['সবসময় সরাসরি বিল করলে এই পেজ লাগবে না।'] } },
     sales: { en: { what: 'Sales Invoice: make the bill when goods are sold. Stock goes down and the customer\'s dues go up.', steps: ['Press "New sale".', 'Choose Date and Customer. Invoice no is suggested for you.', 'Add each product with Quantity and Rate (the list price fills in). Use "Add another item" for more products.', 'Received amount: money the customer paid right now. The rest is "Due".', 'Save. Then use the row buttons to print, download the PDF receipt, or send it on WhatsApp.', 'Delivery: set the status here or later in the Deliveries menu.'], tips: ['A price different from the list price is sent to management for approval. You will see "Pending approval" on the bill.', 'To collect the due later, use Payments, not a new bill.'] },
