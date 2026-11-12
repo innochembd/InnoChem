@@ -8,6 +8,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon-v4.png">
 <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
 <meta name="theme-color" content="#017885">
+<script src="config.js"></script>
 <script>(function(){var t=null;try{t=localStorage.getItem("ic_theme");}catch(e){}if(t!=="dark"&&t!=="light")t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",t==="dark"?"#013f48":"#017885");})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -991,6 +992,7 @@
       <button class="nav-item" data-page="todo"><i class="ti ti-clipboard-check"></i> To-do &amp; Alerts <span class="nav-count" id="nav-todo-count" style="display:none"></span></button>
       <button class="nav-item" data-page="analyst"><i class="ti ti-chart-bar"></i> Business Analyst</button>
       <button class="nav-item" data-page="expenses"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l12-3v3"/><circle cx="16" cy="13.5" r="1.2"/></svg> Expenses</button>
+      <button class="nav-item" data-page="datahealth"><i class="ti ti-circle-check"></i> Data Health</button>
       <button class="nav-item" data-page="receivables"><i class="ti ti-cash-banknote"></i> Receivables</button>
       <button class="nav-item" data-page="inventory"><i class="ti ti-packages"></i> Inventory</button>
       <button class="nav-item" data-page="reports"><i class="ti ti-file-analytics"></i> Reports &amp; Export</button>
@@ -1610,7 +1612,7 @@
             Download everything — companies, products, purchases, sales, payments, and your business profile — as one file. Keep it somewhere safe, or use it to restore your data later.
           </p>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-            <button class="btn-primary sm" id="backup-export-btn"><i class="ti ti-download"></i> Download full backup (JSON)</button>
+            <button class="btn-secondary sm" id="csv-open-btn"><i class="ti ti-upload"></i> Import customers / products (CSV)</button> <button class="btn-primary sm" id="backup-export-btn"><i class="ti ti-download"></i> Download full backup (JSON)</button>
             <button class="btn-secondary" id="backup-import-btn"><i class="ti ti-upload"></i> Restore from backup</button>
             <input type="file" id="backup-file-input" accept="application/json" style="display:none;">
           </div>
@@ -1656,12 +1658,13 @@
           <span id="an-custom" style="display:none;gap:6px;align-items:center;"><input type="date" id="an-from"> to <input type="date" id="an-to"></span>
           <span class="cell-sub" id="an-range-note"></span><button type="button" class="btn-secondary sm" id="an-explain"><i class="ti ti-sparkles"></i> Explain this page</button><button type="button" class="btn-secondary sm" id="an-print"><i class="ti ti-download"></i> Print / PDF</button>
         </div>
-        <div class="pd-tabs" id="an-tabs" style="overflow-x:auto;white-space:nowrap;"><button class="pd-tab active" data-an="overview">Overview</button><button class="pd-tab" data-an="products">Products</button><button class="pd-tab" data-an="plan">Next month</button><button class="pd-tab" data-an="sales">Sales</button><button class="pd-tab" data-an="profit">Profit</button><button class="pd-tab" data-an="inventory">Inventory</button><button class="pd-tab" data-an="suppliers">Suppliers</button><button class="pd-tab" data-an="customers">Customers</button><button class="pd-tab" data-an="cash">Cash flow</button><button class="pd-tab" data-an="ops">Operations</button><button class="pd-tab" data-an="forecast">Forecast</button></div>
+        <div class="pd-tabs" id="an-tabs" style="overflow-x:auto;white-space:nowrap;"><button class="pd-tab active" data-an="overview">Overview</button><button class="pd-tab" data-an="brief">Brief</button><button class="pd-tab" data-an="products">Products</button><button class="pd-tab" data-an="plan">Next month</button><button class="pd-tab" data-an="sales">Sales</button><button class="pd-tab" data-an="profit">Profit</button><button class="pd-tab" data-an="inventory">Inventory</button><button class="pd-tab" data-an="suppliers">Suppliers</button><button class="pd-tab" data-an="customers">Customers</button><button class="pd-tab" data-an="cash">Cash flow</button><button class="pd-tab" data-an="ops">Operations</button><button class="pd-tab" data-an="forecast">Forecast</button></div>
         <div id="an-body"></div>
       </div>
 
       <!-- EXPENSES PAGE -->
       <div class="page" id="page-expenses"><div id="exp-body"></div></div>
+      <div class="page" id="page-datahealth"><div id="dh-body"></div></div>
 
       <!-- TO-DO & ALERTS PAGE -->
       <div class="page" id="page-todo">
@@ -1881,6 +1884,10 @@
             <label>Opening balance (৳)</label>
             <div class="field-input-wrap"><i class="ti ti-cash"></i><input type="number" id="company-opening" step="0.01" placeholder="0"></div>
           </div>
+          <div class="field">
+            <label>Credit limit (৳, empty = no limit)</label>
+            <div class="field-input-wrap"><i class="ti ti-shield-check"></i><input type="number" id="company-credit-limit" step="0.01" placeholder="No limit"></div>
+          </div>
         </div>
         <div class="form-row">
           <div class="field">
@@ -1963,6 +1970,10 @@
         <div class="field">
           <label>Reorder level (leave empty = automatic)</label>
           <div class="field-input-wrap"><i class="ti ti-alert-triangle"></i><input type="number" id="product-reorder-level" step="0.01" placeholder="Automatic from your sales pace"></div>
+        </div>
+        <div class="field">
+          <label>Minimum margin % (warn when a sale is below this; empty = off)</label>
+          <div class="field-input-wrap"><i class="ti ti-percentage"></i><input type="number" id="product-min-margin" step="0.1" placeholder="e.g. 10"></div>
         </div>
         <div class="field">
           <label>Notes</label>
@@ -2747,8 +2758,10 @@
   }
 
   /* ================= SUPABASE CONFIG & REST HELPERS ================= */
-  const SUPABASE_URL = 'https://iyebirclmvrafcvvgpey.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5ZWJpcmNsbXZyYWZjdnZncGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1Mjg1NTEsImV4cCI6MjEwMzEwNDU1MX0.Lb7hwkonMMeeXs5em4rzZ9tLdTsAPdUZykXMlgEJiFs';
+  const CFG = Object.assign({ supabaseUrl: 'https://iyebirclmvrafcvvgpey.supabase.co', loginDomain: 'innochem.app', brand: 'Inno Chem Bangladesh', tagline: 'Your Textile Partner', product: 'RAR TECH', currency: '৳', businessType: 'textile-chemicals trading business', country: 'Bangladesh', modules: {} }, window.APP_CONFIG || {});
+  CFG.modules = CFG.modules || {};
+  const SUPABASE_URL = CFG.supabaseUrl;
+  const SUPABASE_ANON_KEY = CFG.supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5ZWJpcmNsbXZyYWZjdnZncGV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1Mjg1NTEsImV4cCI6MjEwMzEwNDU1MX0.Lb7hwkonMMeeXs5em4rzZ9tLdTsAPdUZykXMlgEJiFs';
 
   /* ---- Supabase Auth session (JWT). Falls back to the anon key only before login. ---- */
   const AUTH_KEY = 'innochem_auth';
@@ -2759,7 +2772,7 @@
     try{ if(a) localStorage.setItem(AUTH_KEY, JSON.stringify(a)); else localStorage.removeItem(AUTH_KEY); }catch(e){}
   }
   function usernameToEmail(u){
-    return String(u || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '_') + '@innochem.app';
+    return String(u || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '_') + '@' + CFG.loginDomain;
   }
   function sbHeaders(extra){
     const token = (authState && authState.access_token) || SUPABASE_ANON_KEY;
@@ -2831,12 +2844,12 @@
   /* ---- field mapping: JS camelCase <-> Postgres snake_case, per table ---- */
   const FIELD_MAPS = {
     companies: {
-      fromDb: r => ({ id:r.id, name:r.name, type:r.type, opening:Number(r.opening)||0, contact:r.contact||'', phone:r.phone||'', email:r.email||'', address:r.address||'', notes:r.notes||'', created_at:epoch(r.created_at) }),
-      toDb: c => ({ id:c.id, name:c.name, type:c.type, opening:c.opening, contact:c.contact, phone:c.phone, email:c.email, address:c.address, notes:c.notes })
+      fromDb: r => ({ id:r.id, name:r.name, type:r.type, opening:Number(r.opening)||0, contact:r.contact||'', phone:r.phone||'', email:r.email||'', address:r.address||'', notes:r.notes||'', creditLimit:Number(r.credit_limit)||0, created_at:epoch(r.created_at) }),
+      toDb: c => Object.assign({ id:c.id, name:c.name, type:c.type, opening:c.opening, contact:c.contact, phone:c.phone, email:c.email, address:c.address, notes:c.notes }, c.creditLimit > 0 ? { credit_limit:c.creditLimit } : {})
     },
     products: {
-      fromDb: r => ({ id:r.id, name:r.name, category:r.category||'', unit:r.unit, openingStock:Number(r.opening_stock)||0, purchaseRate:Number(r.purchase_rate)||0, salesRate:Number(r.sales_rate)||0, reorderLevel:Number(r.reorder_level)||0, notes:r.notes||'', created_at:epoch(r.created_at) }),
-      toDb: p => ({ id:p.id, name:p.name, category:p.category, unit:p.unit, opening_stock:p.openingStock, purchase_rate:p.purchaseRate, sales_rate:p.salesRate, reorder_level:p.reorderLevel, notes:p.notes })
+      fromDb: r => ({ id:r.id, name:r.name, category:r.category||'', unit:r.unit, openingStock:Number(r.opening_stock)||0, purchaseRate:Number(r.purchase_rate)||0, salesRate:Number(r.sales_rate)||0, reorderLevel:Number(r.reorder_level)||0, minMargin:Number(r.min_margin)||0, notes:r.notes||'', created_at:epoch(r.created_at) }),
+      toDb: p => Object.assign({ id:p.id, name:p.name, category:p.category, unit:p.unit, opening_stock:p.openingStock, purchase_rate:p.purchaseRate, sales_rate:p.salesRate, reorder_level:p.reorderLevel, notes:p.notes }, p.minMargin > 0 ? { min_margin:p.minMargin } : {})
     },
     purchases: {
       fromDb: r => ({ id:r.id, date:r.date, invoiceNo:r.invoice_no||'', companyId:r.company_id, companyName:r.company_name, productId:r.product_id, productName:r.product_name, qty:Number(r.qty)||0, rate:Number(r.rate)||0, total:Number(r.total)||0, paid:Number(r.paid)||0, due:Number(r.due)||0, notes:r.notes||'', created_at:epoch(r.created_at) }),
@@ -2916,7 +2929,8 @@
     Object.keys(prevMap).forEach(id => {
       if(!newMap[id]) changes.push({ action:'delete', id, ref:prevMap[id], oldData:prevMap[id], newData:null });
     });
-    AUDIT_SNAPSHOTS[key] = newMap;
+    const cloned = {}; Object.keys(newMap).forEach(id => { cloned[id] = JSON.parse(JSON.stringify(newMap[id])); });
+    AUDIT_SNAPSHOTS[key] = cloned;
     return changes;
   }
   async function logAuditForList(key, newArr){
@@ -2927,16 +2941,33 @@
   }
   function seedAuditSnapshot(key, arr){
     const map = {};
-    (arr || []).forEach(r => { if(r && r.id) map[r.id] = r; });
+    (arr || []).forEach(r => { if(r && r.id) map[r.id] = JSON.parse(JSON.stringify(r)); });
     AUDIT_SNAPSHOTS[key] = map;
   }
 
+  /* Row-level saving: compare with what the server last had and send ONLY the rows that changed.
+     Returns null (= fall back to the old full sync) when there is no trustworthy snapshot. */
+  function planChanges(key, arr){
+    const prev = AUDIT_SNAPSHOTS[key]; if(!prev) return null;
+    const up = [], del = [], seen = {};
+    for(const r of (arr || [])){ if(!r || !r.id) return null; seen[r.id] = 1; if(!prev[r.id] || JSON.stringify(prev[r.id]) !== JSON.stringify(r)) up.push(r); }
+    Object.keys(prev).forEach(id => { if(!seen[id]) del.push(id); });
+    return { up: up, del: del };
+  }
+  async function deleteByIds(table, col, ids){
+    for(let i = 0; i < ids.length; i += 50){ await sbFetch(table + '?' + col + '=in.(' + ids.slice(i, i + 50).join(',') + ')', { method: 'DELETE', headers: sbHeaders() }); }
+  }
   async function fetchFlatTable(key){
     const rows = await sbFetch(TABLE_NAMES[key] + '?select=*&order=created_at.asc', { headers: sbHeaders() });
     return (rows || []).map(FIELD_MAPS[key].fromDb);
   }
-  async function syncFlatTable(key, arr){
+  async function syncFlatTable(key, arr, ch){
     const table = TABLE_NAMES[key];
+    if(ch){
+      if(ch.up.length) await sbFetch(table + '?on_conflict=id', { method: 'POST', headers: sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(ch.up.map(FIELD_MAPS[key].toDb)) });
+      if(ch.del.length) await deleteByIds(table, 'id', ch.del);
+      return;
+    }
     const rows = arr.map(FIELD_MAPS[key].toDb);
     if(rows.length > 0){
       await sbFetch(table + '?on_conflict=id', {
@@ -2962,8 +2993,9 @@
       items:(r.sale_items||[]).map(it => ({ productId:it.product_id, productName:it.product_name, unit:it.unit||'', qty:Number(it.qty)||0, rate:Number(it.rate)||0, amount:Number(it.amount)||0, cost:Number(it.cost)||0 }))
     }));
   }
-  async function syncSalesTable(arr){
-    const headers = arr.map(s => ({
+  async function syncSalesTable(arr, ch){
+    const work = ch ? ch.up : arr;
+    const headers = work.map(s => ({
       id:s.id, date:s.date, invoice_no:s.invoiceNo, challan_no:s.challanNo||null, company_id:s.companyId||null, company_name:s.companyName,
       company_address:s.companyAddress, company_phone:s.companyPhone, total:s.total, received:s.received, due:s.due, notes:s.notes,
       delivery_status:s.deliveryStatus||'pending', delivery_date:s.deliveryDate||null, delivery_vehicle:s.deliveryVehicle||null, delivery_receiver:s.deliveryReceiver||null
@@ -2973,12 +3005,13 @@
         method:'POST', headers: sbHeaders({ 'Prefer':'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(headers)
       });
     }
-    const ids = arr.map(x => x.id).filter(Boolean);
+    if(ch){ if(ch.del.length) await deleteByIds('sales', 'id', ch.del); }
+    else { const ids = arr.map(x => x.id).filter(Boolean);
     const idList = ids.length ? ids.join(',') : '00000000-0000-0000-0000-000000000000';
-    await sbFetch('sales?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() });
+    await sbFetch('sales?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() }); }
 
     // Line items don't carry stable client-side ids, so resync per sale: delete then reinsert
-    for(const s of arr){
+    for(const s of work){
       await sbFetch('sale_items?sale_id=eq.' + s.id, { method:'DELETE', headers: sbHeaders() });
       const items = (s.items||[]).map(it => ({
         sale_id: s.id, product_id: it.productId||null, product_name: it.productName, unit: it.unit, qty: it.qty, rate: it.rate, amount: it.amount, cost: it.cost||0
@@ -3000,8 +3033,9 @@
       items:(r.sales_order_items||[]).map(it => ({ productId:it.product_id, productName:it.product_name, unit:it.unit||'', qty:Number(it.qty)||0, rate:Number(it.rate)||0, amount:Number(it.amount)||0 }))
     }));
   }
-  async function syncSalesOrdersTable(arr){
-    const headers = arr.map(s => ({
+  async function syncSalesOrdersTable(arr, ch){
+    const work = ch ? ch.up : arr;
+    const headers = work.map(s => ({
       id:s.id, order_no:s.orderNo, date:s.date, company_id:s.companyId||null, company_name:s.companyName,
       company_address:s.companyAddress, company_phone:s.companyPhone, total:s.total, status:s.status||'open',
       invoiced_sale_id:s.invoicedSaleId||null, notes:s.notes
@@ -3011,11 +3045,12 @@
         method:'POST', headers: sbHeaders({ 'Prefer':'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(headers)
       });
     }
-    const ids = arr.map(x => x.id).filter(Boolean);
+    if(ch){ if(ch.del.length) await deleteByIds('sales_orders', 'id', ch.del); }
+    else { const ids = arr.map(x => x.id).filter(Boolean);
     const idList = ids.length ? ids.join(',') : '00000000-0000-0000-0000-000000000000';
-    await sbFetch('sales_orders?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() });
+    await sbFetch('sales_orders?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() }); }
 
-    for(const s of arr){
+    for(const s of work){
       await sbFetch('sales_order_items?order_id=eq.' + s.id, { method:'DELETE', headers: sbHeaders() });
       const items = (s.items||[]).map(it => ({
         order_id: s.id, product_id: it.productId||null, product_name: it.productName, unit: it.unit, qty: it.qty, rate: it.rate, amount: it.amount
@@ -3042,9 +3077,9 @@
     });
     return Object.values(groups);
   }
-  async function syncRecipesTable(groups){
+  async function syncRecipesTable(groups, ch){
     // Resync per finished product: delete its existing component rows, reinsert current ones.
-    for(const g of groups){
+    for(const g of (ch ? ch.up : groups)){
       await sbFetch('product_recipes?finished_product_id=eq.' + g.finishedProductId, { method:'DELETE', headers: sbHeaders() });
       const rows = (g.components||[]).map((c, idx) => ({
         finished_product_id: g.finishedProductId,
@@ -3056,6 +3091,7 @@
         await sbFetch('product_recipes', { method:'POST', headers: sbHeaders({ 'Prefer':'return=minimal' }), body: JSON.stringify(rows) });
       }
     }
+    if(ch){ if(ch.del.length) await deleteByIds('product_recipes', 'finished_product_id', ch.del); return; }
     // Remove recipes for finished products no longer in the list at all
     const keepIds = groups.map(g => g.finishedProductId).filter(Boolean);
     const idList = keepIds.length ? keepIds.join(',') : '00000000-0000-0000-0000-000000000000';
@@ -3075,8 +3111,9 @@
       }))
     }));
   }
-  async function syncProductionTable(arr){
-    const headers = arr.map(b => ({
+  async function syncProductionTable(arr, ch){
+    const work = ch ? ch.up : arr;
+    const headers = work.map(b => ({
       id:b.id, date:b.date, batch_no:b.batchNo, product_id:b.productId||null, product_name:b.productName,
       qty_produced:b.qtyProduced, total_material_cost:b.totalMaterialCost, unit_cost:b.unitCost, notes:b.notes
     }));
@@ -3085,11 +3122,12 @@
         method:'POST', headers: sbHeaders({ 'Prefer':'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify(headers)
       });
     }
-    const ids = arr.map(x => x.id).filter(Boolean);
+    if(ch){ if(ch.del.length) await deleteByIds('production_batches', 'id', ch.del); }
+    else { const ids = arr.map(x => x.id).filter(Boolean);
     const idList = ids.length ? ids.join(',') : '00000000-0000-0000-0000-000000000000';
-    await sbFetch('production_batches?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() });
+    await sbFetch('production_batches?id=not.in.(' + idList + ')', { method:'DELETE', headers: sbHeaders() }); }
 
-    for(const b of arr){
+    for(const b of work){
       await sbFetch('production_batch_items?batch_id=eq.' + b.id, { method:'DELETE', headers: sbHeaders() });
       const items = (b.items||[]).map(it => ({
         batch_id: b.id, component_product_id: it.componentProductId||null, component_name: it.componentName,
@@ -3370,11 +3408,13 @@
     if(key === 'users') return true;
     if(STALE_MODE){ showToast('Offline — reconnect to save changes'); return false; }
     try{
-      if(key === 'sales') await syncSalesTable(arr);
-      else if(key === 'salesOrders') await syncSalesOrdersTable(arr);
-      else if(key === 'recipes') await syncRecipesTable(arr);
-      else if(key === 'production') await syncProductionTable(arr);
-      else if(TABLE_NAMES[key]) await syncFlatTable(key, arr);
+      const ch = planChanges(key, arr);
+      if(ch && !ch.up.length && !ch.del.length){ cacheWrite(key, arr); return true; }
+      if(key === 'sales') await syncSalesTable(arr, ch);
+      else if(key === 'salesOrders') await syncSalesOrdersTable(arr, ch);
+      else if(key === 'recipes') await syncRecipesTable(arr, ch);
+      else if(key === 'production') await syncProductionTable(arr, ch);
+      else if(TABLE_NAMES[key]) await syncFlatTable(key, arr, ch);
       await logAuditForList(key, arr);
       cacheWrite(key, arr);
       return true;
@@ -3571,6 +3611,7 @@
       receivables: ['Receivables', 'Who owes you, how long, and what to chase first'],
       analyst: ['Business Analyst', 'Sales, products, profit and what stands out'],
       expenses: ['Expenses', 'Running costs, used to work out your net profit'],
+      datahealth: ['Data Health', 'Checks that your numbers can be trusted'],
       inventory: ['Inventory', 'Stock levels and valuation'],
       reports: ['Reports & Export', 'Search and export your business data'],
       approvals: ['Price Approvals', 'Confirm prices entered by staff'],
@@ -3599,8 +3640,9 @@
         if(page === 'manual') renderManualPage();
         if(page === 'todo'){ renderTodoPage(); loadTodos(); }
         if(page === 'receivables') renderReceivables();
-        if(page === 'analyst'){ renderAnalyst(); loadExpenses(); }
+        if(page === 'analyst'){ renderAnalyst(); loadExpenses(); loadAnTargets(); if(typeof loadTodos === 'function') loadTodos(); }
         if(page === 'expenses'){ renderExpensesPage(); loadExpenses(); }
+        if(page === 'datahealth') renderDataHealth();
         if(page === 'approvals'){ renderApprovalsPage(); loadApprovals(true); }
         if(page === 'audit') loadAuditLog();
       });
@@ -3666,7 +3708,7 @@
   /* ================= SHARED DATA HELPERS ================= */
   function fmtMoney(n){
     n = Number(n) || 0;
-    return '৳' + n.toLocaleString('en-BD', {minimumFractionDigits:0, maximumFractionDigits:2});
+    return CFG.currency + n.toLocaleString('en-BD', {minimumFractionDigits:0, maximumFractionDigits:2});
   }
   function escapeHtml(str){
     return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
@@ -3689,7 +3731,9 @@
   }
 
   let confirmCallback = null;
-  function openConfirm(title, message, onOk){
+  function openConfirm(title, message, onOk, okLabel){
+    const okb = document.getElementById('confirm-ok-btn'); if(okb){ okb.innerHTML = okLabel ? '<i class="ti ti-check"></i> ' + escapeHtml(okLabel) : '<i class="ti ti-trash"></i> Delete'; okb.style.background = okLabel ? 'var(--primary)' : 'var(--danger)'; }
+    document.getElementById('confirm-message').style.whiteSpace = 'pre-line';
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-message').textContent = message;
     confirmCallback = onOk;
@@ -3796,6 +3840,7 @@
       document.getElementById('company-name').value = c.name || '';
       document.getElementById('company-type').value = c.type || 'Supplier';
       document.getElementById('company-opening').value = c.opening || '';
+      document.getElementById('company-credit-limit').value = c.creditLimit || '';
       document.getElementById('company-contact').value = c.contact || '';
       document.getElementById('company-phone').value = c.phone || '';
       document.getElementById('company-email').value = c.email || '';
@@ -3835,6 +3880,7 @@
         name,
         type: document.getElementById('company-type').value,
         opening: parseFloat(document.getElementById('company-opening').value) || 0,
+        creditLimit: parseFloat(document.getElementById('company-credit-limit').value) || 0,
         contact: document.getElementById('company-contact').value.trim(),
         phone: document.getElementById('company-phone').value.trim(),
         email: document.getElementById('company-email').value.trim(),
@@ -3932,6 +3978,7 @@
       document.getElementById('product-purchase-rate').value = p.purchaseRate || '';
       document.getElementById('product-sales-rate').value = p.salesRate || '';
       document.getElementById('product-reorder-level').value = p.reorderLevel || '';
+      document.getElementById('product-min-margin').value = p.minMargin || '';
       document.getElementById('product-notes').value = p.notes || '';
     } else {
       document.getElementById('product-modal-title').textContent = 'Add product';
@@ -3970,6 +4017,7 @@
         purchaseRate: parseFloat(document.getElementById('product-purchase-rate').value) || 0,
         salesRate: parseFloat(document.getElementById('product-sales-rate').value) || 0,
         reorderLevel: parseFloat(document.getElementById('product-reorder-level').value) || 0,
+        minMargin: parseFloat(document.getElementById('product-min-margin').value) || 0,
         notes: document.getElementById('product-notes').value.trim(),
         created_at: id ? (productsCache.find(x=>x.id===id)||{}).created_at || Date.now() : Date.now()
       };
@@ -4726,6 +4774,7 @@
     }
 
     refreshDashboardInsights(ledgerRows);
+    try{ renderOnboarding(); }catch(e){}
   }
 
   /* Owner insights: today/month sales, who owes money (with overdue flag), top products, low stock */
@@ -4839,7 +4888,7 @@
   }
 
   /* ================= BUSINESS PROFILE ================= */
-  let profileCache = { name:'Inno Chem Bangladesh', tagline:'Your Textile Partner', address:'', phone:'', email:'', bin:'' };
+  let profileCache = { name:CFG.brand, tagline:CFG.tagline, address:'', phone:'', email:'', bin:'' };
 
   async function loadProfile(){
     const raw = await safeGet('company:profile', true);
@@ -4858,7 +4907,7 @@
     document.getElementById('profile-form').addEventListener('submit', async function(e){
       e.preventDefault();
       profileCache = {
-        name: document.getElementById('profile-name').value.trim() || 'Inno Chem Bangladesh',
+        name: document.getElementById('profile-name').value.trim() || CFG.brand,
         tagline: document.getElementById('profile-tagline').value.trim(),
         address: document.getElementById('profile-address').value.trim(),
         phone: document.getElementById('profile-phone').value.trim(),
@@ -5290,6 +5339,8 @@
       const total = items.reduce((s, it) => s + it.amount, 0);
       const due = Math.max(total - received, 0);
       const id = document.getElementById('sale-id').value;
+      if(saleWarnOk){ saleWarnOk = false; }
+      else { const warns = saleRiskWarnings(companyId, items, total, received, id); if(warns.length){ openConfirm('Check before saving', warns.join('\n'), () => { saleWarnOk = true; document.getElementById('sale-form').requestSubmit(); }, 'Save anyway'); return; } }
       const data = {
         id: id || uid(),
         date: document.getElementById('sale-date').value || todayStr(),
@@ -5836,12 +5887,12 @@
     return parts.join(' ');
   }
   function profBizFirst(){
-    const words = (profileCache.name || 'Inno Chem Bangladesh').trim().split(/\s+/);
+    const words = (profileCache.name || CFG.brand).trim().split(/\s+/);
     if(words.length > 1) words.pop();
     return words.join(' ');
   }
   function profBizLast(){
-    const words = (profileCache.name || 'Inno Chem Bangladesh').trim().split(/\s+/);
+    const words = (profileCache.name || CFG.brand).trim().split(/\s+/);
     return words.length > 1 ? words[words.length - 1] : '';
   }
 
@@ -5858,7 +5909,7 @@
             <td class="rc-num">${fmtMoney(it.rate)}</td>
             <td class="rc-num"><b>${fmtMoney(it.amount)}</b></td>
           </tr>`).join('');
-    const nameParts = (profileCache.name || 'Inno Chem Bangladesh').trim().split(/\s+/);
+    const nameParts = (profileCache.name || CFG.brand).trim().split(/\s+/);
     const nameLast = nameParts.length > 1 ? nameParts.pop() : '';
     const nameFirst = nameParts.join(' ');
     return `
@@ -5982,7 +6033,7 @@
       const phone = sale.companyPhone || (co && co.phone) || '';
       const msg = 'Dear ' + sale.companyName + ',\nInvoice ' + sale.invoiceNo + ' (' + sale.date + ')\n'
         + 'Total: ' + fmtMoney(sale.total) + '\nReceived: ' + fmtMoney(sale.received) + '\nDue: ' + fmtMoney(sale.due)
-        + '\n\nThank you,\n' + (profileCache.name || 'Inno Chem Bangladesh');
+        + '\n\nThank you,\n' + (profileCache.name || CFG.brand);
       shareDocOnWhatsApp(this, el, 210, 'innochem-' + sale.invoiceNo + '.pdf', phone, msg);
     });
     document.getElementById('receipt-download-btn').addEventListener('click', async function(){
@@ -6019,7 +6070,7 @@
             <td class="rc-num">${Number(it.qty).toLocaleString()} ${escapeHtml(it.unit||'')}</td>
             <td class="rc-num">${escapeHtml(it.remarks || '—')}</td>
           </tr>`).join('');
-    const nameParts = (profileCache.name || 'Inno Chem Bangladesh').trim().split(/\s+/);
+    const nameParts = (profileCache.name || CFG.brand).trim().split(/\s+/);
     const nameLast = nameParts.length > 1 ? nameParts.pop() : '';
     const nameFirst = nameParts.join(' ');
     return `
@@ -6491,7 +6542,7 @@
       const received = pay.type === 'received';
       const msg = 'Dear ' + pay.companyName + ',\n' + (received ? 'We have received your payment of ' : 'We have paid you ')
         + fmtMoney(pay.amount) + ' on ' + pay.date + (pay.receiptNo ? ' (Receipt ' + pay.receiptNo + ')' : '')
-        + '.\n\nThank you,\n' + (profileCache.name || 'Inno Chem Bangladesh');
+        + '.\n\nThank you,\n' + (profileCache.name || CFG.brand);
       shareDocOnWhatsApp(this, el, 148, 'innochem-' + String(el.getAttribute('data-receipt') || 'receipt').toLowerCase() + '.pdf', phone, msg);
     });
     document.getElementById('payment-receipt-download-btn').addEventListener('click', async function(){
@@ -7254,7 +7305,7 @@
   function downloadFullBackup(){
     const backup = {
       exportedAt: new Date().toISOString(),
-      app: 'Inno Chem Bangladesh ERP',
+      app: CFG.brand + ' ERP',
       profile: profileCache,
       users: usersCache.map(u => ({ id:u.id, username:u.username, role:u.role, permissions:u.permissions, created_at:u.created_at })),
       companies: companiesCache,
@@ -7262,8 +7313,12 @@
       purchases: purchasesCache,
       sales: salesCache,
       salesOrders: salesOrdersCache,
-      payments: paymentsCache
+      payments: paymentsCache,
+      recipes: (typeof recipesCache !== 'undefined' ? recipesCache : []),
+      production: (typeof productionCache !== 'undefined' ? productionCache : []),
+      expenses: (typeof expensesCache !== 'undefined' ? expensesCache : [])
     };
+    try{ localStorage.setItem('ic_last_backup', todayStr()); }catch(e){}
     const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -7281,6 +7336,7 @@
     document.getElementById('report-product-export-btn').addEventListener('click', exportProductProfitReport);
 
     document.getElementById('backup-export-btn').addEventListener('click', downloadFullBackup);
+    document.getElementById('csv-open-btn').addEventListener('click', openCsvImport);
     document.getElementById('quick-backup-btn').addEventListener('click', downloadFullBackup);
 
     document.getElementById('backup-import-btn').addEventListener('click', () => {
@@ -7877,7 +7933,7 @@
     if(d.indexOf('880') === 0) return d; if(d.charAt(0) === '0') return '88' + d; if(d.length === 10) return '880' + d; return d;
   }
   function rcvReminderText(a){
-    const biz = (profileCache && profileCache.name) || 'Inno Chem Bangladesh', amt = fmtMoney(a.balance);
+    const biz = (profileCache && profileCache.name) || CFG.brand, amt = fmtMoney(a.balance);
     return 'আসসালামু আলাইকুম, ' + a.company.name + '।\n' + biz + '-এর হিসাব অনুযায়ী আপনার কাছে মোট বকেয়া ' + amt +
       (a.oldestDays ? ' (সবচেয়ে পুরনো বকেয়া ' + a.oldestDays + ' দিনের)' : '') + '। অনুগ্রহ করে পরিশোধের ব্যবস্থা নিন। ধন্যবাদ।\n\n' +
       'Dear ' + a.company.name + ', our records show an outstanding balance of ' + amt + ' with ' + biz + '. Kindly arrange payment. Thank you.';
@@ -8229,6 +8285,7 @@
     });
   }
   async function aiCallFn(payload){
+    payload.biz = { name: (profileCache && profileCache.name) || CFG.brand, type: CFG.businessType, country: CFG.country, currency: CFG.currency };
     const body = JSON.stringify(payload);
     const call = () => fetch(SUPABASE_URL + '/functions/v1/rar-assistant', { method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + ((authState && authState.access_token) || SUPABASE_ANON_KEY), 'Content-Type': 'application/json' }, body: body });
     let res = await call();
@@ -8241,7 +8298,7 @@
   /* Everything the assistant needs to know about HOW this app works: built from the manual (so it is always up to date) plus the core rules. */
   function aiGuide(){
     const rules = [
-      'APP: RAR TECH ERP for a textile-chemicals trading business (single web app, installable on phone/PC, works with Supabase).',
+      'APP: ' + CFG.product + ' ERP for a ' + CFG.businessType + ' (single web app, installable on phone/PC, works with Supabase).',
       'COMPANIES: type is Buyer (we sell to them), Supplier (we buy from them) or Both. One company can be Both, so never create a duplicate company: change its type to Both on the Companies page.',
       'BALANCE SIGN (Tally Book / Receivables): positive = they owe us (receivable); negative = we owe them (payable). Opening balance on a company is money pending before the app was used.',
       'BILLS AND PAYMENTS: a sale/purchase bill has a received/paid amount at billing; later money goes through Payments. A payment clears the OLDEST unpaid bill first (FIFO); the Payments form picks the oldest unpaid bill automatically. Do not enter billing-time money again as a payment.',
@@ -8596,12 +8653,18 @@
     const r = anRange();
     document.getElementById('an-range-note').textContent = r.from + ' to ' + r.to + '  (compared with ' + r.pFrom + ' to ' + r.pTo + ')';
     let h = '';
-    try{ h = anWarnings() + (an.tab === 'overview' ? anOverview(r) : an.tab === 'products' ? anProducts(r) : an.tab === 'plan' ? anPlanTab(r) : an.tab === 'sales' ? anSales(r) : an.tab === 'inventory' ? anInventoryTab(r) : an.tab === 'suppliers' ? anSuppliersTab(r) : an.tab === 'customers' ? anCustomersTab(r) : an.tab === 'cash' ? anCashTab(r) : an.tab === 'ops' ? anOpsTab(r) : an.tab === 'forecast' ? anForecastTab(r) : anProfit(r)); }
+    try{ h = anWarnings() + (an.tab === 'overview' ? anOverview(r) : an.tab === 'products' ? anProducts(r) : an.tab === 'plan' ? anPlanTab(r) + anPoSection() : an.tab === 'sales' ? anSales(r) : an.tab === 'inventory' ? anInventoryTab(r) : an.tab === 'suppliers' ? anSuppliersTab(r) : an.tab === 'customers' ? anCustomersTab(r) : an.tab === 'cash' ? anCashTab(r) : an.tab === 'ops' ? anOpsTab(r) : an.tab === 'forecast' ? anForecastTab(r) : an.tab === 'brief' ? anBriefTab(r) : anProfit(r)); }
     catch(e){ console.error('analyst', e); h = '<div class="an-warn"><div>Could not build this view: ' + escapeHtml(String(e && e.message)) + '</div></div>'; }
     const hs = box.querySelector('.an-heat'), keep = hs ? hs.scrollLeft : -1;
     box.innerHTML = h;
     { const hh = box.querySelector('.an-heat'); if(hh) hh.scrollLeft = keep >= 0 ? keep : hh.scrollWidth; }
     const on = (id, ev, fn) => { const el = document.getElementById(id); if(el) el.addEventListener(ev, fn); };
+    box.querySelectorAll('[data-anpo-wa]').forEach(b => b.addEventListener('click', () => anPoAction('wa', Number(b.getAttribute('data-anpo-wa')))));
+    box.querySelectorAll('[data-anpo-pr]').forEach(b => b.addEventListener('click', () => anPoAction('pr', Number(b.getAttribute('data-anpo-pr')))));
+    anChaseBind(box);
+    on('an-brief-kind', 'change', function(){ an.brief = this.value; renderAnalyst(); });
+    on('an-brief-wa', 'click', () => { const t = document.getElementById('an-brief-text'); window.open('https://wa.me/?text=' + encodeURIComponent(t ? t.textContent : ''), '_blank'); });
+    on('an-brief-copy', 'click', () => { const t = document.getElementById('an-brief-text'); try{ navigator.clipboard.writeText(t ? t.textContent : ''); showToast('Copied'); }catch(e){ showToast('Could not copy'); } });
     on('an-growth', 'change', function(){ an.growth = parseFloat(this.value) || 0; renderAnalyst(); });
     on('an-safety', 'change', function(){ an.safety = Math.max(parseFloat(this.value) || 0, 0); renderAnalyst(); });
     on('an-season', 'change', function(){ an.season = this.checked; renderAnalyst(); });
@@ -8786,8 +8849,8 @@
     const leaving = rows.filter(e => e.tags.some(t => t[0] === 'May be leaving')), slow = rows.filter(e => e.tags.some(t => t[0] === 'Slow payer') && e.bal > 0);
     if(leaving.length) h += '<div class="card card-pad" style="margin-bottom:16px;"><div class="section-title"><i class="ti ti-alert-triangle"></i> Customers who may be leaving</div>' + leaving.slice(0, 8).map(e => '<div class="an-ins bad"><b>' + escapeHtml(e.name) + '</b>: usually buys every ~' + Math.round(e.gap) + ' days, but nothing for ' + e.daysSince + ' days. They bought ' + fmtMoney(e.sales12) + ' in 12 months. Call them.</div>').join('') + '</div>';
     if(slow.length) h += '<div class="card card-pad" style="margin-bottom:16px;"><div class="section-title"><i class="ti ti-clock"></i> Slow payers</div>' + slow.slice(0, 8).map(e => '<div class="an-ins warn"><b>' + escapeHtml(e.name) + '</b>: owes ' + fmtMoney(e.bal) + (e.payDays !== null ? ', usually pays after ' + Math.round(e.payDays) + ' days' : '') + (e.over30 > 0 ? ', ' + fmtMoney(e.over30) + ' is over 30 days old' : '') + '.</div>').join('') + '</div>';
-    h += '<div class="card card-pad"><div class="section-title"><i class="ti ti-users"></i> Customer ranking (last 12 months)</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Customer</th><th class="r">Sales</th><th class="r">Share</th><th class="r">Profit</th><th class="r">Invoices</th><th class="r">Avg order</th><th class="r">Last bought</th><th class="r">Buys every</th><th class="r">Pays after</th><th class="r">They owe</th><th></th></tr></thead><tbody>' +
-      (rows.map(e => '<tr><td><b>' + escapeHtml(e.name) + '</b></td><td class="r">' + fmtMoney(e.sales12) + '</td><td class="r">' + anPct(e.share) + '</td><td class="r">' + fmtMoney(e.profit12) + '</td><td class="r">' + e.inv12 + '</td><td class="r">' + (e.inv12 ? fmtMoney(e.sales12 / e.inv12) : '-') + '</td><td class="r">' + (e.daysSince !== null ? e.daysSince + ' d ago' : '-') + '</td><td class="r">' + (e.gap ? Math.round(e.gap) + ' d' : '-') + '</td><td class="r">' + (e.payDays !== null ? Math.round(e.payDays) + ' d' : '-') + '</td><td class="r">' + (e.bal > 0.5 ? fmtMoney(e.bal) : '-') + '</td><td>' + anChips(e.tags) + '</td></tr>').join('') || '<tr><td colspan="11" class="cell-sub">No customers yet.</td></tr>') + '</tbody></table></div></div>';
+    h += '<div class="card card-pad"><div class="section-title"><i class="ti ti-users"></i> Customer ranking (last 12 months)</div><div class="table-wrap"><table class="data-table"><thead><tr><th>Customer</th><th class="r">Sales</th><th class="r">Share</th><th class="r">Profit</th><th class="r">Invoices</th><th class="r">Avg order</th><th class="r">Last bought</th><th class="r">Buys every</th><th class="r">Pays after</th><th class="r">They owe</th><th></th><th>Chase</th></tr></thead><tbody>' +
+      (rows.map(e => '<tr><td><b>' + escapeHtml(e.name) + '</b></td><td class="r">' + fmtMoney(e.sales12) + '</td><td class="r">' + anPct(e.share) + '</td><td class="r">' + fmtMoney(e.profit12) + '</td><td class="r">' + e.inv12 + '</td><td class="r">' + (e.inv12 ? fmtMoney(e.sales12 / e.inv12) : '-') + '</td><td class="r">' + (e.daysSince !== null ? e.daysSince + ' d ago' : '-') + '</td><td class="r">' + (e.gap ? Math.round(e.gap) + ' d' : '-') + '</td><td class="r">' + (e.payDays !== null ? Math.round(e.payDays) + ' d' : '-') + '</td><td class="r">' + (e.bal > 0.5 ? fmtMoney(e.bal) : '-') + '</td><td>' + anChips(e.tags) + '</td>' + anChaseCell(e) + '</tr>').join('') || '<tr><td colspan="12" class="cell-sub">No customers yet.</td></tr>') + '</tbody></table></div></div>';
     return h;
   }
   function anOwedToSuppliers(){ return companiesCache.reduce((a, c) => { const L = computeCompanyLedger(c.id); return a + (L && L.closingBalance < -0.5 ? -L.closingBalance : 0); }, 0); }
@@ -8840,8 +8903,6 @@
   }
   /* ================= BUSINESS ANALYST: FORECAST, WHAT-IF, TARGETS, EXPLAIN, PDF ================= */
   an.wi = { p: 0, c: 0, v: 0 };
-  function anTargets(){ try{ return JSON.parse(localStorage.getItem('ic_an_targets') || '{}') || {}; }catch(e){ return {}; } }
-  function anSetTargets(o){ try{ localStorage.setItem('ic_an_targets', JSON.stringify(o)); }catch(e){} }
   function anMonthAgg(m){ return anAgg(m + '-01', m + '-31'); }
   /* Next 3 months: weighted level of the last 3 full months (newest counts most), last year's season where available, growth guess, and a range from how bumpy the last 6 months were. */
   function anForecast(){
@@ -8882,24 +8943,249 @@
   function now0(){ return new Date(); }
   function anPageText(){ const b = document.getElementById('an-body'); return b ? (b.innerText || '').replace(/\n{2,}/g, '\n').slice(0, 3500) : ''; }
   function anExplain(){
-    const names = { overview: 'Overview', products: 'Products', plan: 'Next month', sales: 'Sales', profit: 'Profit', inventory: 'Inventory', suppliers: 'Suppliers', customers: 'Customers', cash: 'Cash flow', ops: 'Operations', forecast: 'Forecast' };
+    const names = { overview: 'Overview', products: 'Products', plan: 'Next month', sales: 'Sales', profit: 'Profit', inventory: 'Inventory', suppliers: 'Suppliers', customers: 'Customers', cash: 'Cash flow', ops: 'Operations', forecast: 'Forecast', brief: 'Brief' };
     const p = document.getElementById('ai-panel'); if(p) p.classList.add('open');
     aiAsk('Explain the Business Analyst "' + names[an.tab] + '" page for me in simple words. What is good, what is worrying, and what should I do first this week?', anPageText());
   }
   function anPrint(){
     const b = document.getElementById('an-body'); if(!b) return; const r = anRange(), w = window.open('', '_blank'); if(!w){ showToast('Allow pop-ups to print'); return; }
     const css = Array.from(document.querySelectorAll('style')).map(s => s.outerHTML).join('');
-    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Business Analysis</title>' + css + '<style>body{padding:20px;background:#fff!important}.an-top{display:none!important}</style></head><body><h2>Inno Chem Bangladesh: Business Analysis</h2><div class="cell-sub">' + escapeHtml(r.from + ' to ' + r.to) + ' &middot; printed ' + escapeHtml(todayStr()) + '</div><br>' + b.innerHTML + '</body></html>');
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Business Analysis</title>' + css + '<style>body{padding:20px;background:#fff!important}.an-top{display:none!important}</style></head><body><h2>' + escapeHtml((profileCache && profileCache.name) || CFG.brand) + ': Business Analysis</h2><div class="cell-sub">' + escapeHtml(r.from + ' to ' + r.to) + ' &middot; printed ' + escapeHtml(todayStr()) + '</div><br>' + b.innerHTML + '</body></html>');
     w.document.close(); setTimeout(() => { try{ w.focus(); w.print(); }catch(e){} }, 600);
+  }
+  /* ================= DATA HEALTH ================= */
+  function dhChecks(){
+    const out = [], pid = {}; productsCache.forEach(p => { pid[p.id] = p; });
+    const add = (key, title, level, page, items, hint) => { if(items.length) out.push({ key: key, title: title, level: level, page: page, items: items, hint: hint }); };
+    const zero = {}; salesCache.forEach(s => (s.items || []).forEach(it => { if(!(Number(it.cost) > 0) && !(getAvgCost(it.productId) > 0)) zero[it.productName || '?'] = (zero[it.productName || '?'] || 0) + 1; }));
+    add('zerocost', 'Sold items with no cost (profit is wrong)', 'bad', 'products', Object.keys(zero).map(k => k + ': ' + zero[k] + ' sale line(s)'), 'Open Products and set the Purchase rate, or add a purchase or a recipe for the product.');
+    add('negstock', 'Negative stock', 'bad', 'inventory', computeInventory().filter(r => r.currentStock < -0.001).map(r => r.product.name + ': ' + anQty(r.currentStock) + ' ' + (r.product.unit || '')), 'A purchase or opening stock is missing, or the product was sold more than you hold. Add the missing purchase, or fix Opening stock on the product.');
+    add('norate', 'Products without a selling price', 'warn', 'products', productsCache.filter(p => !(Number(p.salesRate) > 0)).map(p => p.name), 'Set the Sales rate. Price approvals and the margin checks compare against it.');
+    add('nopurch', 'Products without a purchase rate', 'warn', 'products', productsCache.filter(p => !(Number(p.purchaseRate) > 0) && !(getAvgCost(p.id) > 0)).map(p => p.name), 'Set the Purchase rate so profit can be worked out.');
+    const rb = []; (recipesCache || []).forEach(g => { const fp = pid[g.finishedProductId]; if(!g.components || !g.components.length) rb.push((fp ? fp.name : '?') + ': no raw materials'); else g.components.forEach(c => { if(!pid[c.componentProductId]) rb.push((fp ? fp.name : '?') + ': a raw material was deleted'); else if(!(Number(c.qtyPerUnit) > 0)) rb.push((fp ? fp.name : '?') + ': ' + pid[c.componentProductId].name + ' has zero quantity'); }); });
+    add('recipe', 'Recipe problems', 'bad', 'recipes', rb, 'Open Mix Recipes and fix the lines. A wrong recipe gives wrong raw-material stock and profit.');
+    const bal = companiesCache.map(ledgerVsInvoices).filter(r => r && Math.abs(r.diff) > 1);
+    add('balance', 'Company balances that do not agree with their bills', 'bad', 'receivables', bal.map(r => r.company.name + ': off by ' + fmtMoney(Math.abs(r.diff))), 'See the Accuracy check at the bottom of Receivables. Usually a payment was linked to the wrong bill or an opening balance was changed.');
+    const dup = {}, dups = []; salesCache.forEach(s => { if(!s.invoiceNo) return; dup[s.invoiceNo] = (dup[s.invoiceNo] || 0) + 1; }); Object.keys(dup).forEach(k => { if(dup[k] > 1) dups.push(k + ' used ' + dup[k] + ' times'); });
+    add('dupinv', 'Duplicate invoice numbers', 'warn', 'sales', dups, 'Each bill should have its own number. Open Sales Invoice and correct one of them.');
+    const cids = new Set(companiesCache.map(c => c.id)), orph = [];
+    salesCache.forEach(s => { if(s.companyId && !cids.has(s.companyId)) orph.push('Sale ' + (s.invoiceNo || '') + ' (' + (s.companyName || '?') + ')'); });
+    purchasesCache.forEach(x => { if(x.companyId && !cids.has(x.companyId)) orph.push('Purchase ' + (x.invoiceNo || '') + ' (' + (x.companyName || '?') + ')'); });
+    paymentsCache.forEach(p => { if(p.companyId && !cids.has(p.companyId)) orph.push('Payment ' + (p.receiptNo || '') + ' (' + (p.companyName || '?') + ')'); });
+    add('orphan', 'Bills or payments of a company that no longer exists', 'bad', 'companies', orph.slice(0, 20), 'The company was deleted. Create it again with the same name, then reopen the bill.');
+    const d90 = anDS(new Date(new Date().getTime() - 90 * 86400000)); let loss = 0; salesCache.forEach(s => { if((s.date || '') >= d90 && saleProfit(s) < 0) loss++; });
+    add('loss', 'Invoices sold at a loss (last 90 days)', 'warn', 'analyst', loss ? [loss + ' invoice(s)'] : [], 'Open Business Analyst, then the Profit tab, to see which ones.');
+    const bad = []; companiesCache.forEach(c => { if(!(c.name || '').trim()) bad.push('A company has no name'); if(c.type !== 'Supplier' && salesCache.some(s => s.companyId === c.id) && !(c.phone || '').trim()) bad.push(c.name + ': no phone (WhatsApp reminders will not work)'); });
+    add('phone', 'Customers without a phone number', 'info', 'companies', bad.slice(0, 20), 'Add the phone so you can send reminders and statements on WhatsApp.');
+    let lb = ''; try{ lb = localStorage.getItem('ic_last_backup') || ''; }catch(e){} const lbDays = lb ? anDaysBetween(lb, todayStr()) : null;
+    add('backup', 'No recent backup', 'warn', 'reports', lbDays === null ? ['No backup has been downloaded from this device yet'] : lbDays > 7 ? ['Last backup downloaded ' + lbDays + ' days ago'] : [], 'On the Reports page press "Download full backup" and keep the file safe. Do it at least once a week. Also run phase_f_backup.sql once to get a nightly copy inside Supabase.');
+    const ym = anYM(new Date()); if(typeof expensesCache !== 'undefined' && expSum(ym + '-01', ym + '-31') <= 0) add('noexp', 'No expenses recorded this month', 'info', 'expenses', ['Nothing yet in ' + anMonLabel(ym)], 'Net profit equals gross profit until you add running costs.');
+    return out;
+  }
+  function renderDataHealth(){
+    const box = document.getElementById('dh-body'); if(!box) return;
+    if(!isPriceController()){ box.innerHTML = '<div class="empty-row">Only management can open this page.</div>'; return; }
+    const ch = dhChecks(), pen = { bad: 15, warn: 6, info: 2 }; let score = 100; ch.forEach(c => { score -= Math.min(pen[c.level] * Math.max(1, Math.min(c.items.length, 3)) / 1.5, 30); }); score = Math.max(Math.round(score), 0);
+    const col = score >= 85 ? 'good' : score >= 60 ? 'warn' : 'bad';
+    let h = '<div class="metric-grid"><div class="metric-card"><div class="m-label">Data health</div><div class="m-value">' + score + '%</div><div class="an-sub"><span class="an-chip ' + col + '">' + (score >= 85 ? 'Good' : score >= 60 ? 'Needs attention' : 'Fix first') + '</span></div></div><div class="metric-card"><div class="m-label">Problems found</div><div class="m-value">' + ch.length + '</div><div class="an-sub">' + ch.reduce((a, c) => a + c.items.length, 0) + ' items</div></div></div>';
+    if(!ch.length) h += '<div class="an-ins good">Everything looks clean. Your reports and the Business Analyst can be trusted.</div>';
+    ch.sort((a, b) => ({ bad: 0, warn: 1, info: 2 }[a.level] - { bad: 0, warn: 1, info: 2 }[b.level])).forEach(c => {
+      h += '<div class="card card-pad" style="margin-bottom:16px;"><div class="section-title"><span class="an-chip ' + c.level + '">' + (c.level === 'bad' ? 'Fix' : c.level === 'warn' ? 'Check' : 'Note') + '</span> ' + escapeHtml(c.title) + ' <span class="cell-sub">(' + c.items.length + ')</span></div><div class="cell-sub" style="margin-bottom:8px;">' + escapeHtml(c.hint) + '</div>' + c.items.slice(0, 12).map(x => '<div class="an-ins ' + c.level + '">' + escapeHtml(x) + '</div>').join('') + (c.items.length > 12 ? '<div class="cell-sub">and ' + (c.items.length - 12) + ' more</div>' : '') + '<button type="button" class="btn-secondary sm" data-dhgo="' + c.page + '"><i class="ti ti-arrow-right"></i> Open ' + escapeHtml(c.page === 'analyst' ? 'Business Analyst' : c.page) + '</button></div>';
+    });
+    box.innerHTML = h;
+    box.querySelectorAll('[data-dhgo]').forEach(b => b.addEventListener('click', () => { const n = document.querySelector('.nav-item[data-page="' + b.getAttribute('data-dhgo') + '"]'); if(n) n.click(); }));
+  }
+  /* ================= STEP B: PURCHASE ORDERS, CHASING, CREDIT LIMIT, MARGIN FLOOR ================= */
+  function anPoGroups(){
+    const P = anPlan(), g = {};
+    P.buyList.forEach(x => { if(!(x.buy > 0)) return; const k = x.supplier || ''; (g[k] = g[k] || []).push(x); });
+    return g;
+  }
+  function anPoText(name, lines){
+    const biz = (profileCache && profileCache.name) || CFG.brand;
+    return 'Purchase request from ' + biz + '\nDate: ' + todayStr() + (name ? '\nTo: ' + name : '') + '\n\n' + lines.map((x, i) => (i + 1) + '. ' + x.p.name + ': ' + anQty(x.buy) + ' ' + (x.p.unit || '') + (x.buy > 0 && x.cost > 0 ? ' (about ' + fmtMoney(x.cost / x.buy) + ' per ' + (x.p.unit || 'unit') + ')' : '')).join('\n') + '\n\nPlease confirm availability, price and delivery date. Thank you.';
+  }
+  function anPoSection(){
+    const g = anPoGroups(), keys = Object.keys(g); if(!keys.length) return '';
+    let h = '<div class="card card-pad" style="margin-bottom:16px;"><div class="section-title"><i class="ti ti-file-invoice"></i> Purchase orders to send (by supplier)</div><div class="cell-sub" style="margin-bottom:8px;">Drafts made from the buy list. Send on WhatsApp or print. Nothing is saved: when goods arrive, record them in Purchases.</div>';
+    keys.forEach((k, i) => { const tot = g[k].reduce((a, x) => a + x.cost, 0);
+      h += '<div class="an-ins"><b>' + escapeHtml(k || 'No usual supplier yet') + '</b> &middot; ' + g[k].length + ' product(s) &middot; about ' + fmtMoney(tot) + '<div class="cell-sub">' + g[k].map(x => escapeHtml(x.p.name) + ' ' + anQty(x.buy) + ' ' + escapeHtml(x.p.unit || '')).join(', ') + '</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn-secondary sm" data-anpo-wa="' + i + '"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button><button type="button" class="btn-secondary sm" data-anpo-pr="' + i + '"><i class="ti ti-printer"></i> Print</button></div></div>'; });
+    return h + '</div>';
+  }
+  function anPoAction(kind, i){
+    const g = anPoGroups(), keys = Object.keys(g), k = keys[i]; if(k === undefined) return; const txt = anPoText(k, g[k]);
+    if(kind === 'wa'){ const c = companiesCache.find(x => x.name === k), num = whatsappNumber(c && c.phone); if(!num){ showToast('This supplier has no phone number. Opening WhatsApp without a number.'); window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank'); return; } window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(txt), '_blank'); return; }
+    const w = window.open('', '_blank'); if(!w){ showToast('Allow pop-ups to print'); return; }
+    const biz = (profileCache && profileCache.name) || CFG.brand, rows = g[k].map((x, j) => '<tr><td>' + (j + 1) + '</td><td>' + escapeHtml(x.p.name) + '</td><td style="text-align:right">' + anQty(x.buy) + ' ' + escapeHtml(x.p.unit || '') + '</td><td style="text-align:right">' + (x.buy > 0 && x.cost > 0 ? fmtMoney(x.cost / x.buy) : '-') + '</td><td style="text-align:right">' + (x.cost > 0 ? fmtMoney(x.cost) : '-') + '</td></tr>').join('');
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Purchase order</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}table{border-collapse:collapse;width:100%;margin-top:14px}td,th{border:1px solid #bbb;padding:8px;font-size:13px;text-align:left}th{background:#f1f1f1}</style></head><body><h2>' + escapeHtml(biz) + '</h2><h3>Purchase order (draft)</h3><div>Date: ' + escapeHtml(todayStr()) + '</div><div>To: <b>' + escapeHtml(k || '') + '</b></div><table><thead><tr><th>#</th><th>Product</th><th style="text-align:right">Quantity</th><th style="text-align:right">Est. rate</th><th style="text-align:right">Est. amount</th></tr></thead><tbody>' + rows + '</tbody></table><p style="margin-top:20px;font-size:12px;color:#555">Please confirm availability, price and delivery date.</p></body></html>');
+    w.document.close(); setTimeout(() => { try{ w.focus(); w.print(); }catch(e){} }, 500);
+  }
+  /* Chase column buttons in the Customers ranking */
+  function anChaseCell(e){
+    if(!(e.bal > 0.5)) return '<td></td>';
+    return '<td style="white-space:nowrap;"><button type="button" class="btn-secondary sm" data-anwa="' + e.id + '" title="WhatsApp reminder"><i class="ti ti-brand-whatsapp"></i></button> <input type="date" data-anpd="' + e.id + '" style="width:130px" title="Date the customer promised to pay"> <button type="button" class="btn-secondary sm" data-anpt="' + e.id + '" title="Add a to-do for the promised date"><i class="ti ti-clipboard-check"></i></button></td>';
+  }
+  function anChaseBind(box){
+    box.querySelectorAll('[data-anwa]').forEach(b => b.addEventListener('click', () => { const a = computeAgeing(b.getAttribute('data-anwa')); if(!a) return; const num = whatsappNumber(a.company.phone); if(!num){ showToast('This customer has no phone number'); return; } window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(rcvReminderText(a)), '_blank'); }));
+    box.querySelectorAll('[data-anpt]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-anpt'), inp = box.querySelector('[data-anpd="' + id + '"]'), c = companiesCache.find(x => x.id === id), L = computeCompanyLedger(id); if(!c) return;
+      const d = inp && inp.value; if(!d){ showToast('Pick the promised date first'); return; }
+      addTodo('Collect ' + fmtMoney(L ? Math.max(L.closingBalance, 0) : 0) + ' from ' + c.name + ' (promised ' + d + ')', d, 'high'); }));
+  }
+  /* Credit limit and margin floor: checked when a sale is saved */
+  let saleWarnOk = false;
+  function saleRiskWarnings(companyId, items, total, received, editId){
+    const w = [], c = companiesCache.find(x => x.id === companyId), L = computeCompanyLedger(companyId), due = Math.max(total - received, 0);
+    if(c && L){ let bal = L.closingBalance; if(editId){ const old = salesCache.find(x => x.id === editId); if(old) bal -= (Number(old.due) || 0); }
+      const nb = bal + due; if(Number(c.creditLimit) > 0 && nb > Number(c.creditLimit)) w.push('Credit limit: ' + c.name + ' would owe ' + fmtMoney(nb) + ', above the limit of ' + fmtMoney(c.creditLimit) + '.');
+      const a = computeAgeing(companyId); if(a && ((a.b61 || 0) + (a.b90 || 0)) > 0.5) w.push(c.name + ' already has ' + fmtMoney((a.b61 || 0) + (a.b90 || 0)) + ' older than 60 days unpaid.'); }
+    items.forEach(it => { const p = productsCache.find(x => x.id === it.productId); if(!p || !(Number(p.minMargin) > 0) || !(Number(it.rate) > 0)) return; const cost = getAvgCost(it.productId); if(!(cost > 0)) return; const m = (it.rate - cost) / it.rate * 100; if(m < p.minMargin) w.push(p.name + ': margin ' + anPct(m) + ' is below your minimum of ' + anPct(p.minMargin) + '.'); });
+    return w;
+  }
+  /* ================= STEP C: DAILY BRIEF, WEEKLY SUMMARY, TARGETS IN DATABASE ================= */
+  let anTargetsDb = null;
+  async function loadAnTargets(){
+    if(!currentUser || !isPriceController() || !navigator.onLine) return;
+    try{ const rows = await sbFetch('app_settings?select=value&key=eq.targets', { headers: sbHeaders() }); if(rows && rows[0] && rows[0].value){ anTargetsDb = rows[0].value; } else if(rows){ anTargetsDb = {}; } }catch(e){ anTargetsDb = null; }
+    if(document.getElementById('page-analyst').classList.contains('active') && an.tab === 'forecast') renderAnalyst();
+  }
+  function anTargets(){ if(anTargetsDb && (anTargetsDb.sales || anTargetsDb.profit)) return anTargetsDb; try{ return JSON.parse(localStorage.getItem('ic_an_targets') || '{}') || {}; }catch(e){ return {}; } }
+  function anSetTargets(o){
+    try{ localStorage.setItem('ic_an_targets', JSON.stringify(o)); }catch(e){}
+    anTargetsDb = o;
+    sbFetch('app_settings', { method: 'POST', headers: sbHeaders({ Prefer: 'resolution=merge-duplicates,return=minimal' }), body: JSON.stringify({ key: 'targets', value: o }) }).catch(() => {});
+  }
+  function briefBiz(){ return (profileCache && profileCache.name) || CFG.brand; }
+  function buildBrief(kind){
+    const now = new Date(), today = anDS(now), L = [], biz = briefBiz();
+    const ags = companiesCache.map(c => computeAgeing(c.id)).filter(a => a && a.balance > 0.5).sort((a, b) => b.balance - a.balance);
+    const recv = ags.reduce((a, x) => a + x.balance, 0), late = ags.reduce((a, x) => a + (x.b31 || 0) + (x.b61 || 0) + (x.b90 || 0), 0);
+    if(kind === 'week'){
+      const f = anDS(new Date(now.getTime() - 6 * 86400000)), pt = anDS(new Date(now.getTime() - 7 * 86400000)), pf = anDS(new Date(now.getTime() - 13 * 86400000));
+      const c = anAgg(f, today), p = anAgg(pf, pt), dl = (a, b) => b > 0.5 ? ' (' + (a >= b ? '+' : '-') + Math.abs(Math.round((a - b) / b * 100)) + '% vs last week)' : '';
+      L.push('Weekly summary: ' + biz, f + ' to ' + today, '');
+      L.push('Sales: ' + fmtMoney(c.sales) + dl(c.sales, p.sales), 'Gross profit: ' + fmtMoney(c.gp) + dl(c.gp, p.gp) + ', margin ' + anPct(c.margin), 'Money collected: ' + fmtMoney(c.coll) + dl(c.coll, p.coll), 'Invoices: ' + c.invoices);
+      const pm = {}, cm = {}; anSalesIn(f, today).forEach(s => { cm[s.companyName] = (cm[s.companyName] || 0) + (Number(s.total) || 0); (s.items || []).forEach(it => { pm[it.productName] = (pm[it.productName] || 0) + (Number(it.amount) || 0); }); });
+      const top = o => Object.keys(o).sort((a, b) => o[b] - o[a])[0];
+      if(top(pm)) L.push('', 'Best product: ' + top(pm) + ' (' + fmtMoney(pm[top(pm)]) + ')'); if(top(cm)) L.push('Best customer: ' + top(cm) + ' (' + fmtMoney(cm[top(cm)]) + ')');
+      L.push('', 'To collect: ' + fmtMoney(recv) + ' (late: ' + fmtMoney(late) + ')');
+      try{ const C = anCashFlow(); L.push('Next 30 days: expected in ' + fmtMoney(C.expect) + ', supplier dues ' + fmtMoney(C.pay)); }catch(e){}
+      try{ const D = dhChecks().filter(x => x.level === 'bad'); if(D.length) L.push('', 'Data to fix: ' + D.map(x => x.title).join('; ')); }catch(e){}
+      L.push('', 'Do first this week: ' + (ags[0] ? 'call ' + ags[0].company.name + ' (' + fmtMoney(ags[0].balance) + ')' : 'no big dues'));
+      return L.join('\n');
+    }
+    const t = anAgg(today, today), ym = anYM(now), m = anAgg(ym + '-01', today), T = anTargets();
+    L.push('Good morning. Daily brief: ' + biz, today, '');
+    L.push('Today so far: sales ' + fmtMoney(t.sales) + ' (' + t.invoices + ' invoices), collected ' + fmtMoney(t.coll));
+    L.push('This month: sales ' + fmtMoney(m.sales) + ', gross profit ' + fmtMoney(m.gp) + (T.sales > 0 ? ', ' + Math.round(m.sales / T.sales * 100) + '% of target' : ''));
+    L.push('', 'To collect: ' + fmtMoney(recv) + ' (older than 30 days: ' + fmtMoney(late) + ')');
+    ags.slice(0, 3).forEach((a, i) => L.push((i + 1) + '. ' + a.company.name + ': ' + fmtMoney(a.balance) + (a.oldestDays ? ', oldest ' + a.oldestDays + ' days' : '')));
+    try{ const P = anPlan(), low = P.buyList.filter(x => isFinite(x.daysLeft) && x.daysLeft < 14).slice(0, 5); if(low.length){ L.push('', 'Running out soon:'); low.forEach(x => L.push('- ' + x.p.name + ': ' + anQty(x.stock) + ' ' + (x.p.unit || '') + ' left, about ' + Math.max(Math.round(x.daysLeft), 0) + ' days')); } }catch(e){}
+    const stuck = salesCache.filter(s => (s.deliveryStatus || 'pending') !== 'delivered' && anDaysBetween(s.date || today, today) > 3).length; if(stuck) L.push('', 'Deliveries waiting over 3 days: ' + stuck);
+    const pa = (typeof approvalsCache !== 'undefined' ? approvalsCache : []).filter(a => a.status === 'pending').length; if(pa) L.push('Price approvals waiting: ' + pa);
+    const td = (todosCache || []).filter(x => x.status === 'open' && x.due_date && x.due_date <= today); if(td.length){ L.push('', 'To-do due today or late:'); td.slice(0, 6).forEach(x => L.push('- ' + x.title + ' (' + x.due_date + ')')); }
+    return L.join('\n');
+  }
+  function anBriefTab(r){
+    const k = an.brief || 'day', txt = buildBrief(k);
+    return '<div class="an-top"><label class="cell-sub">Type <select id="an-brief-kind"><option value="day"' + (k === 'day' ? ' selected' : '') + '>Daily brief</option><option value="week"' + (k === 'week' ? ' selected' : '') + '>Weekly summary</option></select></label> <button type="button" class="btn-primary sm" id="an-brief-wa"><i class="ti ti-brand-whatsapp"></i> Send to my WhatsApp</button> <button type="button" class="btn-secondary sm" id="an-brief-copy"><i class="ti ti-copy"></i> Copy</button></div>' +
+      '<div class="card card-pad"><div class="section-title"><i class="ti ti-sun"></i> ' + (k === 'week' ? 'Weekly summary' : 'Daily brief') + '</div><pre id="an-brief-text" style="white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.7;margin:0;">' + escapeHtml(txt) + '</pre></div>' +
+      '<div class="cell-sub" style="margin-top:10px;">The brief is made from your data when you open this tab. Press "Send to my WhatsApp" and choose your own number to keep it, or send it to a partner.</div>';
+  }
+  /* ================= STEP E: COMPANY CONFIG, MODULES, ONBOARDING, CSV IMPORT ================= */
+  const MODULE_PAGES = { recipes: ['recipes'], production: ['production'], salesOrders: ['salesOrders'], deliveries: ['deliveries'], analyst: ['analyst'], expenses: ['expenses'], datahealth: ['datahealth'], receivables: ['receivables'], approvals: ['approvals'] };
+  function applyConfig(){
+    try{
+      document.title = CFG.product;
+      const ft = document.querySelector('.content-footer'); if(ft) ft.innerHTML = 'Powered by <b>' + escapeHtml(CFG.product) + '</b> &middot; ' + escapeHtml((profileCache && profileCache.name) || CFG.brand);
+      const lb = document.getElementById('login-brand-big'); if(lb && !lb.dataset.cfg){ lb.textContent = CFG.brand; lb.dataset.cfg = 1; const lt = document.getElementById('login-title-text'); if(lt) lt.textContent = CFG.brand; const ll = document.getElementById('login-brand-line'); if(ll) ll.textContent = CFG.tagline; const sn = document.getElementById('sidebar-name'); if(sn) sn.textContent = CFG.brand; const st = document.getElementById('sidebar-tag'); if(st) st.textContent = CFG.tagline; }
+      if(CFG.currency !== '৳'){ const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const nodes = []; while(w.nextNode()) nodes.push(w.currentNode); nodes.forEach(n => { if(n.nodeValue.indexOf('৳') >= 0) n.nodeValue = n.nodeValue.split('৳').join(CFG.currency); }); document.querySelectorAll('[placeholder]').forEach(el => { const v = el.getAttribute('placeholder'); if(v && v.indexOf('৳') >= 0) el.setAttribute('placeholder', v.split('৳').join(CFG.currency)); }); }
+      const css = []; Object.keys(MODULE_PAGES).forEach(k => { if(CFG.modules[k] === false) MODULE_PAGES[k].forEach(pg => css.push('.nav-item[data-page="' + pg + '"]{display:none!important}')); });
+      if(css.length){ let st = document.getElementById('cfg-modules'); if(!st){ st = document.createElement('style'); st.id = 'cfg-modules'; document.head.appendChild(st); } st.textContent = css.join(''); }
+    }catch(e){ console.error('applyConfig', e); }
+  }
+  /* First-steps checklist on the dashboard for a new company */
+  function onboardingSteps(){
+    const prof = profileCache || {};
+    return [
+      { t: 'Add your business details and logo', go: 'settings', ok: !!(prof.name && prof.name !== CFG.brand) || !!prof.address || !!prof.phone },
+      { t: 'Add your products', go: 'products', ok: productsCache.length > 0 },
+      { t: 'Add a customer', go: 'companies', ok: companiesCache.some(c => c.type !== 'Supplier') },
+      { t: 'Add a supplier', go: 'companies', ok: companiesCache.some(c => c.type !== 'Buyer') },
+      { t: 'Record your first purchase', go: 'purchases', ok: purchasesCache.length > 0 },
+      { t: 'Make your first sale', go: 'sales', ok: salesCache.length > 0 }
+    ];
+  }
+  function renderOnboarding(){
+    const pg = document.getElementById('page-dashboard'); if(!pg) return;
+    let box = document.getElementById('onboard-card');
+    let dismissed = false; try{ dismissed = localStorage.getItem('ic_onboard_off') === '1'; }catch(e){}
+    const show = currentUser && isPriceController() && !dismissed && (productsCache.length < 3 || salesCache.length < 1);
+    if(!show){ if(box) box.remove(); return; }
+    const steps = onboardingSteps(), done = steps.filter(x => x.ok).length;
+    if(done === steps.length){ if(box) box.remove(); return; }
+    if(!box){ box = document.createElement('div'); box.id = 'onboard-card'; box.className = 'card card-pad'; box.style.marginBottom = '16px'; pg.insertBefore(box, pg.firstChild); }
+    box.innerHTML = '<div class="section-title"><i class="ti ti-rocket"></i> Get started (' + done + ' of ' + steps.length + ')</div><div class="an-track" style="margin-bottom:10px;"><div style="width:' + Math.round(done / steps.length * 100) + '%;height:100%;background:#0f9d8a;border-radius:6px"></div></div>' +
+      steps.map(x => '<div class="an-ins ' + (x.ok ? 'good' : '') + '" style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span>' + (x.ok ? '&#10003; ' : '&#9675; ') + escapeHtml(x.t) + '</span>' + (x.ok ? '' : '<button type="button" class="btn-secondary sm" data-ob="' + x.go + '">Open</button>') + '</div>').join('') +
+      '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-secondary sm" id="ob-import"><i class="ti ti-upload"></i> Import customers and products from a file</button><button type="button" class="btn-secondary sm" id="ob-hide">Hide this</button></div>';
+    box.querySelectorAll('[data-ob]').forEach(b => b.addEventListener('click', () => { const n = document.querySelector('.nav-item[data-page="' + b.getAttribute('data-ob') + '"]'); if(n) n.click(); }));
+    document.getElementById('ob-hide').addEventListener('click', () => { try{ localStorage.setItem('ic_onboard_off', '1'); }catch(e){} box.remove(); });
+    document.getElementById('ob-import').addEventListener('click', openCsvImport);
+  }
+  /* CSV import for companies and products (add new, skip names that already exist) */
+  function csvParse(text){
+    const rows = []; let row = [], cur = '', q = false; text = String(text || '').replace(/^﻿/, '');
+    for(let i = 0; i < text.length; i++){ const ch = text[i];
+      if(q){ if(ch === '"'){ if(text[i + 1] === '"'){ cur += '"'; i++; } else q = false; } else cur += ch; }
+      else if(ch === '"') q = true; else if(ch === ',' || ch === ';'){ row.push(cur); cur = ''; }
+      else if(ch === '\n'){ row.push(cur); rows.push(row); row = []; cur = ''; } else if(ch !== '\r') cur += ch; }
+    if(cur !== '' || row.length){ row.push(cur); rows.push(row); }
+    return rows.filter(r => r.some(c => String(c).trim() !== ''));
+  }
+  function csvObjects(text){ const r = csvParse(text); if(r.length < 2) return []; const h = r[0].map(x => String(x).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')); return r.slice(1).map(c => { const o = {}; h.forEach((k, i) => { o[k] = String(c[i] === undefined ? '' : c[i]).trim(); }); return o; }); }
+  async function importCompaniesCsv(text){
+    const rows = csvObjects(text), have = new Set(companiesCache.map(c => (c.name || '').trim().toLowerCase())); let add = 0, skip = 0;
+    rows.forEach(o => { const name = o.name || o.company || o.company_name; if(!name){ return; } if(have.has(name.toLowerCase())){ skip++; return; } have.add(name.toLowerCase());
+      const t = (o.type || '').toLowerCase(); companiesCache.push({ id: uid(), name: name, type: t.indexOf('both') === 0 ? 'Both' : t.indexOf('sup') === 0 ? 'Supplier' : 'Buyer', opening: parseFloat(o.opening || o.opening_balance) || 0, creditLimit: parseFloat(o.credit_limit) || 0, contact: o.contact || '', phone: o.phone || '', email: o.email || '', address: o.address || '', notes: o.notes || '', created_at: Date.now() + add }); add++; });
+    if(add) await setList('companies', companiesCache);
+    return { add: add, skip: skip };
+  }
+  async function importProductsCsv(text){
+    const rows = csvObjects(text), have = new Set(productsCache.map(c => (c.name || '').trim().toLowerCase())); let add = 0, skip = 0;
+    rows.forEach(o => { const name = o.name || o.product || o.product_name; if(!name){ return; } if(have.has(name.toLowerCase())){ skip++; return; } have.add(name.toLowerCase());
+      productsCache.push({ id: uid(), name: name, category: o.category || '', unit: o.unit || 'kg', openingStock: parseFloat(o.opening_stock) || 0, purchaseRate: parseFloat(o.purchase_rate) || 0, salesRate: parseFloat(o.sales_rate) || 0, reorderLevel: parseFloat(o.reorder_level) || 0, minMargin: parseFloat(o.min_margin) || 0, notes: o.notes || '', created_at: Date.now() + add }); add++; });
+    if(add) await setList('products', productsCache);
+    return { add: add, skip: skip };
+  }
+  function csvTemplate(kind){
+    const rows = kind === 'companies' ? [['name', 'type', 'phone', 'address', 'email', 'contact', 'opening_balance', 'credit_limit'], ['Example Textile Ltd', 'Buyer', '01700000000', 'Dhaka', '', 'Mr Rahim', '0', '0']]
+      : [['name', 'category', 'unit', 'opening_stock', 'purchase_rate', 'sales_rate', 'reorder_level'], ['Example Dye', 'Dyes', 'kg', '100', '80', '100', '']];
+    downloadCsv(kind + '-template.csv', rows);
+  }
+  function openCsvImport(){
+    let m = document.getElementById('csv-import-modal');
+    if(!m){ m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'csv-import-modal';
+      m.innerHTML = '<div class="modal" style="max-width:520px;"><div class="modal-head"><h3>Import from a CSV file</h3><button class="modal-close" id="csv-x"><i class="ti ti-x"></i></button></div><div class="modal-body" style="padding:18px;"><div class="cell-sub" style="margin-bottom:10px;">Make the list in Excel, save as CSV. Existing names are skipped, nothing is overwritten. Opening balance: positive = they owe you, negative = you owe them.</div>' +
+        '<div class="field"><label>Customers and suppliers <a href="#" id="csv-t-c" style="font-weight:400">(get template)</a></label><input type="file" id="csv-file-c" accept=".csv,text/csv"></div>' +
+        '<div class="field"><label>Products <a href="#" id="csv-t-p" style="font-weight:400">(get template)</a></label><input type="file" id="csv-file-p" accept=".csv,text/csv"></div><div id="csv-result" class="cell-sub" style="margin-top:8px;"></div></div></div>';
+      document.body.appendChild(m);
+      m.querySelector('#csv-x').addEventListener('click', () => m.classList.remove('open'));
+      m.querySelector('#csv-t-c').addEventListener('click', e => { e.preventDefault(); csvTemplate('companies'); });
+      m.querySelector('#csv-t-p').addEventListener('click', e => { e.preventDefault(); csvTemplate('products'); });
+      const run = async (id, fn, label) => { const f = m.querySelector(id).files[0]; if(!f) return; const out = m.querySelector('#csv-result'); out.textContent = 'Importing...';
+        try{ const r = await fn(await f.text()); out.innerHTML += '<div>' + label + ': added ' + r.add + ', skipped ' + r.skip + ' that already exist.</div>'; out.firstChild && out.firstChild.nodeType === 3 && out.removeChild(out.firstChild); if(typeof renderCompanies === 'function') renderCompanies(); if(typeof renderProducts === 'function') renderProducts(); if(typeof populateCompanyDropdowns === 'function') populateCompanyDropdowns(); renderOnboarding(); }
+        catch(e){ out.textContent = 'Could not import: ' + (e && e.message); } };
+      m.querySelector('#csv-file-c').addEventListener('change', () => run('#csv-file-c', importCompaniesCsv, 'Customers and suppliers'));
+      m.querySelector('#csv-file-p').addEventListener('change', () => run('#csv-file-p', importProductsCsv, 'Products')); }
+    m.querySelector('#csv-result').textContent = ''; m.classList.add('open');
   }
   /* ================= HELP & MANUAL ================= */
   const MANUAL = {
-    dashboard: { en: { what: 'Your business at a glance. Nothing to type here, just look.', steps: ['Top cards: total purchases, sales, profit, today\'s sales, this month vs last month.', '"Money to collect" lists the customers who owe you most. Call them first.', '"Low stock alerts" shows products that are running out.', '"Recent activity" and the 6-month chart show what happened lately.'], tips: ['Click the bell at the top for things that need attention today.'] },
-      bn: { what: 'এক নজরে পুরো ব্যবসা। এখানে কিছু লিখতে হয় না, শুধু দেখুন।', steps: ['উপরের কার্ডে মোট কেনা, বিক্রি, লাভ, আজকের বিক্রি এবং এই মাস বনাম গত মাস।', '"Money to collect"-এ যাদের কাছে সবচেয়ে বেশি টাকা পাবেন তাদের নাম। আগে তাদের ফোন করুন।', '"Low stock alerts"-এ যেসব পণ্য শেষ হয়ে আসছে।', '"Recent activity" ও ৬ মাসের চার্টে সাম্প্রতিক অবস্থা।'], tips: ['উপরের ঘণ্টা আইকনে আজকের জরুরি বিষয় দেখা যায়।'] } },
-    companies: { en: { what: 'Your address book of customers (Buyers) and suppliers. Every bill and payment is linked to a company.', steps: ['Press "Add company".', 'Fill the Name and choose Type: Buyer (you sell to them), Supplier (you buy from them) or Both.', 'Add phone and address. The phone is used for WhatsApp messages.', 'Opening balance: money already pending BEFORE you started using this app. Positive = they owe you. Negative = you owe them. Leave 0 if none.', 'Press Save. To fix a mistake, use the pencil icon in the row.'], tips: ['Create the company first, then you can bill or pay it.', 'Do not create the same company twice. Search before adding.'] },
-      bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।'] } },
-    products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: leave it empty and the app works it out itself (about 14 days of your recent sales). Type a number only if you want your own limit.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
-      bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: ফাঁকা রাখুন, অ্যাপ নিজে হিসাব করবে (সাম্প্রতিক বিক্রির প্রায় ১৪ দিনের মজুদ)। নিজের সীমা চাইলে তবেই সংখ্যা লিখুন।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
+    dashboard: { en: { what: 'Your business at a glance. Nothing to type here, just look.', steps: ['Top cards: total purchases, sales, profit, today\'s sales, this month vs last month.', '"Money to collect" lists the customers who owe you most. Call them first.', '"Low stock alerts" shows products that are running out.', '"Recent activity" and the 6-month chart show what happened lately.'], tips: ['Click the bell at the top for things that need attention today.', 'New company? A "Get started" box at the top lists the first steps (details, products, customers, supplier, first purchase and sale). Press Hide this to remove it.'] },
+      bn: { what: 'এক নজরে পুরো ব্যবসা। এখানে কিছু লিখতে হয় না, শুধু দেখুন।', steps: ['উপরের কার্ডে মোট কেনা, বিক্রি, লাভ, আজকের বিক্রি এবং এই মাস বনাম গত মাস।', '"Money to collect"-এ যাদের কাছে সবচেয়ে বেশি টাকা পাবেন তাদের নাম। আগে তাদের ফোন করুন।', '"Low stock alerts"-এ যেসব পণ্য শেষ হয়ে আসছে।', '"Recent activity" ও ৬ মাসের চার্টে সাম্প্রতিক অবস্থা।'], tips: ['উপরের ঘণ্টা আইকনে আজকের জরুরি বিষয় দেখা যায়।', 'নতুন কোম্পানির জন্য উপরে "Get started" বাক্স প্রথম ধাপগুলো (তথ্য, পণ্য, ক্রেতা, সরবরাহকারী, প্রথম কেনা ও বিক্রি) দেখায়। সরাতে Hide this চাপুন।'] } },
+    companies: { en: { what: 'Your address book of customers (Buyers) and suppliers. Every bill and payment is linked to a company.', steps: ['Credit limit (optional): the most you want a customer to owe you. When a new bill takes them above it, or they have bills older than 60 days, the app asks you to confirm before saving. Run phase_d_limits.sql in Supabase once to use it.', 'Press "Add company".', 'Fill the Name and choose Type: Buyer (you sell to them), Supplier (you buy from them) or Both.', 'Add phone and address. The phone is used for WhatsApp messages.', 'Opening balance: money already pending BEFORE you started using this app. Positive = they owe you. Negative = you owe them. Leave 0 if none.', 'Press Save. To fix a mistake, use the pencil icon in the row.'], tips: ['Create the company first, then you can bill or pay it.', 'Do not create the same company twice. Search before adding.'] },
+      bn: { what: 'ক্রেতা (Buyer) ও সরবরাহকারীদের (Supplier) তালিকা। প্রতিটি বিল ও পেমেন্ট একটা কোম্পানির সাথে যুক্ত থাকে।', steps: ['Credit limit (ঐচ্ছিক): একজন ক্রেতা আপনাকে সর্বোচ্চ কত বাকি রাখতে পারবে। নতুন বিলে সীমা পার হলে বা ৬০ দিনের বেশি পুরনো বাকি থাকলে Save করার আগে অ্যাপ নিশ্চিত করতে বলবে। ব্যবহার করতে Supabase-এ একবার phase_d_limits.sql চালান।', '"Add company" চাপুন।', 'নাম লিখুন এবং Type বাছুন: Buyer (আপনি বিক্রি করেন), Supplier (আপনি কেনেন) বা Both।', 'ফোন ও ঠিকানা দিন। ফোন নম্বর WhatsApp মেসেজে লাগে।', 'Opening balance: অ্যাপ চালুর আগে থেকে যে টাকা বাকি ছিল। ধনাত্মক (+) = তারা আপনাকে দেবে। ঋণাত্মক (−) = আপনি তাদের দেবেন। না থাকলে 0।', 'Save চাপুন। ভুল হলে সারির পেন্সিল আইকনে সংশোধন করুন।'], tips: ['আগে কোম্পানি বানান, তারপর বিল বা পেমেন্ট করা যাবে।', 'একই কোম্পানি দুবার বানাবেন না। যোগ করার আগে সার্চ করুন।'] } },
+    products: { en: { what: 'Your product catalogue: every chemical you buy or sell, with its list prices.', steps: ['Minimum margin % (under "More details", optional): if a sale is priced below this margin the app warns you before saving. Needs phase_d_limits.sql run once.', 'Press "Add product".', 'Enter Name, Category and Unit (kg, litre, drum...).', 'Opening stock: how much you already had before using the app.', 'Purchase rate = what you normally pay. Sales rate = your list selling price. Staff entering a different price in a bill will need management approval.', 'Reorder level: leave it empty and the app works it out itself (about 14 days of your recent sales). Type a number only if you want your own limit.', 'The poster icon in a row creates an advertising poster for that product (management only).'], tips: ['Use the same unit everywhere for one product.', 'Keep the Sales rate up to date, because price approvals compare against it.'] },
+      bn: { what: 'আপনার পণ্যের তালিকা: যা কেনেন বা বেচেন, সাথে তালিকা দাম।', steps: ['Minimum margin % ("More details"-এ, ঐচ্ছিক): বিক্রির দাম এই margin-এর নিচে হলে Save করার আগে অ্যাপ সতর্ক করে। phase_d_limits.sql একবার চালাতে হবে।', '"Add product" চাপুন।', 'নাম, ক্যাটাগরি ও ইউনিট (kg, litre, drum...) লিখুন।', 'Opening stock: অ্যাপ চালুর আগে মজুদ কতটুকু ছিল।', 'Purchase rate = সাধারণত যে দামে কেনেন। Sales rate = আপনার তালিকা বিক্রয়মূল্য। স্টাফ বিলে অন্য দাম দিলে ম্যানেজমেন্টের অনুমোদন লাগবে।', 'Reorder level: ফাঁকা রাখুন, অ্যাপ নিজে হিসাব করবে (সাম্প্রতিক বিক্রির প্রায় ১৪ দিনের মজুদ)। নিজের সীমা চাইলে তবেই সংখ্যা লিখুন।', 'সারির পোস্টার আইকনে পণ্যের বিজ্ঞাপন পোস্টার বানানো যায় (শুধু ম্যানেজমেন্ট)।'], tips: ['একটি পণ্যের জন্য সবখানে একই ইউনিট ব্যবহার করুন।', 'Sales rate হালনাগাদ রাখুন, কারণ price approval এর সাথে মেলানো হয়।'] } },
     recipes: { en: { what: 'For products you MIX yourself. A recipe says which raw materials, and how much of each, make ONE unit of the finished product. This is the only thing you must set up for mixed products.', steps: ['Press "Add recipe".', 'Choose the finished product (or create it with "+ New product").', 'Add each raw material with the quantity needed for 1 unit.', 'Save. From now on, when you sell this product and it is not in stock, the app cuts the raw materials from stock by this recipe by itself, and works the profit from the recipe cost.', 'If you edit a recipe later, the numbers change for all past sales too (stock is worked out live).'], tips: ['Skip this page if you only buy and resell.', 'Check the quantities carefully: a wrong recipe gives wrong raw-material stock and wrong profit.'] },
       bn: { what: 'যেসব পণ্য আপনি নিজে মিশিয়ে বানান তার জন্য। রেসিপি বলে ১ ইউনিট তৈরি পণ্যে কোন কাঁচামাল কত লাগে। মিক্স করা পণ্যের জন্য শুধু এটুকুই আপনাকে ঠিক করে রাখতে হয়।', steps: ['"Add recipe" চাপুন।', 'তৈরি পণ্য বাছুন (না থাকলে "+ New product" দিয়ে বানান)।', 'প্রতিটি কাঁচামাল ও ১ ইউনিটের জন্য দরকারি পরিমাণ যোগ করুন।', 'Save করুন। এরপর এই পণ্য বিক্রির সময় স্টকে না থাকলে অ্যাপ নিজেই রেসিপি অনুযায়ী কাঁচামাল স্টক থেকে কাটে এবং রেসিপির খরচ ধরে লাভ হিসাব করে।', 'পরে রেসিপি বদলালে আগের বিক্রির হিসাবও বদলে যাবে (স্টক সবসময় তাৎক্ষণিক হিসাব হয়)।'], tips: ['শুধু কিনে বিক্রি করলে এই পেজ লাগবে না।', 'পরিমাণ সাবধানে দিন: ভুল রেসিপিতে কাঁচামালের স্টক ও লাভ ভুল আসবে।'] } },
     production: { en: { what: 'OPTIONAL. You do not need to write anything here for normal selling: raw materials are cut automatically by the recipe when you sell a mixed product that is not in stock. Use this page only when you make a batch AHEAD of selling.', steps: ['Press "Add batch".', 'Choose Date, the Finished product and the Quantity produced.', 'The materials from the recipe fill in. Change the amounts if the real usage was different.', 'Save. Raw materials go down and the finished product goes up. Later sales use this ready stock first; only the shortage is auto-made from the recipe.'], tips: ['The Stock card of a product (Inventory page, graph icon) shows every "Auto-made from recipe" and "Used by recipe (auto)" line.'] },
@@ -8930,12 +9216,14 @@
       bn: { what: 'অডিট লগ (শুধু ম্যানেজমেন্ট): কে কী যোগ, বদল বা মুছেছে এবং কখন।', steps: ['সর্বশেষটা উপরে। প্রতিটিতে ইউজার, কাজ (insert / update / delete), রেকর্ড ও পরিবর্তন।', 'রেকর্ডের ধরন, ইউজার বা তারিখ দিয়ে ফিল্টার করুন অথবা সার্চ করুন।', 'Export চাপলে CSV কপি।'], tips: ['কোনো সংখ্যা ভুল মনে হলে কে বদলেছে খুঁজতে এটা ব্যবহার করুন।'] } },
     settings: { en: { what: 'Your business details, your account and (for admin) the users.', steps: ['Business profile: name, address, phone, email. These appear on bills and statements.', 'Logo, photo and login page: upload your logo and change the login picture.', 'My account: change your own password.', 'User management (admin): "Add user", choose a role. Staff get only the pages you tick. Management sees everything including approvals.'], tips: ['Give each person their own login. Never share one password.'] },
       bn: { what: 'ব্যবসার তথ্য, আপনার একাউন্ট এবং (অ্যাডমিনের জন্য) ইউজার ব্যবস্থাপনা।', steps: ['Business profile: নাম, ঠিকানা, ফোন, ইমেইল। এগুলো বিল ও স্টেটমেন্টে ছাপা হয়।', 'লোগো, ছবি ও লগইন পেজ: লোগো আপলোড ও লগইন ছবি বদলান।', 'My account: নিজের পাসওয়ার্ড বদলান।', 'User management (অ্যাডমিন): "Add user" চাপুন, Role বাছুন। Staff শুধু আপনার টিক দেওয়া পেজ দেখবে। Management সব দেখে, approval সহ।'], tips: ['প্রত্যেককে আলাদা লগইন দিন। একটি পাসওয়ার্ড শেয়ার করবেন না।'] } },
-    analyst: { en: { what: 'Business Analyst (management only): your whole business in one place, with charts, comparisons and what stands out. Nothing to type: it is worked out from your sales, purchases, payments, recipes and expenses.', steps: ['At the top pick the period (this month, last 3 months, this year or your own dates). Every figure is compared with the previous period and with the same time last year.', 'Overview: sales, gross profit, expenses, net profit, purchases, money collected, receivable and stock value, a 12-month chart, and "What stands out" (top product, rising and falling products, margin change, risky customers, loss-making invoices, stock-outs).', 'Products: a table of every product by month (darker = stronger month), a ranking of products for any month from most to least sold, a behaviour list (fast mover, slow, rising, falling, seasonal, dead stock) and a one-product detail with buyers and days of stock left. Switch the table between quantity, sales amount and profit.', 'Sales: sales over time (daily, weekly, monthly), top customers, new and repeat customers, category split, list price versus the price you really got, and sales by weekday.', 'Profit: cost of goods, gross and net profit, margin trend, profit by product and by customer, and invoices sold at a loss or under 5% margin. CSV buttons export the tables.', 'Next month: the plan for next month. It estimates demand from your recent selling pace (and last year\'s season where you have a year of history), adds your growth guess and safety days, then shows what to BUY (with supplier and cost), what to MAKE from recipes with the raw materials needed, what is running out first, and what not to buy. Change the boxes to test other cases; CSV exports the list.', 'Inventory: stock value, dead stock and overstock, days of cover, turnover, ABC class of every product, and how much you can make with the raw materials you hold.', 'Suppliers: spend by supplier, buying price trend of every product, the cheapest supplier, and products that depend on one supplier.', 'Customers: every customer ranked by sales with profit, how often they buy, how fast they pay, what they owe, and flags for customers who may be leaving or pay slowly.', 'Cash flow: money in and out for 6 months, working capital (money to collect + stock - money you owe) and an estimate for the next 30 days.', 'Operations: delivery status and speed, invoices waiting too long, and price-approval requests by staff.', 'Forecast: expected sales and gross profit for the next 3 months with a low-high range, a "What if...?" box (change prices, raw material cost or quantity and see the profit), and this month\'s targets with progress and the daily amount you still need. Targets are saved on this device only.', 'On every tab: "Explain this page" asks Ask RAR to explain what you see in simple words and what to do first. "Print / PDF" opens a print view: choose Save as PDF.', 'The yellow box at the top warns about data problems (no cost on a product, negative stock, no expenses) that can make the analysis wrong. Fix those first.'], tips: ['Net profit needs your running costs: add them on the Expenses page.', 'Profit uses the cost saved on each sale; for mixed products with no cost it uses the recipe or average cost.'] },
-      bn: { what: 'বিজনেস অ্যানালিস্ট (শুধু ম্যানেজমেন্ট): পুরো ব্যবসা এক জায়গায়, চার্ট, তুলনা আর কী চোখে পড়ার মতো তা সহ। কিছু লিখতে হয় না, বিক্রি, কেনা, পেমেন্ট, রেসিপি ও খরচ থেকে নিজে হিসাব হয়।', steps: ['উপরে সময় বাছুন (এই মাস, গত ৩ মাস, এই বছর বা নিজের তারিখ)। প্রতিটি সংখ্যা আগের সময় ও গত বছরের একই সময়ের সাথে তুলনা হয়।', 'Overview: বিক্রি, মোট লাভ, খরচ, নিট লাভ, কেনা, টাকা আদায়, পাওনা ও স্টকের মূল্য, ১২ মাসের চার্ট, আর "What stands out" (সেরা পণ্য, বাড়ন্ত ও কমন্ত পণ্য, margin বদল, ঝুঁকির ক্রেতা, লোকসানের বিল, স্টক শেষ)।', 'Products: প্রতিটি পণ্যের মাসভিত্তিক ছক (গাঢ় = ওই মাস বেশি জোরালো), যেকোনো মাসের জন্য বেশি থেকে কম বিক্রির ranking, আচরণের তালিকা (দ্রুত চলা, ধীর, বাড়ন্ত, কমন্ত, মৌসুমি, অচল মাল) এবং একটি পণ্যের বিস্তারিত (ক্রেতা, কত দিনের স্টক বাকি)। ছকটা পরিমাণ, বিক্রির টাকা বা লাভ অনুযায়ী বদলানো যায়।', 'Sales: সময় অনুযায়ী বিক্রি (দৈনিক, সাপ্তাহিক, মাসিক), শীর্ষ ক্রেতা, নতুন ও পুরনো ক্রেতা, ক্যাটাগরি, তালিকা দাম বনাম আসলে পাওয়া দাম, আর সপ্তাহের দিন অনুযায়ী বিক্রি।', 'Profit: মালের খরচ, মোট ও নিট লাভ, margin ট্রেন্ড, পণ্য ও ক্রেতা অনুযায়ী লাভ, আর লোকসানে বা ৫%-এর কম margin-এ বিক্রি হওয়া বিল। CSV বোতামে টেবিল নামানো যায়।', 'Next month: আগামী মাসের পরিকল্পনা। সাম্প্রতিক বিক্রির গতি (এবং এক বছরের ডেটা থাকলে গত বছরের মৌসুম), আপনার বৃদ্ধির অনুমান ও নিরাপত্তা-দিন ধরে চাহিদা হিসাব করে দেখায় কী কিনবেন (সরবরাহকারী ও খরচসহ), রেসিপি থেকে কী বানাবেন ও কত কাঁচামাল লাগবে, কোনটা আগে শেষ হবে, আর কোনটা কিনবেন না। বাক্সের সংখ্যা বদলে অন্য অবস্থা পরীক্ষা করুন; CSV-তে তালিকা নামে।', 'Inventory: স্টকের মূল্য, অচল ও বেশি জমে থাকা মাল, কত দিনের মজুদ, কতবার ঘুরছে, প্রতিটি পণ্যের ABC শ্রেণি, আর হাতে থাকা কাঁচামালে কত বানানো যাবে।', 'Suppliers: সরবরাহকারী অনুযায়ী খরচ, প্রতিটি পণ্যের কেনার দামের ট্রেন্ড, সবচেয়ে সস্তা সরবরাহকারী, আর একজনের উপর নির্ভরশীল পণ্য।', 'Customers: বিক্রি অনুযায়ী প্রতিটি ক্রেতার ranking, লাভ, কত ঘনঘন কেনে, কত দিনে টাকা দেয়, কত বাকি, আর যারা চলে যেতে পারে বা দেরিতে দেয় তাদের চিহ্ন।', 'Cash flow: ৬ মাসের টাকা আসা-যাওয়া, working capital (পাওনা + স্টক - দেনা) এবং আগামী ৩০ দিনের অনুমান।', 'Operations: ডেলিভারির অবস্থা ও গতি, অনেক দিন আটকে থাকা বিল, আর স্টাফ অনুযায়ী price approval অনুরোধ।', 'Forecast: আগামী ৩ মাসের আনুমানিক বিক্রি ও মোট লাভ (কম-বেশি সীমাসহ), "What if...?" বাক্স (দাম, কাঁচামালের খরচ বা পরিমাণ বদলে লাভ দেখুন), আর এই মাসের লক্ষ্যমাত্রা, অগ্রগতি ও বাকি দিনে প্রতিদিন কত লাগবে। লক্ষ্যমাত্রা শুধু এই ডিভাইসে সেভ হয়।', 'প্রতিটি ট্যাবে: "Explain this page" চাপলে Ask RAR সহজ ভাষায় বোঝায় এবং আগে কী করবেন বলে। "Print / PDF" প্রিন্ট ভিউ খোলে: Save as PDF বাছুন।', 'উপরের হলুদ বাক্স ডেটার সমস্যা জানায় (পণ্যে খরচ নেই, ঋণাত্মক স্টক, খরচ লেখা হয়নি), যেগুলো বিশ্লেষণ ভুল করতে পারে। আগে সেগুলো ঠিক করুন।'], tips: ['নিট লাভের জন্য নিয়মিত খরচ লাগে: Expenses পেজে লিখুন।', 'লাভ প্রতিটি বিক্রিতে সেভ করা খরচ থেকে হয়; মিক্স পণ্যে খরচ না থাকলে রেসিপি বা গড় খরচ ধরা হয়।'] } },
+    analyst: { en: { what: 'Business Analyst (management only): your whole business in one place, with charts, comparisons and what stands out. Nothing to type: it is worked out from your sales, purchases, payments, recipes and expenses.', steps: ['At the top pick the period (this month, last 3 months, this year or your own dates). Every figure is compared with the previous period and with the same time last year.', 'Overview: sales, gross profit, expenses, net profit, purchases, money collected, receivable and stock value, a 12-month chart, and "What stands out" (top product, rising and falling products, margin change, risky customers, loss-making invoices, stock-outs).', 'Products: a table of every product by month (darker = stronger month), a ranking of products for any month from most to least sold, a behaviour list (fast mover, slow, rising, falling, seasonal, dead stock) and a one-product detail with buyers and days of stock left. Switch the table between quantity, sales amount and profit.', 'Sales: sales over time (daily, weekly, monthly), top customers, new and repeat customers, category split, list price versus the price you really got, and sales by weekday.', 'Profit: cost of goods, gross and net profit, margin trend, profit by product and by customer, and invoices sold at a loss or under 5% margin. CSV buttons export the tables.', 'Next month: the plan for next month. It estimates demand from your recent selling pace (and last year\'s season where you have a year of history), adds your growth guess and safety days, then shows what to BUY (with supplier and cost), what to MAKE from recipes with the raw materials needed, what is running out first, and what not to buy. Change the boxes to test other cases; CSV exports the list.', 'Inventory: stock value, dead stock and overstock, days of cover, turnover, ABC class of every product, and how much you can make with the raw materials you hold.', 'Suppliers: spend by supplier, buying price trend of every product, the cheapest supplier, and products that depend on one supplier.', 'Customers: every customer ranked by sales with profit, how often they buy, how fast they pay, what they owe, and flags for customers who may be leaving or pay slowly.', 'Cash flow: money in and out for 6 months, working capital (money to collect + stock - money you owe) and an estimate for the next 30 days.', 'Operations: delivery status and speed, invoices waiting too long, and price-approval requests by staff.', 'Next month also lists "Purchase orders to send": the buy list split by supplier. Press WhatsApp to send it to the supplier or Print for a paper order. Nothing is saved; record the goods in Purchases when they arrive.', 'Customers: in the Chase column press the WhatsApp icon to send a reminder, or pick the date the customer promised to pay and press the clipboard icon: a high-priority to-do is made for that day.', 'Brief: a ready daily brief (today\'s sales, money to collect, running out soon, deliveries, tasks due) and a weekly summary. Press "Send to my WhatsApp" or Copy. Targets on the Forecast tab are now saved for everyone (run phase_e_settings.sql once).', 'Forecast: expected sales and gross profit for the next 3 months with a low-high range, a "What if...?" box (change prices, raw material cost or quantity and see the profit), and this month\'s targets with progress and the daily amount you still need. Targets are saved on this device only.', 'On every tab: "Explain this page" asks Ask RAR to explain what you see in simple words and what to do first. "Print / PDF" opens a print view: choose Save as PDF.', 'The yellow box at the top warns about data problems (no cost on a product, negative stock, no expenses) that can make the analysis wrong. Fix those first.'], tips: ['Net profit needs your running costs: add them on the Expenses page.', 'Profit uses the cost saved on each sale; for mixed products with no cost it uses the recipe or average cost.'] },
+      bn: { what: 'বিজনেস অ্যানালিস্ট (শুধু ম্যানেজমেন্ট): পুরো ব্যবসা এক জায়গায়, চার্ট, তুলনা আর কী চোখে পড়ার মতো তা সহ। কিছু লিখতে হয় না, বিক্রি, কেনা, পেমেন্ট, রেসিপি ও খরচ থেকে নিজে হিসাব হয়।', steps: ['উপরে সময় বাছুন (এই মাস, গত ৩ মাস, এই বছর বা নিজের তারিখ)। প্রতিটি সংখ্যা আগের সময় ও গত বছরের একই সময়ের সাথে তুলনা হয়।', 'Overview: বিক্রি, মোট লাভ, খরচ, নিট লাভ, কেনা, টাকা আদায়, পাওনা ও স্টকের মূল্য, ১২ মাসের চার্ট, আর "What stands out" (সেরা পণ্য, বাড়ন্ত ও কমন্ত পণ্য, margin বদল, ঝুঁকির ক্রেতা, লোকসানের বিল, স্টক শেষ)।', 'Products: প্রতিটি পণ্যের মাসভিত্তিক ছক (গাঢ় = ওই মাস বেশি জোরালো), যেকোনো মাসের জন্য বেশি থেকে কম বিক্রির ranking, আচরণের তালিকা (দ্রুত চলা, ধীর, বাড়ন্ত, কমন্ত, মৌসুমি, অচল মাল) এবং একটি পণ্যের বিস্তারিত (ক্রেতা, কত দিনের স্টক বাকি)। ছকটা পরিমাণ, বিক্রির টাকা বা লাভ অনুযায়ী বদলানো যায়।', 'Sales: সময় অনুযায়ী বিক্রি (দৈনিক, সাপ্তাহিক, মাসিক), শীর্ষ ক্রেতা, নতুন ও পুরনো ক্রেতা, ক্যাটাগরি, তালিকা দাম বনাম আসলে পাওয়া দাম, আর সপ্তাহের দিন অনুযায়ী বিক্রি।', 'Profit: মালের খরচ, মোট ও নিট লাভ, margin ট্রেন্ড, পণ্য ও ক্রেতা অনুযায়ী লাভ, আর লোকসানে বা ৫%-এর কম margin-এ বিক্রি হওয়া বিল। CSV বোতামে টেবিল নামানো যায়।', 'Next month: আগামী মাসের পরিকল্পনা। সাম্প্রতিক বিক্রির গতি (এবং এক বছরের ডেটা থাকলে গত বছরের মৌসুম), আপনার বৃদ্ধির অনুমান ও নিরাপত্তা-দিন ধরে চাহিদা হিসাব করে দেখায় কী কিনবেন (সরবরাহকারী ও খরচসহ), রেসিপি থেকে কী বানাবেন ও কত কাঁচামাল লাগবে, কোনটা আগে শেষ হবে, আর কোনটা কিনবেন না। বাক্সের সংখ্যা বদলে অন্য অবস্থা পরীক্ষা করুন; CSV-তে তালিকা নামে।', 'Inventory: স্টকের মূল্য, অচল ও বেশি জমে থাকা মাল, কত দিনের মজুদ, কতবার ঘুরছে, প্রতিটি পণ্যের ABC শ্রেণি, আর হাতে থাকা কাঁচামালে কত বানানো যাবে।', 'Suppliers: সরবরাহকারী অনুযায়ী খরচ, প্রতিটি পণ্যের কেনার দামের ট্রেন্ড, সবচেয়ে সস্তা সরবরাহকারী, আর একজনের উপর নির্ভরশীল পণ্য।', 'Customers: বিক্রি অনুযায়ী প্রতিটি ক্রেতার ranking, লাভ, কত ঘনঘন কেনে, কত দিনে টাকা দেয়, কত বাকি, আর যারা চলে যেতে পারে বা দেরিতে দেয় তাদের চিহ্ন।', 'Cash flow: ৬ মাসের টাকা আসা-যাওয়া, working capital (পাওনা + স্টক - দেনা) এবং আগামী ৩০ দিনের অনুমান।', 'Operations: ডেলিভারির অবস্থা ও গতি, অনেক দিন আটকে থাকা বিল, আর স্টাফ অনুযায়ী price approval অনুরোধ।', 'Next month-এ "Purchase orders to send" আছে: কেনার তালিকা সরবরাহকারী অনুযায়ী ভাগ করা। WhatsApp চাপলে সরবরাহকারীকে পাঠানো যায়, Print চাপলে কাগজের অর্ডার। কিছু সেভ হয় না; মাল এলে Purchases-এ লিখুন।', 'Customers-এর Chase কলামে WhatsApp আইকনে রিমাইন্ডার পাঠান, অথবা ক্রেতা যে তারিখে দেবে বলেছে সেটা বেছে ক্লিপবোর্ড আইকন চাপুন: ওই দিনের জন্য জরুরি To-do তৈরি হবে।', 'Brief: তৈরি দৈনিক ব্রিফ (আজকের বিক্রি, টাকা পাবেন, কী শেষ হচ্ছে, ডেলিভারি, কাজ) এবং সাপ্তাহিক সারাংশ। "Send to my WhatsApp" বা Copy চাপুন। Forecast ট্যাবের লক্ষ্যমাত্রা এখন সবার জন্য সেভ হয় (একবার phase_e_settings.sql চালান)।', 'Forecast: আগামী ৩ মাসের আনুমানিক বিক্রি ও মোট লাভ (কম-বেশি সীমাসহ), "What if...?" বাক্স (দাম, কাঁচামালের খরচ বা পরিমাণ বদলে লাভ দেখুন), আর এই মাসের লক্ষ্যমাত্রা, অগ্রগতি ও বাকি দিনে প্রতিদিন কত লাগবে। লক্ষ্যমাত্রা শুধু এই ডিভাইসে সেভ হয়।', 'প্রতিটি ট্যাবে: "Explain this page" চাপলে Ask RAR সহজ ভাষায় বোঝায় এবং আগে কী করবেন বলে। "Print / PDF" প্রিন্ট ভিউ খোলে: Save as PDF বাছুন।', 'উপরের হলুদ বাক্স ডেটার সমস্যা জানায় (পণ্যে খরচ নেই, ঋণাত্মক স্টক, খরচ লেখা হয়নি), যেগুলো বিশ্লেষণ ভুল করতে পারে। আগে সেগুলো ঠিক করুন।'], tips: ['নিট লাভের জন্য নিয়মিত খরচ লাগে: Expenses পেজে লিখুন।', 'লাভ প্রতিটি বিক্রিতে সেভ করা খরচ থেকে হয়; মিক্স পণ্যে খরচ না থাকলে রেসিপি বা গড় খরচ ধরা হয়।'] } },
     expenses: { en: { what: 'Expenses (management only): write your running costs (salary, rent, transport, electricity...) so the Business Analyst can show your NET profit.', steps: ['Pick the Date and Type, write an optional note and the Amount, then press Add.', 'The cards show this month and last month. Below, this month by type and the latest entries.', 'To remove a wrong entry press the bin icon.'], tips: ['Do not enter the cost of goods you buy here. That is already in Purchases.', 'Run phase_c_expenses.sql once in Supabase if this page asks for setup.'] },
       bn: { what: 'এক্সপেন্সেস (শুধু ম্যানেজমেন্ট): নিয়মিত খরচ (বেতন, ভাড়া, পরিবহন, বিদ্যুৎ...) লিখুন, যাতে বিজনেস অ্যানালিস্ট আপনার নিট লাভ দেখাতে পারে।', steps: ['তারিখ ও ধরন বাছুন, চাইলে নোট লিখুন, পরিমাণ দিয়ে Add চাপুন।', 'কার্ডে এই মাস ও গত মাসের খরচ। নিচে এই মাসের ধরন অনুযায়ী খরচ ও সর্বশেষ এন্ট্রি।', 'ভুল এন্ট্রি মুছতে বিন আইকন চাপুন।'], tips: ['মাল কেনার খরচ এখানে লিখবেন না। সেটা Purchases-এ আগেই আছে।', 'পেজ সেটআপ চাইলে Supabase-এ একবার phase_c_expenses.sql চালান।'] } },
     assistant: { en: { what: 'Ask RAR: your AI assistant (management only). Press the round "Ask RAR" button at the bottom right. It answers from your own data and prepares entries for you. It never saves anything by itself.', steps: ['Ask about money and stock, e.g. "Who owes me the most?", "How is this month\'s profit?", "Which products will run out soon?". Pick your language (English, Bangla, Chinese...) at the top of the panel.', 'Record a sale: "Sold 20 kg X to Rahim at 120, received 5000". Press the green "Open sale form" button, check, then Save.', 'Record a payment: "Received 20,000 from Rahim by bank". Press "Open payment form", check, Save.', 'Record a supplier bill: use the paperclip to attach the bill photo/PDF and ask it to record the purchase. Or use "Scan bill" on the Purchases page.', 'Tasks: "Remind me to order Dye X on Sunday". Press "Add to to-do". Say a task is done and press "Mark done".', 'Poster: "Make a poster for Softener S9". Attach a datasheet for better text. Press the poster button and download.', 'Use the microphone to speak, and the new-chat icon to start fresh.'], tips: ['If the customer or product name is not found, add it first (Companies / Products) or give the exact name.', 'Always check the filled form before saving. The assistant can misread a name or number.'] },
       bn: { what: 'Ask RAR: আপনার AI সহকারী (শুধু ম্যানেজমেন্ট)। ডান-নিচের গোল "Ask RAR" বাটন চাপুন। এটি আপনার নিজের ডেটা থেকে উত্তর দেয় এবং এন্ট্রি তৈরি করে দেয়। নিজে থেকে কিছু Save করে না।', steps: ['টাকা ও স্টক নিয়ে জিজ্ঞেস করুন, যেমন "কার কাছে সবচেয়ে বেশি বাকি?", "এই মাসের লাভ কেমন?", "কোন পণ্য শেষ হতে যাচ্ছে?"। প্যানেলের উপরে ভাষা বাছুন (English, Bangla, Chinese...)।', 'বিক্রি লিখতে: "রহিমকে ২০ কেজি X ১২০ টাকায় বিক্রি, ৫০০০ পেয়েছি"। সবুজ "Open sale form" বাটন চাপুন, দেখে নিয়ে Save করুন।', 'পেমেন্ট লিখতে: "রহিমের কাছ থেকে ব্যাংকে ২০,০০০ পেয়েছি"। "Open payment form" চাপুন, দেখে Save করুন।', 'সরবরাহকারীর বিল লিখতে: ক্লিপ আইকনে বিলের ছবি/PDF দিয়ে কেনা লিখতে বলুন। অথবা Purchases পেজের "Scan bill" ব্যবহার করুন।', 'কাজ: "রবিবার Dye X অর্ডারের কথা মনে করিয়ে দাও"। "Add to to-do" চাপুন। কাজ শেষ হলে বলুন, তারপর "Mark done" চাপুন।', 'পোস্টার: "Softener S9-এর পোস্টার বানাও"। ভালো লেখার জন্য datasheet দিন। পোস্টার বাটন চেপে ডাউনলোড করুন।', 'কথা বলতে মাইক্রোফোন এবং নতুন চ্যাটের জন্য নতুন-চ্যাট আইকন ব্যবহার করুন।'], tips: ['ক্রেতা বা পণ্যের নাম না পেলে আগে যোগ করুন (Companies / Products) বা সঠিক নাম দিন।', 'Save করার আগে সবসময় ভরা ফর্ম দেখে নিন। সহকারী নাম বা সংখ্যা ভুল পড়তে পারে।'] } },
+    datahealth: { en: { what: 'Data Health (management only): finds mistakes and gaps in your data that make reports and the Business Analyst wrong. Open it once a week.', steps: ['The top card shows a score. Fix the red items first.', 'Each block explains the problem and has a button that opens the right page.', 'Checks: sold items with no cost, negative stock, products without prices, wrong recipes, company balances that do not match their bills, duplicate invoice numbers, bills of deleted companies, losses, missing phone numbers, no expenses.', 'After fixing, come back here: the list updates by itself.'], tips: ['A clean score means the Business Analyst numbers can be trusted.'] },
+      bn: { what: 'ডেটা হেলথ (শুধু ম্যানেজমেন্ট): আপনার ডেটার ভুল ও ফাঁক খুঁজে বের করে, যেগুলো রিপোর্ট ও বিজনেস অ্যানালিস্টকে ভুল করে দেয়। সপ্তাহে একবার খুলুন।', steps: ['উপরের কার্ডে স্কোর দেখায়। আগে লাল বিষয়গুলো ঠিক করুন।', 'প্রতিটি ব্লকে সমস্যা বোঝানো আছে এবং একটি বোতাম সঠিক পেজ খুলে দেয়।', 'যা যা দেখে: খরচ ছাড়া বিক্রি হওয়া পণ্য, ঋণাত্মক স্টক, দাম ছাড়া পণ্য, ভুল রেসিপি, বিলের সাথে না মেলা কোম্পানির ব্যালেন্স, একই ইনভয়েস নম্বর, মুছে ফেলা কোম্পানির বিল, লোকসান, ফোন নম্বর নেই, খরচ লেখা হয়নি।', 'ঠিক করে ফিরে এলে তালিকা নিজে হালনাগাদ হয়।'], tips: ['স্কোর ভালো মানে বিজনেস অ্যানালিস্টের সংখ্যা ভরসা করা যায়।'] } },
     manual: { en: { what: 'This manual. Every menu is explained here.', steps: ['Pick English or বাংলা at the top.', 'Search a word to find a topic.', 'On any page, press the "?" button at the top right to see that page\'s guide.'], tips: ['Ask the "Ask RAR" assistant if you are stuck.'] },
       bn: { what: 'এই ম্যানুয়াল। প্রতিটি মেনু এখানে বোঝানো আছে।', steps: ['উপরে English বা বাংলা বাছুন।', 'শব্দ সার্চ করে বিষয় খুঁজুন।', 'যেকোনো পেজে উপরে ডানের "?" বাটনে ওই পেজের গাইড দেখুন।'], tips: ['আটকে গেলে "Ask RAR" সহকারীকে জিজ্ঞেস করুন।'] } }
   };
@@ -8950,7 +9238,7 @@
     const box = document.getElementById('man-list'); if(!box) return;
     const q = document.getElementById('man-search').value.trim().toLowerCase();
     document.querySelectorAll('#man-lang button').forEach(b => b.classList.toggle('on', b.getAttribute('data-l') === manLang));
-    const keys = Object.keys(MANUAL).filter(k => k === 'manual' || k === 'dashboard' || canView(k) || ((k === 'approvals' || k === 'audit' || k === 'todo' || k === 'receivables' || k === 'assistant' || k === 'analyst' || k === 'expenses') && isPriceController()));
+    const keys = Object.keys(MANUAL).filter(k => k === 'manual' || k === 'dashboard' || canView(k) || ((k === 'approvals' || k === 'audit' || k === 'todo' || k === 'receivables' || k === 'assistant' || k === 'analyst' || k === 'expenses' || k === 'datahealth') && isPriceController()));
     const html = keys.map(k => { const body = manItemHtml(k), title = manTitle(k); if(q && !(title + ' ' + body.replace(/<[^>]+>/g, ' ')).toLowerCase().includes(q)) return '';
       return '<details class="man-card" id="man-' + k + '"' + (q ? ' open' : '') + '><summary>' + escapeHtml(title) + '</summary>' + body + '</details>'; }).join('');
     box.innerHTML = html || '<div class="empty-row">Nothing found.</div>';
@@ -9188,7 +9476,7 @@
 
     const who = currentUser ? currentUser.username : '';
     const logo = getAppLogoSrc();
-    return '<div class="mr-head"><div><h1>Monthly Management Report</h1><div class="mr-sub">' + escapeHtml(monthName) + ' &middot; ' + escapeHtml(profileCache.name || 'Inno Chem Bangladesh') + '</div></div>' + (logo ? '<img src="' + logo + '" alt="">' : '') + '</div>' +
+    return '<div class="mr-head"><div><h1>Monthly Management Report</h1><div class="mr-sub">' + escapeHtml(monthName) + ' &middot; ' + escapeHtml(profileCache.name || CFG.brand) + '</div></div>' + (logo ? '<img src="' + logo + '" alt="">' : '') + '</div>' +
       '<div class="mr-sec"><h2>Performance at a glance</h2>' + kpis + '</div>' +
       '<div class="mr-sec"><h2>Daily sales</h2>' + mrDailyChart(st) + '</div>' +
       '<div class="mr-sec"><h2>Top customers</h2>' + custHtml + '</div>' +
@@ -9336,7 +9624,7 @@
     const contact = [prof.phone, prof.email].filter(Boolean).join('   |   ');
     if(contact){ ctx.fillText(contact, pad, y); y -= 44; }
     if(prof.address){ ctx.font = '500 26px ' + FONT; ctx.fillStyle = '#b9e3e8'; const al = posterWrap(ctx, prof.address, maxW); ctx.fillText(al[0] + (al.length > 1 ? '…' : ''), pad, y); y -= 40; }
-    ctx.fillStyle = '#ffffff'; ctx.font = '800 36px ' + FONT; ctx.fillText(prof.name || 'Inno Chem Bangladesh', pad, y); y -= 62;
+    ctx.fillStyle = '#ffffff'; ctx.font = '800 36px ' + FONT; ctx.fillText(prof.name || CFG.brand, pad, y); y -= 62;
     ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(pad, y, 120, 5); y -= 36;
     if(document.getElementById('poster-show-price').checked){
       const label = fmtMoney(posterProduct.salesRate) + ' / ' + posterProduct.unit;
@@ -9431,7 +9719,7 @@
       'LAYOUT: brand logo top-left with the company name; a HUGE bold condensed sans-serif product title in navy (second line in green if the title has two lines); ' + (v('subline') ? 'a rounded subtitle badge; ' : '') + (v('desc') ? 'a short description paragraph; ' : '') + (specs.length ? 'a vertical list of spec rows, each with a round navy icon on the left, small bold navy label and larger value; ' : '') + (benefits.length ? 'a second list of short benefit points with small round icons; ' : '') + 'a large realistic studio photo of the product packaging (' + v('packaging') + (v('pkg-note') ? ', ' + v('pkg-note') : '') + ') with a glass beaker of the product and relevant textile props (fabric, powder or granules as appropriate); ' + (document.getElementById('poster-opt-contact').checked ? 'a rounded navy contact box with phone and WhatsApp icons; ' : '') + (document.getElementById('poster-opt-footer').checked ? 'a navy footer bar with a location icon + address, an email icon + email' + (v('website') ? ', and a globe icon + website' : '') + '. ' : ''),
       'LOOK: ' + themeTxt + '. Palette: navy #0F2A5C, green #1F7A3A, orange #E8731A, white. Clean, premium, well-balanced spacing, no clutter.',
       'EXACT TEXT - spell every word exactly as written, do not invent any other text, numbers or claims:',
-      '- Company: ' + ((profileCache && profileCache.name) || 'Inno Chem Bangladesh') + ' | tagline: ' + ((profileCache && profileCache.tagline) || 'Your Textile Partner'),
+      '- Company: ' + ((profileCache && profileCache.name) || CFG.brand) + ' | tagline: ' + ((profileCache && profileCache.tagline) || CFG.tagline),
       '- Title: ' + v('headline')
     ];
     if(v('subline')) parts.push('- Subtitle badge: ' + v('subline'));
@@ -9566,13 +9854,14 @@
     function write(b){ try{ localStorage.setItem(KEY, JSON.stringify(b)); return true; }catch(e){ showToast('Image too large for this device — try a smaller one'); return false; } }
     function apply(){
       const b = read();
-      const name = b.name || 'Inno Chem Bangladesh', tag = b.tagline || 'Your Textile Partner';
+      const name = b.name || CFG.brand, tag = b.tagline || CFG.tagline;
       document.getElementById('login-title-text').textContent = name;
       document.getElementById('login-brand-big').textContent = name;
       document.getElementById('login-brand-line').textContent = tag;
       if(logoEl) logoEl.src = b.logo || DEFAULT_LOGO;
       const sm = document.getElementById('sidebar-mark'); if(sm && b.logo) sm.src = b.logo;
       const sn = document.getElementById('sidebar-name'); if(sn) sn.textContent = name;
+      const ftr = document.querySelector('.content-footer'); if(ftr) ftr.innerHTML = 'Powered by <b>' + escapeHtml(CFG.product) + '</b> &middot; ' + escapeHtml(name);
       const st = document.getElementById('sidebar-tag'); if(st) st.textContent = tag;
       const panel = document.getElementById('login-panel-brand');
       if(b.photo){
@@ -9674,6 +9963,7 @@
   initLedger();
   initInventory();
   initAnalyst();
+  applyConfig();
   initProductDetail();
   initReports();
   initGlobalSearch();
