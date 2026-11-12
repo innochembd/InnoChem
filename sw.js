@@ -2,11 +2,11 @@
 // Caches the app shell (network-first) so the app can OPEN without internet.
 // Supabase API calls are never intercepted or cached — business data always
 // comes live from the server (offline data handling lives in the app itself).
-const CACHE = 'innochem-shell-v4';
+const CACHE = 'innochem-shell-v5';
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
-    caches.open(CACHE).then(function(c){ return c.addAll(['./', 'index.html', 'manifest.json']).catch(function(){}); })
+    caches.open(CACHE).then(function(c){ return c.addAll(['./', 'index.html', 'manifest.json', 'config.js']).catch(function(){}); })
   );
   self.skipWaiting();
 });
