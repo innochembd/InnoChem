@@ -1651,7 +1651,7 @@
               <input type="text" id="todo-title" placeholder="Type a task and press Enter..." autocomplete="off">
               <input type="date" id="todo-due" title="Due date">
               <select id="todo-prio"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select>
-              <button class="btn-primary" type="submit"><i class="ti ti-plus"></i></button>
+              <button class="btn-primary" type="submit" style="width:auto;flex:0 0 auto;padding:8px 16px;box-shadow:none;" title="Add task"><i class="ti ti-plus"></i> Add</button>
             </form>
             <div id="todo-list"></div>
             <label class="cell-sub" style="display:block;margin-top:10px;cursor:pointer;"><input type="checkbox" id="todo-showdone"> Show completed</label>
@@ -8203,6 +8203,25 @@
     if(!res.ok || !j.reply) throw new Error(j.error || j.message || ('Error ' + res.status));
     return j.reply;
   }
+  /* Everything the assistant needs to know about HOW this app works: built from the manual (so it is always up to date) plus the core rules. */
+  function aiGuide(){
+    const rules = [
+      'APP: RAR TECH ERP for a textile-chemicals trading business (single web app, installable on phone/PC, works with Supabase).',
+      'COMPANIES: type is Buyer (we sell to them), Supplier (we buy from them) or Both. One company can be Both, so never create a duplicate company: change its type to Both on the Companies page.',
+      'BALANCE SIGN (Tally Book / Receivables): positive = they owe us (receivable); negative = we owe them (payable). Opening balance on a company is money pending before the app was used.',
+      'BILLS AND PAYMENTS: a sale/purchase bill has a received/paid amount at billing; later money goes through Payments. A payment clears the OLDEST unpaid bill first (FIFO); the Payments form picks the oldest unpaid bill automatically. Do not enter billing-time money again as a payment.',
+      'STOCK: computed live = opening stock + purchases + production + auto-made from recipe - sales - raw materials used. Nobody edits stock by hand. Wrong stock usually means a wrong opening stock, a missing purchase, or a wrong recipe.',
+      'MIX RECIPES: a recipe lists raw materials per 1 unit of a mixed product. If a mixed product is sold without enough stock, the shortage is treated as made on the spot: raw materials are cut by the recipe and profit uses the recipe cost. Production Log is optional (only to make stock ahead of selling).',
+      'PRICES: each product has a list sales rate and purchase rate. If staff enter a different price on a bill, it goes to Price Approvals and management must approve. Reorder level is automatic (about 14 days of recent sales) unless typed on the product.',
+      'PROFIT: profit on a sale = amount - (average cost x qty). It is gross profit; running costs are not in it unless an Expenses page exists in the app guide below.',
+      'ROLES: admin and management see everything (Receivables, To-do & Alerts, Price Approvals, Audit Log, Ask RAR, scan bill, posters). Staff only see the pages management ticks for them.',
+      'OFFLINE: if the internet drops, entries are kept on the device and the app shows "waiting to sync"; they go to the server automatically when online.',
+      'BACKUP: Reports & Export has Full data backup (Export) and Import. Settings has business profile, logo, password and users.',
+      'WHAT YOU (ASSISTANT) CAN DO: answer from the live snapshot, explain how to use any page from the guide below, prepare a sale/payment/purchase form, add or complete to-dos, make posters, read attached bills. You cannot save records, delete anything or change settings.'
+    ];
+    const pages = Object.keys(MANUAL).map(k => { const t = MANUAL[k].en; return '[' + manTitle(k) + '] ' + t.what + ' Steps: ' + t.steps.map((x, i) => (i + 1) + ') ' + x).join(' ') + (t.tips && t.tips.length ? ' Tips: ' + t.tips.join(' ') : ''); });
+    return rules.join('\n') + '\n\nPAGE GUIDE:\n' + pages.join('\n');
+  }
   let aiBusy = false;
   async function aiAsk(q){
     q = (q || '').trim(); const sendFiles = aiFiles.slice(); if((!q && !sendFiles.length) || aiBusy) return;
@@ -8214,7 +8233,7 @@
     const wait = aiAdd('assistant', 'Thinking...', 'ai-typing');
     try{
       try{ await loadTodos(); }catch(e){}
-      const reply = await aiCallFn({ messages: aiHistory.slice(-10), data: aiSnapshot(), today: todayStr(), lang: aiLang(), files: sendFiles.map(f => ({ mime: f.mime, data: f.data })) });
+      const reply = await aiCallFn({ messages: aiHistory.slice(-10), guide: aiGuide(), data: aiSnapshot(), today: todayStr(), lang: aiLang(), files: sendFiles.map(f => ({ mime: f.mime, data: f.data })) });
       wait.remove(); aiAdd('assistant', reply); aiHistory.push({ role: 'assistant', text: reply.replace(/\[\[[A-Z]+:[\s\S]*?\]\]/g, '').trim() });
     }catch(e){ wait.remove(); aiHistory.pop(); aiAdd('assistant', e.message || 'Something went wrong.', 'err'); }
     aiBusy = false;
