@@ -1047,6 +1047,7 @@
 
       <!-- DASHBOARD PAGE -->
       <div class="page active" id="page-dashboard">
+        <div class="dash-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><i class="ti ti-calendar-stats"></i> Period: From <input type="date" id="dash-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="dash-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="dash-dclear" title="Show all time">All time</button><span class="cell-sub" id="dash-range-note"></span></div>
         <div class="metric-grid">
           <div class="metric-card">
             <div class="m-icon green"><i class="ti ti-shopping-cart"></i></div>
@@ -1248,6 +1249,7 @@
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="purchase-search" placeholder="Search by invoice, company, or product..."></div>
           <div class="tb-filters">
+            <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="purchase-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="purchase-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="purchase-dclear" title="Clear dates">✕</button></span>
             <select id="purchase-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="purchase-export-btn"><i class="ti ti-download"></i> Export CSV</button>
             <button class="btn-secondary sm" id="purchase-scan-btn" style="display:none" title="Take a photo of the supplier bill and let the assistant fill the form"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M7 12h10"/></svg> Scan bill</button>
@@ -1342,6 +1344,7 @@
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="sale-search" placeholder="Search by invoice, company, or product..."></div>
           <div class="tb-filters">
+            <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="sale-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="sale-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="sale-dclear" title="Clear dates">✕</button></span>
             <select id="sale-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="sale-export-btn"><i class="ti ti-download"></i> Export CSV</button>
             <button class="btn-primary sm" id="sale-add-btn"><i class="ti ti-plus"></i> New sale</button>
@@ -4545,10 +4548,24 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
+  function inDateRange(d, from, to){ d = d || ''; if(from && d < from) return false; if(to && d > to) return false; return true; }
+  function wireDateRange(prefix, fn){
+    ['from','to'].forEach(k => { const el = document.getElementById(prefix+'-'+k); if(el) el.addEventListener('change', fn); });
+    const c = document.getElementById(prefix+'-dclear');
+    if(c) c.addEventListener('click', () => { document.getElementById(prefix+'-from').value=''; document.getElementById(prefix+'-to').value=''; fn(); });
+  }
+  function purchasesFiltered(){
+    const f = (document.getElementById('purchase-from')||{}).value || '', t = (document.getElementById('purchase-to')||{}).value || '';
+    return purchasesCache.filter(p => inDateRange(p.date, f, t));
+  }
+  function salesFiltered(){
+    const f = (document.getElementById('sale-from')||{}).value || '', t = (document.getElementById('sale-to')||{}).value || '';
+    return salesCache.filter(x => inDateRange(x.date, f, t));
+  }
   function renderPurchases(){
     const search = document.getElementById('purchase-search').value.trim().toLowerCase();
     const companyFilter = document.getElementById('purchase-company-filter').value;
-    let rows = purchasesCache.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
+    let rows = purchasesFiltered().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
     if(search){
       rows = rows.filter(p =>
         (p.invoiceNo||'').toLowerCase().includes(search) ||
@@ -4685,6 +4702,7 @@
     document.getElementById('purchase-modal').addEventListener('click', function(e){ if(e.target === this) closePurchaseModal(); });
     document.getElementById('purchase-search').addEventListener('input', renderPurchases);
     document.getElementById('purchase-company-filter').addEventListener('change', renderPurchases);
+    wireDateRange('purchase', renderPurchases);
     document.getElementById('purchase-qty').addEventListener('input', updatePurchaseCalcs);
     document.getElementById('purchase-rate').addEventListener('input', updatePurchaseCalcs);
     document.getElementById('purchase-paid').addEventListener('input', updatePurchaseCalcs);
@@ -4697,9 +4715,10 @@
     });
 
     document.getElementById('purchase-export-btn').addEventListener('click', () => {
-      if(purchasesCache.length === 0){ showToast('No purchases to export'); return; }
+      const pf = purchasesFiltered();
+      if(pf.length === 0){ showToast('No purchases to export'); return; }
       const rows = [['Date','Company','Invoice','Product','Qty','Rate','Total','Paid','Due','Notes']];
-      purchasesCache.forEach(p => rows.push([p.date,p.companyName,p.invoiceNo,p.productName,p.qty,p.rate,p.total,p.paid,p.due,p.notes]));
+      pf.forEach(p => rows.push([p.date,p.companyName,p.invoiceNo,p.productName,p.qty,p.rate,p.total,p.paid,p.due,p.notes]));
       downloadCsv('innochem-purchases.csv', rows);
       showToast('Purchases exported');
     });
@@ -4752,8 +4771,13 @@
 
   /* ================= DASHBOARD ================= */
   async function refreshDashboard(){
-    const totalPurchases = purchasesCache.reduce((s,p) => s + (Number(p.total)||0), 0);
-    const totalSales = salesCache.reduce((s,p) => s + (Number(p.total)||0), 0);
+    const dF = (document.getElementById('dash-from')||{}).value || '', dT = (document.getElementById('dash-to')||{}).value || '';
+    const rngP = purchasesCache.filter(p => inDateRange(p.date, dF, dT)), rngS = salesCache.filter(x => inDateRange(x.date, dF, dT));
+    const totalPurchases = rngP.reduce((s,p) => s + (Number(p.total)||0), 0);
+    const totalSales = rngS.reduce((s,p) => s + (Number(p.total)||0), 0);
+    const rn = document.getElementById('dash-range-note');
+    if(rn) rn.textContent = (dF||dT) ? ('Purchases, sales and profit are for ' + (dF||'start') + ' → ' + (dT||'today') + '. Receivable/payable are always the current balance.') : '';
+    document.querySelectorAll('#metric-total-purchases,#metric-total-sales,#metric-total-profit').forEach(e => { const sub = e.parentElement.querySelector('.m-sub'); if(sub) sub.textContent = (dF||dT) ? 'Selected period' : (e.id==='metric-total-profit' ? 'All sales, after cost' : 'All time'); });
     // Receivable / payable come from each company's ledger (sales, purchases AND payments),
     // so they stay correct even when payments are recorded separately from invoices.
     const ledgerRows = companiesCache.map(c => {
@@ -4767,7 +4791,7 @@
     const elS = document.getElementById('metric-total-sales');
     const elRec = document.getElementById('metric-receivable');
     const elProfit = document.getElementById('metric-total-profit');
-    if(elProfit) elProfit.textContent = fmtMoney(salesCache.reduce((s,x)=> s + saleProfit(x), 0));
+    if(elProfit) elProfit.textContent = fmtMoney(rngS.reduce((s,x)=> s + saleProfit(x), 0));
     if(elP) elP.textContent = fmtMoney(totalPurchases);
     if(elPay) elPay.textContent = fmtMoney(payable);
     if(elS) elS.textContent = fmtMoney(totalSales);
@@ -5058,7 +5082,7 @@
   function renderSales(){
     const search = document.getElementById('sale-search').value.trim().toLowerCase();
     const companyFilter = document.getElementById('sale-company-filter').value;
-    let rows = salesCache.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
+    let rows = salesFiltered().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
     if(search){
       rows = rows.filter(s =>
         (s.invoiceNo||'').toLowerCase().includes(search) ||
@@ -5416,6 +5440,8 @@
     document.getElementById('sale-modal').addEventListener('click', function(e){ if(e.target === this) closeSaleModal(); });
     document.getElementById('sale-search').addEventListener('input', renderSales);
     document.getElementById('sale-company-filter').addEventListener('change', renderSales);
+    wireDateRange('sale', renderSales);
+    wireDateRange('dash', () => { try{ refreshDashboard(); }catch(e){} });
     document.getElementById('sale-received').addEventListener('input', recalcSaleTotals);
     document.getElementById('sale-company').addEventListener('change', () => { document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => { const r = row.querySelector('.sale-item-rate'), ps = row.querySelector('.sale-item-product'); if(ps.value && r.dataset.auto === '1'){ r.value = ''; ps.onchange && ps.onchange(); } }); });
     document.getElementById('sale-add-item-btn').addEventListener('click', () => {
@@ -5428,9 +5454,10 @@
     });
 
     document.getElementById('sale-export-btn').addEventListener('click', () => {
-      if(salesCache.length === 0){ showToast('No sales to export'); return; }
+      const sf = salesFiltered();
+      if(sf.length === 0){ showToast('No sales to export'); return; }
       const rows = [['Date','Invoice','Company','Product','Qty','Cost/unit','Rate','Item amount','Item profit','Invoice total','Invoice profit','Received','Due','Notes']];
-      salesCache.forEach(s => {
+      sf.forEach(s => {
         const invoiceProfit = saleProfit(s);
         (s.items && s.items.length ? s.items : [{}]).forEach((it, idx) => {
           const itemProfit = (Number(it.amount)||0) - (Number(it.cost)||0) * (Number(it.qty)||0);
@@ -6590,6 +6617,23 @@
     return 'PMT-' + String(1000 + n);
   }
 
+  /* Company balance just before and just after this payment (ledger position of the payment itself). bal>0 = company owes us, bal<0 = we owe the company. */
+  function paymentBalanceInfo(payment){
+    const led = computeCompanyLedger(payment.companyId);
+    if(!led) return null;
+    const i = led.rows.findIndex(r => r.payId === payment.id);
+    let after, before;
+    if(i >= 0){ after = led.rows[i].balance; before = after - led.rows[i].debit + led.rows[i].credit; }
+    else { after = led.closingBalance; before = payment.type === 'received' ? after + (Number(payment.amount)||0) : after - (Number(payment.amount)||0); }
+    return { before: before, after: after };
+  }
+  function receiptBalanceText(bal, received){
+    const v = Math.round(bal * 100) / 100;
+    if(Math.abs(v) < 0.005) return 'Nil (fully settled)';
+    if(received) return v > 0 ? fmtMoney(v) + ' due from you' : fmtMoney(-v) + ' advance (in your favour)';
+    return v < 0 ? fmtMoney(-v) + ' payable to you' : fmtMoney(v) + ' advance paid to you';
+  }
+
   function buildPaymentReceiptHtml(payment){
     const logoSrc = getAppLogoSrc();
     const isReceived = payment.type === 'received';
@@ -6604,6 +6648,15 @@
         remainingDueLine = `<div class="rc-trow"><span>Remaining due on this invoice</span><span>${fmtMoney(remaining)}</span></div>`;
       }
     }
+
+    let balLines = '';
+    try{
+      const bi = paymentBalanceInfo(payment);
+      if(bi){
+        balLines = `<div class="rc-trow" style="margin-top:6px;"><span>Overall balance before this payment</span><span>${receiptBalanceText(bi.before, isReceived)}</span></div>
+        <div class="rc-trow"><b>Overall balance after this payment</b><b>${receiptBalanceText(bi.after, isReceived)}</b></div>`;
+      }
+    }catch(e){}
 
     return `
       <div class="rc-head">
@@ -6643,6 +6696,7 @@
       <div class="rc-totals">
         <div class="rc-trow rc-grand"><span>${isReceived ? 'Amount received' : 'Amount paid'}</span><span>${fmtMoney(payment.amount)}</span></div>
         ${remainingDueLine}
+        ${balLines}
       </div>
     `;
   }
@@ -6670,7 +6724,8 @@
       const received = pay.type === 'received';
       const msg = 'Dear ' + pay.companyName + ',\n' + (received ? 'We have received your payment of ' : 'We have paid you ')
         + fmtMoney(pay.amount) + ' on ' + pay.date + (pay.receiptNo ? ' (Receipt ' + pay.receiptNo + ')' : '')
-        + '.\n\nThank you,\n' + (profileCache.name || CFG.brand);
+        + '.' + (function(){ try{ const bi = paymentBalanceInfo(pay); return bi ? '\nBalance now: ' + receiptBalanceText(bi.after, received) + '.' : ''; }catch(e){ return ''; } })()
+        + '\n\nThank you,\n' + (profileCache.name || CFG.brand);
       shareDocOnWhatsApp(this, el, 148, 'innochem-' + String(el.getAttribute('data-receipt') || 'receipt').toLowerCase() + '.pdf', phone, msg);
     });
     document.getElementById('payment-receipt-download-btn').addEventListener('click', async function(){
@@ -6740,11 +6795,11 @@
     });
     paymentsCache.filter(p => p.companyId === companyId).forEach(p => {
       if(p.type === 'received'){
-        entries.push({ date: p.date, created_at: p.created_at, type:'payment',
+        entries.push({ payId: p.id, date: p.date, created_at: p.created_at, type:'payment',
           particulars: `Payment received (${p.method})${p.notes ? ' — ' + p.notes : ''}`,
           debit: 0, credit: Number(p.amount)||0 });
       } else {
-        entries.push({ date: p.date, created_at: p.created_at, type:'payment',
+        entries.push({ payId: p.id, date: p.date, created_at: p.created_at, type:'payment',
           particulars: `Payment paid (${p.method})${p.notes ? ' — ' + p.notes : ''}`,
           debit: Number(p.amount)||0, credit: 0 });
       }
