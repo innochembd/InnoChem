@@ -1577,6 +1577,7 @@ html.resuming #login-screen{display:none !important;}
               <option value="low">Low stock only</option>
               <option value="out">Out of stock</option>
             </select>
+            <button class="btn-primary sm" id="cs-open" style="display:none"><i class="ti ti-adjustments"></i> Cost &amp; stock sheet</button>
             <button class="btn-secondary" id="inventory-export-btn"><i class="ti ti-download"></i> Export CSV</button>
           </div>
         </div>
@@ -3710,6 +3711,7 @@ html.resuming #login-screen{display:none !important;}
     document.getElementById('settings-username').value = user.username;
     applyPermissionsUI();
     try{ applyPhoto(); }catch(e){}
+    try{ window.__showCostStockBtn && window.__showCostStockBtn(); }catch(e){}
     startDataLoad();
     restoreLastPage();
     const sp = document.getElementById('splash');
@@ -3717,6 +3719,128 @@ html.resuming #login-screen{display:none !important;}
     saveSplashLogo();
   }
 
+
+
+  /* ================= COST & STOCK SHEET =================
+     One screen to type the real cost per unit and the counted stock for every product,
+     with CSV download/upload for Excel. Cost also fixes old sale lines that have no cost (so profit becomes real). */
+  (function(){
+    const norm = t => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    let rowsData = [];
+    function build(){
+      const inv = computeInventory(), byId = {};
+      inv.forEach(r => { byId[r.product.id] = r; });
+      const amt = {};
+      salesCache.forEach(sl => (sl.items || []).forEach(it => { amt[it.productId] = (amt[it.productId] || 0) + (Number(it.amount) || 0); }));
+      const noCost = {};
+      salesCache.forEach(sl => (sl.items || []).forEach(it => { if(!(Number(it.cost) > 0) && Number(it.amount) > 0) noCost[it.productId] = (noCost[it.productId] || 0) + (Number(it.amount) || 0); }));
+      rowsData = productsCache.map(pr => {
+        const r = byId[pr.id] || {};
+        const pq = purchasesCache.filter(x => x.productId === pr.id && Number(x.qty) > 0 && Number(x.rate) > 0);
+        const q = pq.reduce((a, x) => a + Number(x.qty), 0), v = pq.reduce((a, x) => a + Number(x.qty) * Number(x.rate), 0);
+        return { id: pr.id, name: pr.name, unit: pr.unit || '', sold: r.soldQty || 0, stock: Math.round((r.currentStock || 0) * 100) / 100, cost: Number(pr.purchaseRate) || 0, hint: q ? Math.round(v / q * 100) / 100 : 0, sales: amt[pr.id] || 0, missing: noCost[pr.id] || 0 };
+      }).sort((a, b) => b.missing - a.missing || b.sales - a.sales || a.name.localeCompare(b.name));
+    }
+    function ensureModal(){
+      let m = document.getElementById('cs-modal');
+      if(!m){
+        m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'cs-modal';
+        m.innerHTML = '<div class="modal-box" style="max-width:1020px;"><div class="modal-head"><h3>Cost &amp; stock sheet</h3><button class="modal-close" id="cs-x"><i class="ti ti-x"></i></button></div>' +
+          '<div class="modal-body" style="padding:16px 18px;max-height:none;overflow:visible;"><div class="cell-sub" style="margin-bottom:10px;line-height:1.55;">Type the <b>real cost per unit</b> (what it costs you to buy or make 1 kg) and, if you have counted, the <b>actual stock in hand</b>. Leave blank to keep as is. Products that sold a lot with no cost are shown first.</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;"><input type="text" id="cs-search" placeholder="Search product..." style="flex:1;min-width:160px;height:36px;border:1px solid var(--border);border-radius:9px;padding:0 10px;"><label style="font-size:12.5px;display:flex;gap:6px;align-items:center;"><input type="checkbox" id="cs-onlymissing"> Only products with no cost</label><button type="button" class="btn-secondary sm" id="cs-hint" title="Where you have bought the product, use your average buying rate as the cost">Use buying rates</button><button type="button" class="btn-secondary sm" id="cs-dl"><i class="ti ti-download"></i> Download CSV</button><button type="button" class="btn-secondary sm" id="cs-ul"><i class="ti ti-upload"></i> Upload CSV</button><input type="file" id="cs-file" accept=".csv,text/csv" style="display:none"></div>' +
+          '<div class="table-wrap" style="max-height:48vh;overflow:auto;"><table class="data-table" id="cs-table"><thead><tr><th>Product</th><th>Unit</th><th class="rc-num">Sold qty</th><th class="rc-num">Stock now</th><th class="rc-num">Actual stock</th><th class="rc-num">Cost / unit</th></tr></thead><tbody id="cs-body"></tbody></table></div>' +
+          '<label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:12px;"><input type="checkbox" id="cs-past" checked> Also fix the cost on past sales that have no cost (so Profit becomes correct)</label>' +
+          '<div class="cell-sub" id="cs-msg" style="margin-top:8px;"></div></div>' +
+          '<div class="modal-foot"><button type="button" class="btn-secondary" id="cs-cancel">Cancel</button><button type="button" class="btn-primary sm" id="cs-save"><i class="ti ti-device-floppy"></i> Save</button></div></div>';
+        document.body.appendChild(m);
+        m.querySelector('#cs-x').onclick = m.querySelector('#cs-cancel').onclick = () => m.classList.remove('open');
+        m.querySelector('#cs-search').addEventListener('input', paint); m.querySelector('#cs-onlymissing').addEventListener('change', paint);
+        m.querySelector('#cs-hint').onclick = () => { let n = 0; rowsData.forEach(r => { if(!(r.cost > 0) && r.hint > 0 && !(typed[r.id] && typed[r.id].cost != null)){ (typed[r.id] = typed[r.id] || {}).cost = r.hint; n++; } }); paint(); showToast(n + ' costs filled from your buying rates'); };
+        m.querySelector('#cs-dl').onclick = download; m.querySelector('#cs-ul').onclick = () => m.querySelector('#cs-file').click();
+        m.querySelector('#cs-file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if(!f) return; const fr = new FileReader(); fr.onload = () => upload(String(fr.result || '')); fr.readAsText(f); e.target.value = ''; });
+        m.querySelector('#cs-save').onclick = save;
+      }
+      return m;
+    }
+    const typed = {};   // id -> {stock, cost} values the user has typed (kept while searching)
+    function paint(){
+      const m = document.getElementById('cs-modal'); if(!m) return;
+      const q = norm(m.querySelector('#cs-search').value), only = m.querySelector('#cs-onlymissing').checked;
+      const body = m.querySelector('#cs-body');
+      const list = rowsData.filter(r => (!q || norm(r.name).includes(q)) && (!only || r.missing > 0));
+      body.innerHTML = list.slice(0, 400).map(r => { const t = typed[r.id] || {};
+        return '<tr data-id="' + r.id + '"><td><b>' + escapeHtml(r.name) + '</b>' + (r.missing > 0 ? '<div class="cell-sub" style="color:var(--danger);">' + fmtBig(r.missing) + ' sold with no cost</div>' : '') + '</td><td>' + escapeHtml(r.unit) + '</td><td class="rc-num">' + (Math.round(r.sold * 100) / 100).toLocaleString() + '</td><td class="rc-num">' + r.stock.toLocaleString() + '</td>' +
+          '<td class="rc-num"><input type="number" step="any" class="cs-stock" value="' + (t.stock != null ? t.stock : '') + '" placeholder="' + r.stock + '" style="width:92px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:8px;"></td>' +
+          '<td class="rc-num"><input type="number" step="any" min="0" class="cs-cost" value="' + (t.cost != null ? t.cost : '') + '" placeholder="' + (r.cost || r.hint || '') + '" style="width:92px;text-align:right;padding:6px 8px;border:1px solid var(--border);border-radius:8px;"></td></tr>'; }).join('') || '<tr><td colspan="6" class="cell-sub">No products match.</td></tr>';
+      body.querySelectorAll('tr[data-id]').forEach(tr => {
+        const id = tr.getAttribute('data-id');
+        tr.querySelector('.cs-stock').addEventListener('input', e => { (typed[id] = typed[id] || {}).stock = e.target.value === '' ? null : Number(e.target.value); });
+        tr.querySelector('.cs-cost').addEventListener('input', e => { (typed[id] = typed[id] || {}).cost = e.target.value === '' ? null : Number(e.target.value); });
+      });
+      m.querySelector('#cs-msg').textContent = list.length + ' product' + (list.length === 1 ? '' : 's') + (list.length > 400 ? ' (showing the first 400, use search)' : '') + '. Typed so far: ' + Object.values(typed).filter(t => t.stock != null || t.cost != null).length + '.';
+    }
+    function download(){
+      const rows = [['Product', 'Unit', 'Sold qty', 'Stock now', 'Actual stock (fill)', 'Cost per unit (fill)']];
+      rowsData.forEach(r => rows.push([r.name, r.unit, Math.round(r.sold * 100) / 100, r.stock, '', r.cost || '']));
+      downloadCsv('innochem-cost-and-stock.csv', rows);
+    }
+    function upload(text){
+      const rows = csvParse(text); if(rows.length < 2){ showToast('That file looks empty'); return; }
+      const head = rows[0].map(h => norm(h)); const iN = head.findIndex(h => h.startsWith('product')), iS = head.findIndex(h => h.startsWith('actualstock')), iC = head.findIndex(h => h.startsWith('costperunit'));
+      if(iN < 0){ showToast('Could not find the Product column'); return; }
+      const byName = {}; rowsData.forEach(r => { byName[norm(r.name)] = r; });
+      let hit = 0, miss = 0;
+      rows.slice(1).forEach(c => {
+        const r = byName[norm(c[iN])]; if(!r){ if(c[iN]) miss++; return; }
+        const st = iS >= 0 && String(c[iS] || '').trim() !== '' ? Number(String(c[iS]).replace(/,/g, '')) : null;
+        const co = iC >= 0 && String(c[iC] || '').trim() !== '' ? Number(String(c[iC]).replace(/,/g, '')) : null;
+        const t = typed[r.id] = typed[r.id] || {};
+        if(st != null && !isNaN(st)) t.stock = st;
+        if(co != null && !isNaN(co) && co !== r.cost) t.cost = co;
+        hit++;
+      });
+      paint(); showToast(hit + ' products read from the file' + (miss ? ', ' + miss + ' names not found' : ''));
+    }
+    async function save(){
+      const m = document.getElementById('cs-modal'), btn = m.querySelector('#cs-save'), msg = m.querySelector('#cs-msg');
+      const fixPast = m.querySelector('#cs-past').checked;
+      const changes = rowsData.map(r => ({ r, t: typed[r.id] })).filter(x => x.t && (x.t.stock != null || x.t.cost != null));
+      if(!changes.length){ showToast('Nothing typed yet'); return; }
+      btn.disabled = true; msg.textContent = 'Saving…';
+      try{
+        let nStock = 0, nCost = 0; const costFix = [];
+        changes.forEach(({ r, t }) => {
+          const p = productsCache.find(x => x.id === r.id); if(!p) return;
+          if(t.stock != null && Math.abs(t.stock - r.stock) > 0.0001){ p.openingStock = Math.round(((Number(p.openingStock) || 0) + (t.stock - r.stock)) * 10000) / 10000; nStock++; }
+          if(t.cost != null && t.cost >= 0){ if(Math.abs(t.cost - (Number(p.purchaseRate) || 0)) > 0.0001) { p.purchaseRate = t.cost; nCost++; } if(t.cost > 0) costFix.push({ id: r.id, cost: t.cost }); }
+        });
+        const ok = await setList('products', productsCache);
+        if(!ok) throw new Error('could not save products');
+        let nPast = 0;
+        if(fixPast && costFix.length){
+          let i = 0;
+          async function worker(){ while(i < costFix.length){ const c = costFix[i++]; msg.textContent = 'Fixing old sales… ' + i + ' / ' + costFix.length;
+            try{ await sbFetch('sale_items?product_id=eq.' + encodeURIComponent(c.id) + '&or=(cost.is.null,cost.eq.0)', { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=minimal' }), body: JSON.stringify({ cost: c.cost }) }); nPast++; }catch(e){ console.error(e); } } }
+          await Promise.all([worker(), worker(), worker(), worker()]);
+        }
+        Object.keys(typed).forEach(k => delete typed[k]);
+        m.classList.remove('open');
+        dataLoadStarted = false; startDataLoad();
+        setTimeout(() => { try{ renderInventory(); refreshDashboard(); }catch(e){} }, 2000);
+        showToast('Saved: ' + nStock + ' stock, ' + nCost + ' cost' + (fixPast ? ', old sales fixed for ' + nPast + ' products' : ''));
+      }catch(e){ console.error(e); msg.textContent = 'Could not save. Check your connection and try again.'; }
+      btn.disabled = false;
+    }
+    function open(){
+      if(typeof isPriceController === 'function' && !isPriceController()){ showToast('Only the administrator can use this'); return; }
+      build(); const m = ensureModal(); paint(); m.classList.add('open');
+    }
+    setTimeout(() => {
+      const b = document.getElementById('cs-open'); if(!b) return;
+      b.addEventListener('click', open);
+    }, 0);
+    window.__showCostStockBtn = () => { const b = document.getElementById('cs-open'); if(b) b.style.display = (typeof isPriceController === 'function' && isPriceController()) ? '' : 'none'; };
+  })();
 
   /* ---------- user photo ---------- */
   function myPhoto(){
