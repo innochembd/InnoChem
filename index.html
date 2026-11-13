@@ -1047,7 +1047,7 @@
 
       <!-- DASHBOARD PAGE -->
       <div class="page active" id="page-dashboard">
-        <div class="dash-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><i class="ti ti-calendar-stats"></i> <select id="dash-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="auto">This month (auto)</option><option value="all">All time</option><option value="custom" hidden>Custom dates</option></select> From <input type="date" id="dash-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="dash-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><span class="cell-sub" id="dash-range-note"></span></div>
+        <div class="dash-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><i class="ti ti-calendar-stats"></i> <select id="dash-year" class="year-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Year"><option value="">All years</option><option value="custom" hidden>Custom dates</option></select><select id="dash-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Month"><option value="">Whole year</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select> From <input type="date" id="dash-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="dash-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><span class="cell-sub" id="dash-range-note"></span></div>
         <div class="metric-grid">
           <div class="metric-card">
             <div class="m-icon green"><i class="ti ti-shopping-cart"></i></div>
@@ -1249,7 +1249,7 @@
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="purchase-search" placeholder="Search by invoice, company, or product..."></div>
           <div class="tb-filters">
-            <select id="purchase-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select>
+            <select id="purchase-year" class="year-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Year"><option value="">All years</option><option value="custom" hidden>Custom dates</option></select><select id="purchase-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Month"><option value="">Whole year</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
             <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="purchase-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="purchase-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="purchase-dclear" title="Clear dates">✕</button></span>
             <select id="purchase-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="purchase-export-btn"><i class="ti ti-download"></i> Export CSV</button>
@@ -1345,7 +1345,7 @@
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="sale-search" placeholder="Search by invoice, company, or product..."></div>
           <div class="tb-filters">
-            <select id="sale-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select>
+            <select id="sale-year" class="year-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Year"><option value="">All years</option><option value="custom" hidden>Custom dates</option></select><select id="sale-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Month"><option value="">Whole year</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
             <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="sale-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="sale-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="sale-dclear" title="Clear dates">✕</button></span>
             <select id="sale-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="sale-export-btn"><i class="ti ti-download"></i> Export CSV</button>
@@ -1450,7 +1450,7 @@
               <option value="received">Received</option>
               <option value="paid">Paid</option>
             </select>
-            <select id="payment-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select>
+            <select id="payment-year" class="year-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Year"><option value="">All years</option><option value="custom" hidden>Custom dates</option></select><select id="payment-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Month"><option value="">Whole year</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
             <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="payment-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="payment-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="payment-dclear" title="Clear dates">✕</button></span>
             <select id="payment-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="payment-export-btn"><i class="ti ti-download"></i> Export CSV</button>
@@ -1576,7 +1576,7 @@
 
         <div class="card card-pad" style="margin-bottom:16px;">
           <div class="section-title"><i class="ti ti-calendar-stats"></i> Business summary by date range</div>
-          <div style="margin-bottom:10px;"><select id="report-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select></div>
+          <div style="margin-bottom:10px;"><select id="report-year" class="year-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Year"><option value="">All years</option><option value="custom" hidden>Custom dates</option></select><select id="report-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Month"><option value="">Whole year</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
           <div class="form-row" style="max-width:520px;margin-bottom:14px;">
             <div class="field">
               <label>From</label>
@@ -4567,42 +4567,52 @@
   function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
   function thisMonthRange(){ const n = new Date(); return [ymd(new Date(n.getFullYear(), n.getMonth(), 1)), ymd(n)]; }
   function monthRange(ym){ const y = +ym.slice(0,4), m = +ym.slice(5,7); return [ym + '-01', ym + '-' + String(new Date(y, m, 0).getDate()).padStart(2,'0')]; }
-  function fillMonthSelect(prefix){
-    const sel = document.getElementById(prefix + '-month'); if(!sel) return;
-    const set = {}; set[ymd(new Date()).slice(0,7)] = 1;
-    [salesCache, purchasesCache, paymentsCache].forEach(arr => (arr||[]).forEach(x => { if(x.date && /^\d{4}-\d{2}/.test(x.date)) set[x.date.slice(0,7)] = 1; }));
-    const months = Object.keys(set).sort().reverse();
-    const key = months.join(',');
-    if(sel.getAttribute('data-months') === key) return;
+  function fillMonthSelect(prefix){   /* builds the Year dropdown: All years, then this year back to 2020 (a new year appears by itself) */
+    const sel = document.getElementById(prefix + '-year'); if(!sel) return;
+    const cy = new Date().getFullYear(); let minY = 2020;
+    [salesCache, purchasesCache, paymentsCache].forEach(arr => (arr||[]).forEach(x => { const y = parseInt((x.date||'').slice(0,4),10); if(y > 1990 && y < minY) minY = y; }));
+    const key = cy + '-' + minY;
+    if(sel.getAttribute('data-years') === key) return;
     const cur = sel.value;
     sel.querySelectorAll('option[data-dyn]').forEach(o => o.remove());
     const custom = sel.querySelector('option[value="custom"]');
-    months.forEach(ym => { const o = document.createElement('option'); o.value = ym; o.setAttribute('data-dyn','1'); o.textContent = new Date(+ym.slice(0,4), +ym.slice(5,7)-1, 1).toLocaleString('en-GB', { month:'long', year:'numeric' }); sel.insertBefore(o, custom); });
-    sel.setAttribute('data-months', key); sel.value = cur;
+    for(let y = cy; y >= minY; y--){ const o = document.createElement('option'); o.value = String(y); o.setAttribute('data-dyn','1'); o.textContent = String(y); sel.insertBefore(o, custom); }
+    sel.setAttribute('data-years', key); if(cur) sel.value = cur;
+  }
+  function applyYearMonth(prefix){
+    const ys = document.getElementById(prefix + '-year'), ms = document.getElementById(prefix + '-month');
+    const f = document.getElementById(prefix + '-from') || document.getElementById(prefix + '-from-date'), t = document.getElementById(prefix + '-to') || document.getElementById(prefix + '-to-date');
+    if(!ys || !ms || ys.value === 'custom') return;
+    if(ys.value === ''){ ms.value = ''; ms.disabled = true; f.value = ''; t.value = ''; return; }
+    ms.disabled = false;
+    const r = ms.value === '' ? [ys.value + '-01-01', ys.value + '-12-31'] : monthRange(ys.value + '-' + ms.value);
+    f.value = r[0]; t.value = r[1];
   }
   function wireMonthRange(prefix, fn, isDash){
-    const sel = document.getElementById(prefix + '-month'); if(!sel) return;
-    const f = document.getElementById(prefix + '-from'), t = document.getElementById(prefix + '-to');
-    sel.addEventListener('change', () => {
-      const v = sel.value;
-      if(v === 'auto'){ const r = thisMonthRange(); f.value = r[0]; t.value = r[1]; }
-      else if(v === '' || v === 'all'){ f.value = ''; t.value = ''; }
-      else if(v !== 'custom'){ const r = monthRange(v); f.value = r[0]; t.value = r[1]; }
-      fn();
-    });
-    [f, t].forEach(el => el.addEventListener('change', () => { if(sel.value !== 'custom'){ sel.value = 'custom'; } }));
+    const ys = document.getElementById(prefix + '-year'), ms = document.getElementById(prefix + '-month'); if(!ys || !ms) return;
+    const f = document.getElementById(prefix + '-from') || document.getElementById(prefix + '-from-date'), t = document.getElementById(prefix + '-to') || document.getElementById(prefix + '-to-date');
+    fillMonthSelect(prefix);
+    const now = new Date();
+    ys.value = String(now.getFullYear());
+    ms.value = isDash ? String(now.getMonth() + 1).padStart(2, '0') : '';
+    if(isDash) ys.setAttribute('data-auto', '1');
+    applyYearMonth(prefix);
+    [ys, ms].forEach(el => el.addEventListener('change', () => { ys.removeAttribute('data-auto'); applyYearMonth(prefix); fn(); }));
+    [f, t].forEach(el => el.addEventListener('change', () => { ys.removeAttribute('data-auto'); ys.value = 'custom'; ms.disabled = false; }));
   }
   function wireDateRange(prefix, fn){
     ['from','to'].forEach(k => { const el = document.getElementById(prefix+'-'+k); if(el) el.addEventListener('change', fn); });
     const c = document.getElementById(prefix+'-dclear');
-    if(c) c.addEventListener('click', () => { document.getElementById(prefix+'-from').value=''; document.getElementById(prefix+'-to').value=''; const ms = document.getElementById(prefix+'-month'); if(ms) ms.value = ''; fn(); });
+    if(c) c.addEventListener('click', () => { document.getElementById(prefix+'-from').value=''; document.getElementById(prefix+'-to').value=''; const ys = document.getElementById(prefix+'-year'); if(ys){ ys.removeAttribute('data-auto'); ys.value = ''; } applyYearMonth(prefix); fn(); });
   }
   function purchasesFiltered(){
     const f = (document.getElementById('purchase-from')||{}).value || '', t = (document.getElementById('purchase-to')||{}).value || '';
+    if(((document.getElementById('purchase-search')||{}).value||'').trim()) return purchasesCache.slice();   // searching = look in all dates
     return purchasesCache.filter(p => inDateRange(p.date, f, t));
   }
   function salesFiltered(){
     const f = (document.getElementById('sale-from')||{}).value || '', t = (document.getElementById('sale-to')||{}).value || '';
+    if(((document.getElementById('sale-search')||{}).value||'').trim()) return salesCache.slice();
     return salesCache.filter(x => inDateRange(x.date, f, t));
   }
   function renderPurchases(){
@@ -4816,8 +4826,8 @@
   /* ================= DASHBOARD ================= */
   async function refreshDashboard(){
     try{ fillMonthSelect('dash'); }catch(e){}
-    const dMon = document.getElementById('dash-month');
-    if(dMon && dMon.value === 'auto'){ const r = thisMonthRange(); document.getElementById('dash-from').value = r[0]; document.getElementById('dash-to').value = r[1]; }
+    const dYr = document.getElementById('dash-year');
+    if(dYr && dYr.getAttribute('data-auto')){ const nw = new Date(); dYr.value = String(nw.getFullYear()); document.getElementById('dash-month').value = String(nw.getMonth() + 1).padStart(2,'0'); applyYearMonth('dash'); }
     const dF = (document.getElementById('dash-from')||{}).value || '', dT = (document.getElementById('dash-to')||{}).value || '';
     const rngP = purchasesCache.filter(p => inDateRange(p.date, dF, dT)), rngS = salesCache.filter(x => inDateRange(x.date, dF, dT));
     const totalPurchases = rngP.reduce((s,p) => s + (Number(p.total)||0), 0);
@@ -6457,7 +6467,7 @@
         (p.notes||'').toLowerCase().includes(search)
       );
     }
-    { const pf = (document.getElementById('payment-from')||{}).value || '', pt = (document.getElementById('payment-to')||{}).value || ''; if(pf || pt) rows = rows.filter(p => inDateRange(p.date, pf, pt)); }
+    { const pf = (document.getElementById('payment-from')||{}).value || '', pt = (document.getElementById('payment-to')||{}).value || ''; if((pf || pt) && !search) rows = rows.filter(p => inDateRange(p.date, pf, pt)); }
     if(typeFilter){ rows = rows.filter(p => p.type === typeFilter); }
     if(companyFilter){ rows = rows.filter(p => p.companyId === companyFilter); }
 
@@ -7651,10 +7661,7 @@
     document.getElementById('report-from-date').addEventListener('change', renderReportSummary);
     ['rd-kind','rd-view'].forEach(id => document.getElementById(id).addEventListener('change', renderReportDetail));
     document.getElementById('rd-export').addEventListener('click', exportReportDetail);
-    (function(){ const ms = document.getElementById('report-month'); if(!ms) return;
-      ms.addEventListener('change', () => { const v = ms.value; const f = document.getElementById('report-from-date'), t = document.getElementById('report-to-date');
-        if(v === ''){ f.value = ''; t.value = ''; } else if(v !== 'custom'){ const r = monthRange(v); f.value = r[0]; t.value = r[1]; } renderReportSummary(); });
-      ['report-from-date','report-to-date'].forEach(id => document.getElementById(id).addEventListener('change', () => { ms.value = 'custom'; })); })();
+    wireMonthRange('report', renderReportSummary);
     document.getElementById('report-to-date').addEventListener('change', renderReportSummary);
     document.getElementById('report-summary-export-btn').addEventListener('click', exportReportSummary);
     document.getElementById('report-company-export-btn').addEventListener('click', exportCompanyReport);
