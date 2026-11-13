@@ -1047,7 +1047,7 @@
 
       <!-- DASHBOARD PAGE -->
       <div class="page active" id="page-dashboard">
-        <div class="dash-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><i class="ti ti-calendar-stats"></i> Period: From <input type="date" id="dash-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="dash-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="dash-dclear" title="Show all time">All time</button><span class="cell-sub" id="dash-range-note"></span></div>
+        <div class="dash-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><i class="ti ti-calendar-stats"></i> <select id="dash-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="auto">This month (auto)</option><option value="all">All time</option><option value="custom" hidden>Custom dates</option></select> From <input type="date" id="dash-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="dash-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><span class="cell-sub" id="dash-range-note"></span></div>
         <div class="metric-grid">
           <div class="metric-card">
             <div class="m-icon green"><i class="ti ti-shopping-cart"></i></div>
@@ -1249,6 +1249,7 @@
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="purchase-search" placeholder="Search by invoice, company, or product..."></div>
           <div class="tb-filters">
+            <select id="purchase-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select>
             <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="purchase-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="purchase-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="purchase-dclear" title="Clear dates">✕</button></span>
             <select id="purchase-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="purchase-export-btn"><i class="ti ti-download"></i> Export CSV</button>
@@ -1344,6 +1345,7 @@
         <div class="toolbar">
           <div class="tb-search"><i class="ti ti-search"></i><input type="text" id="sale-search" placeholder="Search by invoice, company, or product..."></div>
           <div class="tb-filters">
+            <select id="sale-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select>
             <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="sale-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="sale-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="sale-dclear" title="Clear dates">✕</button></span>
             <select id="sale-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="sale-export-btn"><i class="ti ti-download"></i> Export CSV</button>
@@ -1448,6 +1450,8 @@
               <option value="received">Received</option>
               <option value="paid">Paid</option>
             </select>
+            <select id="payment-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select>
+            <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);">From <input type="date" id="payment-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="payment-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="payment-dclear" title="Clear dates">✕</button></span>
             <select id="payment-company-filter"><option value="">All companies</option></select>
             <button class="btn-secondary" id="payment-export-btn"><i class="ti ti-download"></i> Export CSV</button>
             <button class="btn-primary sm" id="payment-add-btn"><i class="ti ti-plus"></i> Add payment</button>
@@ -1572,6 +1576,7 @@
 
         <div class="card card-pad" style="margin-bottom:16px;">
           <div class="section-title"><i class="ti ti-calendar-stats"></i> Business summary by date range</div>
+          <div style="margin-bottom:10px;"><select id="report-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Pick a month"><option value="">All months</option><option value="custom" hidden>Custom dates</option></select></div>
           <div class="form-row" style="max-width:520px;margin-bottom:14px;">
             <div class="field">
               <label>From</label>
@@ -1584,6 +1589,16 @@
           </div>
           <div class="ledger-mini-grid" id="report-summary-grid" style="margin-bottom:14px;"></div>
           <button class="btn-secondary" id="report-summary-export-btn"><i class="ti ti-download"></i> Export transactions in range (CSV)</button>
+        </div>
+
+        <div class="card card-pad" style="margin-bottom:16px;" id="report-detail-card">
+          <div class="section-title"><i class="ti ti-users"></i> Who bought / sold what — customer &amp; product wise <span class="cell-sub" style="margin-left:8px;">(uses the From–To / month chosen above)</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <select id="rd-kind" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><option value="sales">Sales (to customers)</option><option value="purchases">Purchases (from suppliers)</option></select>
+            <select id="rd-view" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><option value="company">Customer / supplier → products</option><option value="product">Product → customers / suppliers</option></select>
+            <button type="button" class="btn-secondary sm" id="rd-export"><i class="ti ti-download"></i> Export this (CSV)</button>
+          </div>
+          <div id="rd-body"></div>
         </div>
 
         <div class="two-col" style="margin-bottom:16px;">
@@ -4549,10 +4564,38 @@
   }
 
   function inDateRange(d, from, to){ d = d || ''; if(from && d < from) return false; if(to && d > to) return false; return true; }
+  function ymd(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function thisMonthRange(){ const n = new Date(); return [ymd(new Date(n.getFullYear(), n.getMonth(), 1)), ymd(n)]; }
+  function monthRange(ym){ const y = +ym.slice(0,4), m = +ym.slice(5,7); return [ym + '-01', ym + '-' + String(new Date(y, m, 0).getDate()).padStart(2,'0')]; }
+  function fillMonthSelect(prefix){
+    const sel = document.getElementById(prefix + '-month'); if(!sel) return;
+    const set = {}; set[ymd(new Date()).slice(0,7)] = 1;
+    [salesCache, purchasesCache, paymentsCache].forEach(arr => (arr||[]).forEach(x => { if(x.date && /^\d{4}-\d{2}/.test(x.date)) set[x.date.slice(0,7)] = 1; }));
+    const months = Object.keys(set).sort().reverse();
+    const key = months.join(',');
+    if(sel.getAttribute('data-months') === key) return;
+    const cur = sel.value;
+    sel.querySelectorAll('option[data-dyn]').forEach(o => o.remove());
+    const custom = sel.querySelector('option[value="custom"]');
+    months.forEach(ym => { const o = document.createElement('option'); o.value = ym; o.setAttribute('data-dyn','1'); o.textContent = new Date(+ym.slice(0,4), +ym.slice(5,7)-1, 1).toLocaleString('en-GB', { month:'long', year:'numeric' }); sel.insertBefore(o, custom); });
+    sel.setAttribute('data-months', key); sel.value = cur;
+  }
+  function wireMonthRange(prefix, fn, isDash){
+    const sel = document.getElementById(prefix + '-month'); if(!sel) return;
+    const f = document.getElementById(prefix + '-from'), t = document.getElementById(prefix + '-to');
+    sel.addEventListener('change', () => {
+      const v = sel.value;
+      if(v === 'auto'){ const r = thisMonthRange(); f.value = r[0]; t.value = r[1]; }
+      else if(v === '' || v === 'all'){ f.value = ''; t.value = ''; }
+      else if(v !== 'custom'){ const r = monthRange(v); f.value = r[0]; t.value = r[1]; }
+      fn();
+    });
+    [f, t].forEach(el => el.addEventListener('change', () => { if(sel.value !== 'custom'){ sel.value = 'custom'; } }));
+  }
   function wireDateRange(prefix, fn){
     ['from','to'].forEach(k => { const el = document.getElementById(prefix+'-'+k); if(el) el.addEventListener('change', fn); });
     const c = document.getElementById(prefix+'-dclear');
-    if(c) c.addEventListener('click', () => { document.getElementById(prefix+'-from').value=''; document.getElementById(prefix+'-to').value=''; fn(); });
+    if(c) c.addEventListener('click', () => { document.getElementById(prefix+'-from').value=''; document.getElementById(prefix+'-to').value=''; const ms = document.getElementById(prefix+'-month'); if(ms) ms.value = ''; fn(); });
   }
   function purchasesFiltered(){
     const f = (document.getElementById('purchase-from')||{}).value || '', t = (document.getElementById('purchase-to')||{}).value || '';
@@ -4563,6 +4606,7 @@
     return salesCache.filter(x => inDateRange(x.date, f, t));
   }
   function renderPurchases(){
+    try{ fillMonthSelect('purchase'); }catch(e){}
     const search = document.getElementById('purchase-search').value.trim().toLowerCase();
     const companyFilter = document.getElementById('purchase-company-filter').value;
     let rows = purchasesFiltered().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
@@ -4702,7 +4746,7 @@
     document.getElementById('purchase-modal').addEventListener('click', function(e){ if(e.target === this) closePurchaseModal(); });
     document.getElementById('purchase-search').addEventListener('input', renderPurchases);
     document.getElementById('purchase-company-filter').addEventListener('change', renderPurchases);
-    wireDateRange('purchase', renderPurchases);
+    wireMonthRange('purchase', renderPurchases); wireDateRange('purchase', renderPurchases);
     document.getElementById('purchase-qty').addEventListener('input', updatePurchaseCalcs);
     document.getElementById('purchase-rate').addEventListener('input', updatePurchaseCalcs);
     document.getElementById('purchase-paid').addEventListener('input', updatePurchaseCalcs);
@@ -4771,12 +4815,15 @@
 
   /* ================= DASHBOARD ================= */
   async function refreshDashboard(){
+    try{ fillMonthSelect('dash'); }catch(e){}
+    const dMon = document.getElementById('dash-month');
+    if(dMon && dMon.value === 'auto'){ const r = thisMonthRange(); document.getElementById('dash-from').value = r[0]; document.getElementById('dash-to').value = r[1]; }
     const dF = (document.getElementById('dash-from')||{}).value || '', dT = (document.getElementById('dash-to')||{}).value || '';
     const rngP = purchasesCache.filter(p => inDateRange(p.date, dF, dT)), rngS = salesCache.filter(x => inDateRange(x.date, dF, dT));
     const totalPurchases = rngP.reduce((s,p) => s + (Number(p.total)||0), 0);
     const totalSales = rngS.reduce((s,p) => s + (Number(p.total)||0), 0);
     const rn = document.getElementById('dash-range-note');
-    if(rn) rn.textContent = (dF||dT) ? ('Purchases, sales and profit are for ' + (dF||'start') + ' → ' + (dT||'today') + '. Receivable/payable are always the current balance.') : '';
+    if(rn) rn.textContent = (dF||dT) ? ('Purchases, sales and profit: ' + (dF||'start') + ' → ' + (dT||'today') + '. Receivable/payable are always the current balance.') : '';
     document.querySelectorAll('#metric-total-purchases,#metric-total-sales,#metric-total-profit').forEach(e => { const sub = e.parentElement.querySelector('.m-sub'); if(sub) sub.textContent = (dF||dT) ? 'Selected period' : (e.id==='metric-total-profit' ? 'All sales, after cost' : 'All time'); });
     // Receivable / payable come from each company's ledger (sales, purchases AND payments),
     // so they stay correct even when payments are recorded separately from invoices.
@@ -5080,6 +5127,7 @@
   }
 
   function renderSales(){
+    try{ fillMonthSelect('sale'); }catch(e){}
     const search = document.getElementById('sale-search').value.trim().toLowerCase();
     const companyFilter = document.getElementById('sale-company-filter').value;
     let rows = salesFiltered().sort((a,b)=> (b.date||'').localeCompare(a.date||'') || b.created_at - a.created_at);
@@ -5440,8 +5488,8 @@
     document.getElementById('sale-modal').addEventListener('click', function(e){ if(e.target === this) closeSaleModal(); });
     document.getElementById('sale-search').addEventListener('input', renderSales);
     document.getElementById('sale-company-filter').addEventListener('change', renderSales);
-    wireDateRange('sale', renderSales);
-    wireDateRange('dash', () => { try{ refreshDashboard(); }catch(e){} });
+    wireMonthRange('sale', renderSales); wireDateRange('sale', renderSales);
+    wireMonthRange('dash', () => { try{ refreshDashboard(); }catch(e){} }, true); wireDateRange('dash', () => { try{ refreshDashboard(); }catch(e){} });
     document.getElementById('sale-received').addEventListener('input', recalcSaleTotals);
     document.getElementById('sale-company').addEventListener('change', () => { document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => { const r = row.querySelector('.sale-item-rate'), ps = row.querySelector('.sale-item-product'); if(ps.value && r.dataset.auto === '1'){ r.value = ''; ps.onchange && ps.onchange(); } }); });
     document.getElementById('sale-add-item-btn').addEventListener('click', () => {
@@ -6397,6 +6445,7 @@
   }
 
   function renderPayments(){
+    try{ fillMonthSelect('payment'); fillMonthSelect('report'); }catch(e){}
     const search = document.getElementById('payment-search').value.trim().toLowerCase();
     const typeFilter = document.getElementById('payment-type-filter').value;
     const companyFilter = document.getElementById('payment-company-filter').value;
@@ -6408,6 +6457,7 @@
         (p.notes||'').toLowerCase().includes(search)
       );
     }
+    { const pf = (document.getElementById('payment-from')||{}).value || '', pt = (document.getElementById('payment-to')||{}).value || ''; if(pf || pt) rows = rows.filter(p => inDateRange(p.date, pf, pt)); }
     if(typeFilter){ rows = rows.filter(p => p.type === typeFilter); }
     if(companyFilter){ rows = rows.filter(p => p.companyId === companyFilter); }
 
@@ -6548,14 +6598,17 @@
     document.getElementById('payment-search').addEventListener('input', renderPayments);
     document.getElementById('payment-type-filter').addEventListener('change', renderPayments);
     document.getElementById('payment-company-filter').addEventListener('change', renderPayments);
+    wireMonthRange('payment', renderPayments); wireDateRange('payment', renderPayments);
     document.getElementById('payment-type').addEventListener('change', populatePaymentApplyToOptions);
     document.getElementById('payment-amount').addEventListener('input', autoPickPaymentInvoice);
     document.getElementById('payment-company').addEventListener('change', populatePaymentApplyToOptions);
 
     document.getElementById('payment-export-btn').addEventListener('click', () => {
-      if(paymentsCache.length === 0){ showToast('No payments to export'); return; }
+      const pfx = (document.getElementById('payment-from')||{}).value || '', ptx = (document.getElementById('payment-to')||{}).value || '';
+      const payF = paymentsCache.filter(p => inDateRange(p.date, pfx, ptx));
+      if(payF.length === 0){ showToast('No payments to export'); return; }
       const rows = [['Date','Company','Type','Amount','Method','Applied to','Notes']];
-      paymentsCache.forEach(p => rows.push([p.date,p.companyName,p.type,p.amount,p.method,findAppliedLabel(p),p.notes]));
+      payF.forEach(p => rows.push([p.date,p.companyName,p.type,p.amount,p.method,findAppliedLabel(p),p.notes]));
       downloadCsv('innochem-payments.csv', rows);
       showToast('Payments exported');
     });
@@ -7427,7 +7480,49 @@
     return { sales, purchases, payments, totalSales, totalPurchases, totalReceived, totalPaid, grossDiff: totalSales - totalPurchases };
   }
 
+  /* customer/product wise breakdown for the chosen date range */
+  function reportDetailData(){
+    const from = document.getElementById('report-from-date').value, to = document.getElementById('report-to-date').value;
+    const kind = document.getElementById('rd-kind').value, view = document.getElementById('rd-view').value;
+    const lines = [];   // {company, product, unit, qty, amount, docs}
+    if(kind === 'sales'){
+      salesCache.filter(x => inDateRange(x.date, from, to)).forEach(x => (x.items||[]).forEach(it => lines.push({ company:x.companyName||'—', product:it.productName||'—', unit:it.unit||'', qty:Number(it.qty)||0, amount:Number(it.amount)||0, doc:x.invoiceNo })));
+    } else {
+      purchasesCache.filter(x => inDateRange(x.date, from, to)).forEach(x => lines.push({ company:x.companyName||'—', product:x.productName||'—', unit:((productsCache.find(p=>p.id===x.productId)||{}).unit)||'', qty:Number(x.qty)||0, amount:Number(x.total)||0, doc:x.invoiceNo||'' }));
+    }
+    const keyA = view === 'company' ? 'company' : 'product', keyB = view === 'company' ? 'product' : 'company';
+    const groups = {};
+    lines.forEach(l => {
+      const g = groups[l[keyA]] || (groups[l[keyA]] = { name:l[keyA], amount:0, subs:{} });
+      g.amount += l.amount;
+      const sb = g.subs[l[keyB]] || (g.subs[l[keyB]] = { name:l[keyB], unit:l.unit, qty:0, amount:0 });
+      sb.qty += l.qty; sb.amount += l.amount;
+    });
+    const arr = Object.values(groups).sort((a,b) => b.amount - a.amount);
+    arr.forEach(g => { g.list = Object.values(g.subs).sort((a,b) => b.amount - a.amount); });
+    return { arr, kind, view, from, to, total: arr.reduce((s,g)=>s+g.amount,0) };
+  }
+  function renderReportDetail(){
+    const body = document.getElementById('rd-body'); if(!body) return;
+    const d = reportDetailData();
+    if(!d.arr.length){ body.innerHTML = '<div class="empty-row"><i class="ti ti-info-circle"></i> No ' + d.kind + ' in this period.</div>'; return; }
+    const subHead = d.view === 'company' ? 'Product' : (d.kind === 'sales' ? 'Customer' : 'Supplier');
+    body.innerHTML = '<div class="cell-sub" style="margin-bottom:8px;">Total: <b>' + fmtMoney(d.total) + '</b> · ' + d.arr.length + (d.view === 'company' ? (d.kind === 'sales' ? ' customers' : ' suppliers') : ' products') + '</div>' +
+      d.arr.map(g => '<details open style="border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:6px 10px;"><summary style="cursor:pointer;font-weight:700;display:flex;justify-content:space-between;gap:10px;"><span>' + escapeHtml(g.name) + '</span><span>' + fmtMoney(g.amount) + '</span></summary>' +
+        '<div class="table-wrap"><table class="data-table"><thead><tr><th>' + subHead + '</th><th class="rc-num">Qty</th><th class="rc-num">Avg rate</th><th class="rc-num">Amount</th></tr></thead><tbody>' +
+        g.list.map(x => '<tr><td>' + escapeHtml(x.name) + '</td><td class="rc-num">' + (Math.round(x.qty*100)/100).toLocaleString() + ' ' + escapeHtml(x.unit) + '</td><td class="rc-num">' + (x.qty ? fmtMoney(x.amount / x.qty) : '—') + '</td><td class="rc-num"><b>' + fmtMoney(x.amount) + '</b></td></tr>').join('') +
+        '</tbody></table></div></details>').join('');
+  }
+  function exportReportDetail(){
+    const d = reportDetailData(); if(!d.arr.length){ showToast('Nothing to export'); return; }
+    const rows = [[d.view === 'company' ? (d.kind === 'sales' ? 'Customer' : 'Supplier') : 'Product', d.view === 'company' ? 'Product' : (d.kind === 'sales' ? 'Customer' : 'Supplier'), 'Qty', 'Amount']];
+    d.arr.forEach(g => g.list.forEach(x => rows.push([g.name, x.name, Math.round(x.qty*100)/100, Math.round(x.amount*100)/100])));
+    downloadCsv('innochem-' + d.kind + '-' + d.view + '-' + (d.from||'start') + '-to-' + (d.to||'today') + '.csv', rows);
+  }
+
   function renderReportSummary(){
+    try{ fillMonthSelect('report'); }catch(e){}
+    try{ renderReportDetail(); }catch(e){}
     const from = document.getElementById('report-from-date').value;
     const to = document.getElementById('report-to-date').value;
     const r = computeReportSummary(from, to);
@@ -7554,6 +7649,12 @@
 
   function initReports(){
     document.getElementById('report-from-date').addEventListener('change', renderReportSummary);
+    ['rd-kind','rd-view'].forEach(id => document.getElementById(id).addEventListener('change', renderReportDetail));
+    document.getElementById('rd-export').addEventListener('click', exportReportDetail);
+    (function(){ const ms = document.getElementById('report-month'); if(!ms) return;
+      ms.addEventListener('change', () => { const v = ms.value; const f = document.getElementById('report-from-date'), t = document.getElementById('report-to-date');
+        if(v === ''){ f.value = ''; t.value = ''; } else if(v !== 'custom'){ const r = monthRange(v); f.value = r[0]; t.value = r[1]; } renderReportSummary(); });
+      ['report-from-date','report-to-date'].forEach(id => document.getElementById(id).addEventListener('change', () => { ms.value = 'custom'; })); })();
     document.getElementById('report-to-date').addEventListener('change', renderReportSummary);
     document.getElementById('report-summary-export-btn').addEventListener('click', exportReportSummary);
     document.getElementById('report-company-export-btn').addEventListener('click', exportCompanyReport);
