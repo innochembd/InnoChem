@@ -314,7 +314,10 @@
   .btn-danger-text{color:var(--danger);background:none;border:none;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:5px;}
 
   /* ---------- TABLE ---------- */
-  .table-wrap{overflow-x:auto;}
+  .table-wrap{overflow:auto;max-height:calc(100vh - var(--wco-h,0px) - 150px);max-height:calc(100dvh - var(--wco-h,0px) - 150px);min-height:0;}
+  .modal-box .table-wrap, .mr-tbl .table-wrap{max-height:none;}
+  /* column headings stay visible while the rows scroll */
+  .data-table thead th{position:sticky;top:0;z-index:3;background:var(--bg-card,#fff);box-shadow:0 1px 0 var(--border);}
   .data-table{width:100%;border-collapse:collapse;font-size:13px;}
   .data-table th{
     text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-muted);
