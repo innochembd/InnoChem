@@ -4586,6 +4586,8 @@
     if(ys.value === ''){ ms.value = ''; ms.disabled = true; f.value = ''; t.value = ''; return; }
     ms.disabled = false;
     const r = ms.value === '' ? [ys.value + '-01-01', ys.value + '-12-31'] : monthRange(ys.value + '-' + ms.value);
+    const today = ymd(new Date());
+    if(r[0] <= today && r[1] > today) r[1] = today;   // running month/year ends today, not at the end of the period
     f.value = r[0]; t.value = r[1];
   }
   function wireMonthRange(prefix, fn, isDash){
