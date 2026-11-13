@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>try{ if(localStorage.getItem('innochem_auth')) document.documentElement.classList.add('resuming'); }catch(e){}</script>
+<style>
+#splash{display:none;position:fixed;inset:0;z-index:99999;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#f4f3ee;transition:opacity .25s;}
+html.resuming #splash{display:flex;}
+html.resuming #login-screen{display:none !important;}
+:root[data-theme="dark"] #splash{background:#0f1a1d;color:#e8f3f3;}
+#splash img{width:104px;height:104px;object-fit:contain;border-radius:22px;animation:splpulse 1.6s ease-in-out infinite;}
+#splash .spl-name{font:800 17px/1.2 Inter,system-ui,sans-serif;letter-spacing:.2px;color:#0b5f56;}
+:root[data-theme="dark"] #splash .spl-name{color:#7fd6cb;}
+#splash .spl-spin{width:26px;height:26px;border:3px solid rgba(15,148,132,.2);border-top-color:#0f9484;border-radius:50%;animation:splspin .8s linear infinite;}
+@keyframes splspin{to{transform:rotate(360deg)}} @keyframes splpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RAR TECH</title>
@@ -566,6 +578,11 @@
 
 
   /* ---------- polish: quick actions, status chips, zebra rows, loading shimmer, bottom bar ---------- */
+  .tb-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:var(--ic-green,#0d8a7c);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;background-size:cover;background-position:center;border:2px solid var(--bg-card,#fff);box-shadow:0 0 0 1px var(--border);}
+  .tb-avatar.big{width:84px;height:84px;font-size:30px;}
+  .tb-avatar.has-photo,.sidebar-user .avatar.has-photo{color:transparent;font-size:0;}
+  .sidebar-user .avatar.has-photo{background-size:cover;background-position:center;}
+  #refresh-btn.spinning svg{animation:splspin .8s linear infinite;}
   .quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
   .qa-btn{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 20px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-weight:800;font-size:13.5px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .1s, box-shadow .15s;}
   .qa-btn i{font-size:19px;}
@@ -941,6 +958,8 @@
 <style id="pe-css">.pe-row{display:grid;grid-template-columns:2fr 1fr 1fr 34px;gap:8px;margin-bottom:8px;} .pe-row select,.pe-row input{padding:9px 10px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:var(--bg-card,#fff);color:var(--text-primary);font-family:inherit;min-width:0;} .pe-del{border:none;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;}</style>
 </head>
 <body>
+<div id="splash"><img id="splash-img" alt="" src=""><div class="spl-name">Inno Chem Bangladesh</div><div class="spl-spin"></div></div>
+<script>try{ var _l = localStorage.getItem('innochem_splash_logo'); var _i = document.getElementById('splash-img'); if(_l){ _i.src = _l; } else { _i.style.visibility = 'hidden'; } }catch(e){}</script>
 <div id="wco-bar"><img data-rar-logo alt="RAR TECH"><span>RAR TECH</span></div>
 
 <!-- ================= LOGIN SCREEN ================= -->
@@ -1050,6 +1069,7 @@
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:12px;">
         <button class="icon-btn mobile-topbar-toggle" id="mobile-menu-btn"><i class="ti ti-menu-2"></i></button>
+        <div class="tb-avatar" id="tb-avatar" title="My profile photo (Settings)">A</div>
         <div>
           <div class="topbar-title" id="page-title">Dashboard</div>
           <div class="topbar-sub" id="page-subtitle">Overview of your business today</div>
@@ -1067,6 +1087,7 @@
           <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         </button>
+        <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.5-4.4L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.4L20 16"/><path d="M20 20v-4h-4"/></svg></button>
         <button class="icon-btn" id="quick-backup-btn" title="Download full backup"><i class="ti ti-cloud-download"></i></button>
         <button id="help-btn" type="button" title="How to use this page" aria-label="How to use this page">?</button>
         <div class="bell-wrap" id="bell-wrap"><button class="icon-btn" id="bell-btn" title="Notifications" aria-label="Notifications"><i class="ti ti-bell"></i><span class="bell-count" id="bell-count" style="display:none">0</span></button><div class="bell-panel" id="bell-panel"><div class="bell-empty">No notifications</div></div></div>
@@ -1863,6 +1884,20 @@
               <button type="button" class="btn-secondary" id="brand-photo-clear-btn">Remove photo</button>
             </div>
           </div>
+        </div>
+
+        <div class="card card-pad" style="max-width:480px;margin-bottom:18px;">
+          <div class="section-title"><i class="ti ti-user-circle"></i> My photo</div>
+          <p style="font-size:12.5px;color:var(--text-secondary);margin:-6px 0 14px;">Your photo shows next to your name in the menu and at the top of every page.</p>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <div class="tb-avatar big" id="photo-preview">A</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-primary sm" id="photo-pick">Choose photo</button>
+              <button type="button" class="btn-secondary sm" id="photo-remove">Remove</button>
+            </div>
+            <input type="file" id="photo-file" accept="image/*" style="display:none">
+          </div>
+          <div class="cell-sub" id="photo-msg" style="margin-top:10px;"></div>
         </div>
 
         <div class="card card-pad" style="max-width:480px;margin-bottom:18px;">
@@ -2943,7 +2978,7 @@
       toDb: x => ({ id:x.id, receipt_no:x.receiptNo, date:x.date, type:x.type, company_id:x.companyId||null, company_name:x.companyName, company_address:x.companyAddress, company_phone:x.companyPhone, amount:x.amount, method:x.method, applied_type: x.appliedId ? (x.type==='received'?'sale':'purchase') : null, applied_id:x.appliedId||null, applied_label:x.appliedLabel, notes:x.notes })
     },
     users: {
-      fromDb: r => ({ id:r.id, username:r.username, password:r.password, role:r.role, permissions:r.permissions||{}, created_at:epoch(r.created_at) }),
+      fromDb: r => ({ id:r.id, username:r.username, password:r.password, role:r.role, permissions:r.permissions||{}, photo:r.photo||'', created_at:epoch(r.created_at) }),
       toDb: u => ({ id:u.id, username:u.username, password:u.password, role:u.role, permissions:u.permissions })
     }
   };
@@ -3609,6 +3644,7 @@
     return 'Staff';
   }
 
+  setTimeout(() => { document.documentElement.classList.remove('resuming'); }, 15000);
   async function initLogin(){
     const form = document.getElementById('login-form');
     const errBox = document.getElementById('login-error');
@@ -3630,6 +3666,7 @@
       }
     }
 
+    document.documentElement.classList.remove('resuming');   // not signed in: show the login form
     form.addEventListener('submit', async function(e){
       e.preventDefault();
       errBox.style.display = 'none';
@@ -3672,7 +3709,88 @@
     if(roleEl) roleEl.textContent = roleLabel(user);
     document.getElementById('settings-username').value = user.username;
     applyPermissionsUI();
+    try{ applyPhoto(); }catch(e){}
     startDataLoad();
+    restoreLastPage();
+    const sp = document.getElementById('splash');
+    if(sp){ sp.style.opacity = '0'; setTimeout(() => { document.documentElement.classList.remove('resuming'); sp.style.opacity = ''; }, 260); }
+    saveSplashLogo();
+  }
+
+
+  /* ---------- user photo ---------- */
+  function myPhoto(){
+    if(!currentUser) return '';
+    return currentUser.photo || (function(){ try{ return localStorage.getItem('innochem_photo_' + currentUser.id) || ''; }catch(e){ return ''; } })();
+  }
+  function applyPhoto(){
+    const ph = myPhoto(), ini = currentUser ? (currentUser.username || 'A').charAt(0).toUpperCase() : 'A';
+    ['user-avatar','tb-avatar','photo-preview'].forEach(id => {
+      const el = document.getElementById(id); if(!el) return;
+      el.textContent = ini;
+      if(ph){ el.style.backgroundImage = 'url("' + ph + '")'; el.classList.add('has-photo'); }
+      else { el.style.backgroundImage = ''; el.classList.remove('has-photo'); }
+    });
+  }
+  function resizePhoto(file, cb){
+    const fr = new FileReader();
+    fr.onload = () => { const img = new Image(); img.onload = () => {
+      const k = 256, c = document.createElement('canvas'); c.width = k; c.height = k;
+      const m = Math.min(img.width, img.height), sx = (img.width - m) / 2, sy = (img.height - m) / 2;
+      c.getContext('2d').drawImage(img, sx, sy, m, m, 0, 0, k, k);
+      cb(c.toDataURL('image/jpeg', 0.82));
+    }; img.onerror = () => cb(''); img.src = fr.result; };
+    fr.onerror = () => cb(''); fr.readAsDataURL(file);
+  }
+  async function savePhoto(dataUrl){
+    const msg = document.getElementById('photo-msg');
+    try{ if(dataUrl) localStorage.setItem('innochem_photo_' + currentUser.id, dataUrl); else localStorage.removeItem('innochem_photo_' + currentUser.id); }catch(e){}
+    currentUser.photo = dataUrl || '';
+    usersCache = usersCache.map(u => u.id === currentUser.id ? Object.assign({}, u, { photo: dataUrl || '' }) : u);
+    applyPhoto();
+    try{
+      await sbFetch('app_users?id=eq.' + encodeURIComponent(currentUser.id), { method:'PATCH', headers: sbHeaders({ Prefer:'return=minimal' }), body: JSON.stringify({ photo: dataUrl || null }) });
+      if(msg) msg.textContent = dataUrl ? 'Photo saved for all your devices.' : 'Photo removed.';
+      showToast(dataUrl ? 'Photo saved' : 'Photo removed');
+    }catch(e){
+      console.error(e);
+      if(msg) msg.textContent = 'Saved on this device only. To see it on every device, ask your developer to run phase_j_user_photo.sql in Supabase.';
+      showToast('Photo saved on this device');
+    }
+  }
+  (function(){
+    function wire(){
+      const pick = document.getElementById('photo-pick'), file = document.getElementById('photo-file'), rm = document.getElementById('photo-remove');
+      if(!pick || !file) return;
+      pick.addEventListener('click', () => file.click());
+      file.addEventListener('change', () => { const f = file.files && file.files[0]; if(!f) return; resizePhoto(f, d => { if(!d){ showToast('Could not read that picture'); return; } savePhoto(d); }); file.value = ''; });
+      if(rm) rm.addEventListener('click', () => savePhoto(''));
+      const tb = document.getElementById('tb-avatar'); if(tb) tb.addEventListener('click', () => { const nav = document.querySelector('.nav-item[data-page="settings"]'); if(nav) nav.click(); });
+    }
+    setTimeout(wire, 0);
+  })();
+
+  /* Keep the splash logo small and ready for the next refresh */
+  function saveSplashLogo(){
+    try{
+      if(localStorage.getItem('innochem_splash_logo')) return;
+      const img = document.getElementById('login-company-img'); if(!img || !img.complete || !img.naturalWidth) return;
+      const c = document.createElement('canvas'), k = 208 / Math.max(img.naturalWidth, img.naturalHeight);
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      localStorage.setItem('innochem_splash_logo', c.toDataURL('image/png'));
+    }catch(e){}
+  }
+
+  /* Reopen the page you were on (also works from a #page link) */
+  function restoreLastPage(){
+    try{
+      let want = (location.hash || '').replace('#', '') || localStorage.getItem('innochem_last_page') || '';
+      if(!want || want === 'dashboard') return;
+      const btn = document.querySelector('.nav-item[data-page="' + want + '"]');
+      if(!btn || getComputedStyle(btn).display === 'none') return;
+      btn.click();
+    }catch(e){}
   }
 
   async function initLogout(){
@@ -3680,6 +3798,8 @@
       await safeSet('session:current', JSON.stringify({loggedIn:false}), false);
       try{ if(authState) fetch(SUPABASE_URL + '/auth/v1/logout', { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + authState.access_token } }); }catch(e){}
       saveAuth(null);
+      try{ localStorage.removeItem('innochem_last_page'); }catch(e){}
+      try{ history.replaceState(null, '', location.pathname); }catch(e){}
       try{ Object.keys(localStorage).filter(k => k.indexOf(CACHE_PREFIX) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){}
       location.reload();
     });
@@ -3721,6 +3841,10 @@
         pages.forEach(p=>p.classList.remove('active'));
         const target = document.getElementById('page-'+page);
         if(target) target.classList.add('active');
+        try{
+          localStorage.setItem('innochem_last_page', page);
+          if(!window.__navFromPop && location.hash !== '#' + page) history.pushState(null, '', '#' + page);
+        }catch(e){}
         document.getElementById('page-title').textContent = titleMap[page][0];
         document.getElementById('page-subtitle').textContent = titleMap[page][1];
         document.getElementById('sidebar').classList.remove('open');
@@ -3743,6 +3867,11 @@
 
     document.getElementById('mobile-menu-btn').addEventListener('click', function(){
       document.getElementById('sidebar').classList.toggle('open');
+    });
+    window.addEventListener('popstate', function(){   // Back / Forward buttons move between pages
+      const want = (location.hash || '').replace('#', '') || 'dashboard';
+      const btn = document.querySelector('.nav-item[data-page="' + want + '"]');
+      if(btn){ window.__navFromPop = true; try{ btn.click(); } finally { window.__navFromPop = false; } }
     });
   }
 
@@ -4919,7 +5048,7 @@
     const elS = document.getElementById('metric-total-sales');
     const elRec = document.getElementById('metric-receivable');
     const elProfit = document.getElementById('metric-total-profit');
-    const dashSet = (el, v) => { if(el){ el.textContent = fmtCompact(v); el.title = fmtBig(v); } };
+    const dashSet = (el, v) => { if(el){ el.textContent = fmtBig(v); el.removeAttribute('title'); } };
     dashSet(elProfit, rngS.reduce((s,x)=> s + saleProfit(x), 0));
     dashSet(elP, totalPurchases);
     dashSet(elPay, payable);
@@ -6173,7 +6302,7 @@
     const hundred = num;
     const parts = [];
     if(crore) parts.push(threeDigits(crore) + ' Crore');
-    if(lac) parts.push(threeDigits(lac) + ' Lac');
+    if(lac) parts.push(threeDigits(lac) + ' Lakh');
     if(thousand) parts.push(threeDigits(thousand) + ' Thousand');
     if(hundred) parts.push(threeDigits(hundred));
     return parts.join(' ');
@@ -6188,6 +6317,42 @@
     return words.length > 1 ? words[words.length - 1] : '';
   }
 
+  /* "Two Lakh Thirty Two Thousand Five Hundred Seventy Taka" — with paisa if there are any */
+  function moneyWords(n){
+    n = Math.round((Number(n) || 0) * 100) / 100; if(!n) return '';
+    const neg = n < 0, a = Math.abs(n), taka = Math.floor(a), paisa = Math.round((a - taka) * 100);
+    let t = taka ? numberToWordsIndian(taka) + ' Taka' : '';
+    if(paisa) t += (t ? ' and ' : '') + numberToWordsIndian(paisa) + ' Paisa';
+    return (neg ? 'Minus ' : '') + t;
+  }
+  /* words line under big numbers and under money inputs */
+  (function(){
+    const cssT = document.createElement('style');
+    cssT.textContent = '.m-words,.amt-words{font-size:11px;line-height:1.35;color:var(--text-muted);font-weight:500;margin-top:3px;}.amt-words{margin:4px 2px 0;font-size:11.5px;color:var(--text-secondary);}.amt-words:empty,.m-words:empty{display:none;}';
+    document.head.appendChild(cssT);
+    function fromEl(el){ const raw = (el.title && /\d/.test(el.title)) ? el.title : el.textContent; const t = String(raw).replace(/[^0-9.\-]/g, ''); return t && !isNaN(Number(t)) ? Number(t) : null; }
+    function tick(){
+      document.querySelectorAll('.m-value').forEach(el => {
+        const txt = (el.textContent || '').trim();
+        if(!/^-?৳/.test(txt)) return;
+        let w = el.nextElementSibling && el.nextElementSibling.classList.contains('m-words') ? el.nextElementSibling : null;
+        if(!w){ w = document.createElement('div'); w.className = 'm-words'; el.parentNode.insertBefore(w, el.nextSibling); }
+        const key = (el.title || '') + '|' + txt;
+        if(w.getAttribute('data-k') === key) return;
+        w.setAttribute('data-k', key); const v = fromEl(el); w.textContent = v ? moneyWords(v) : '';
+      });
+      ['sale-total-display','sale-received','purchase-total-display','purchase-paid','payment-amount'].forEach(id => {
+        const inp = document.getElementById(id); if(!inp) return;
+        let w = document.getElementById(id + '-words');
+        if(!w){ w = document.createElement('div'); w.className = 'amt-words'; w.id = id + '-words'; const host = inp.closest('.field') || inp.parentNode; host.appendChild(w); }
+        const v = String(inp.value || '');
+        if(w.getAttribute('data-k') === v) return;
+        w.setAttribute('data-k', v); const n = Number(v.replace(/[^0-9.\-]/g, ''));
+        w.textContent = n ? moneyWords(n) : '';
+      });
+    }
+    setInterval(tick, 600); setTimeout(tick, 800);
+  })();
   function amountInWordsTaka(amount){
     return numberToWordsIndian(amount) + ' Taka Only';
   }
@@ -10434,6 +10599,16 @@
   initUsers();
   document.getElementById('report-from-date').value = '';
   document.getElementById('report-to-date').value = todayStr();
+  function initRefreshBtn(){
+    const btn = document.getElementById('refresh-btn'); if(!btn) return;
+    btn.addEventListener('click', function(){
+      if(btn.classList.contains('spinning')) return;
+      btn.classList.add('spinning');
+      try{ dataLoadStarted = false; startDataLoad(); }catch(e){ location.reload(); return; }
+      setTimeout(() => { try{ refreshDashboard(); }catch(e){} btn.classList.remove('spinning'); showToast('Data refreshed'); }, 1800);
+    });
+  }
+  setTimeout(initRefreshBtn, 0);
   function startDataLoad(){
     if(dataLoadStarted) return;
     dataLoadStarted = true;
