@@ -564,6 +564,33 @@
     .prod-breakdown-row{grid-template-columns:1fr 1fr;gap:4px 10px;background:var(--bg-page);padding:10px;border-radius:10px;border-bottom:none;margin-bottom:8px;}
   }
 
+
+  /* ---------- polish: quick actions, status chips, zebra rows, loading shimmer, bottom bar ---------- */
+  .quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .qa-btn{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 20px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-weight:800;font-size:13.5px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .1s, box-shadow .15s;}
+  .qa-btn i{font-size:19px;}
+  .qa-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.09);}
+  .qa-sale{background:linear-gradient(135deg,#0d8a7c,#0a6b61);color:#fff;border-color:transparent;}
+  .qa-pay i{color:var(--ic-blue,#2563eb);} .qa-buy i{color:var(--ic-green,#16a34a);}
+  .st-chip{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:1px;letter-spacing:.2px;}
+  .st-paid{background:rgba(22,163,74,.13);color:#15803d;} .st-due{background:rgba(220,38,38,.12);color:#b91c1c;}
+  .st-part{background:rgba(217,119,6,.15);color:#b45309;} .st-ret{background:rgba(234,88,12,.14);color:#c2410c;}
+  .data-table tbody tr:nth-child(even){background:color-mix(in srgb, var(--text-primary) 2.6%, transparent);}
+  .data-table tbody tr{transition:background .12s;}
+  body.is-loading .m-value{color:transparent !important;background:linear-gradient(90deg,var(--bg-page) 25%,var(--border) 50%,var(--bg-page) 75%);background-size:200% 100%;animation:shim 1.2s infinite;border-radius:8px;min-width:90px;}
+  @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .bottom-nav{display:none;}
+  @media (max-width:860px){
+    .topbar-title,.topbar-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48vw;}
+    .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--bg-card);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.07);}
+    .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:none;color:var(--text-muted);font-size:10.5px;font-weight:700;padding:4px 0;cursor:pointer;}
+    .bottom-nav button i{font-size:21px;}
+    .bottom-nav button.active{color:#0d8a7c;}
+    body.has-bottom-nav .content{padding-bottom:84px;}
+    #ai-fab{bottom:78px !important;}
+    #company-table th:first-child,#company-table td:first-child,#product-table th:first-child,#product-table td:first-child,#inventory-table th:first-child,#inventory-table td:first-child,#rcv-table th:first-child,#rcv-table td:first-child{position:sticky;left:0;background:var(--bg-card,#fff);z-index:2;box-shadow:1px 0 0 var(--border);}
+    #company-table th:first-child,#product-table th:first-child,#inventory-table th:first-child,#rcv-table th:first-child{z-index:4;}
+  }
   .mobile-topbar-toggle{display:none;}
   @media (max-width:860px){
     .sidebar{position:fixed;top:0;left:-236px;z-index:50;transition:left .2s;box-shadow:var(--shadow-pop);}
@@ -605,7 +632,7 @@
   .doc-challan .rc-table th{background:#E9F0FA;color:#14458C;}
   .rc-table th.rc-num, .rc-table td.rc-num{text-align:right;}
   .rc-table td{padding:11px 10px;border-bottom:1px solid var(--border);font-size:13px;}
-  .rc-totals{margin-left:auto;width:230px;}
+  .rc-totals{margin-left:auto;width:fit-content;min-width:230px;max-width:100%;}
   .rc-totals .rc-trow{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;color:var(--text-secondary);}
   .rc-totals .rc-trow.rc-grand{margin-top:4px;padding-top:10px;font-size:15px;font-weight:800;color:var(--text-primary);}
   .doc-invoice .rc-totals .rc-trow.rc-grand{border-top:2px solid #E8720A;}
@@ -1051,6 +1078,11 @@
       <!-- DASHBOARD PAGE -->
       <div class="page active" id="page-dashboard">
         <div class="dash-range" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--text-secondary);"><i class="ti ti-calendar-stats"></i> <select id="dash-year" class="year-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Year"><option value="">All years</option><option value="custom" hidden>Custom dates</option></select><select id="dash-month" class="month-sel" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;" title="Month"><option value="">Whole year</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select> From <input type="date" id="dash-from" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="dash-to" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><span class="cell-sub" id="dash-range-note"></span></div>
+        <div class="quick-actions" id="dash-quick">
+          <button type="button" class="qa-btn qa-sale" id="qa-sale"><i class="ti ti-receipt"></i><span>New sale</span></button>
+          <button type="button" class="qa-btn qa-pay" id="qa-pay"><i class="ti ti-cash-banknote"></i><span>Take / give payment</span></button>
+          <button type="button" class="qa-btn qa-buy" id="qa-buy"><i class="ti ti-shopping-cart"></i><span>New purchase</span></button>
+        </div>
         <div class="metric-grid">
           <div class="metric-card">
             <div class="m-icon green"><i class="ti ti-shopping-cart"></i></div>
@@ -1096,6 +1128,22 @@
           </div>
         </div>
 
+        <div class="two-col" style="margin-bottom:16px;">
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-chart-bar"></i> Business trend — last 6 months</div>
+            <div class="dash-chart-legend">
+              <span class="legend-dot purchases"></span> Purchases
+              <span class="legend-dot sales"></span> Sales
+            </div>
+            <div id="dashboard-chart-wrap"></div>
+          </div>
+          <div class="card card-pad">
+            <div class="section-title"><i class="ti ti-clock"></i> Recent activity</div>
+            <div id="recent-activity-list">
+              <div class="empty-row"><i class="ti ti-info-circle"></i> No transactions yet — record a purchase or sale to see it here.</div>
+            </div>
+          </div>
+        </div>
         <div class="three-col" style="margin-bottom:16px;">
           <div class="card card-pad">
             <div class="section-title"><i class="ti ti-alert-triangle" style="color:var(--danger);"></i> Money to collect — top customers</div>
@@ -1111,22 +1159,6 @@
           </div>
         </div>
 
-        <div class="two-col">
-          <div class="card card-pad">
-            <div class="section-title"><i class="ti ti-clock"></i> Recent activity</div>
-            <div id="recent-activity-list">
-              <div class="empty-row"><i class="ti ti-info-circle"></i> No transactions yet — record a purchase or sale to see it here.</div>
-            </div>
-          </div>
-          <div class="card card-pad">
-            <div class="section-title"><i class="ti ti-chart-bar"></i> Business trend — last 6 months</div>
-            <div class="dash-chart-legend">
-              <span class="legend-dot purchases"></span> Purchases
-              <span class="legend-dot sales"></span> Sales
-            </div>
-            <div id="dashboard-chart-wrap"></div>
-          </div>
-        </div>
       </div>
 
       <!-- COMPANIES PAGE -->
@@ -1804,6 +1836,10 @@
               <div class="field">
                 <label>BIN / TIN (optional)</label>
                 <div class="field-input-wrap"><i class="ti ti-id"></i><input type="text" id="profile-bin" placeholder="BIN / TIN number"></div>
+              </div>
+              <div class="field">
+                <label>Bank / bKash details (printed on invoices, optional)</label>
+                <div class="field-input-wrap"><i class="ti ti-building-bank"></i><input type="text" id="profile-bank" placeholder="e.g. City Bank A/C 1234567890 · bKash 01XXXXXXXXX"></div>
               </div>
               <button type="submit" class="btn-primary" style="width:auto;padding:0 22px;"><i class="ti ti-device-floppy"></i> Save profile</button>
             </form>
@@ -2746,6 +2782,13 @@
 
 
 <!-- RAR ASSISTANT (chatbot) -->
+<nav class="bottom-nav" id="bottom-nav" aria-label="Quick navigation">
+  <button type="button" data-go="dashboard"><i class="ti ti-layout-dashboard"></i>Home</button>
+  <button type="button" data-go="sales"><i class="ti ti-receipt"></i>Sales</button>
+  <button type="button" data-go="purchases"><i class="ti ti-shopping-cart"></i>Purchases</button>
+  <button type="button" data-go="payments"><i class="ti ti-cash"></i>Payments</button>
+  <button type="button" data-go="__more"><i class="ti ti-menu-2"></i>More</button>
+</nav>
 <button id="ai-fab" type="button" title="RAR Assistant" style="display:none"><i class="ti ti-sparkles"></i><span>Ask RAR</span></button>
 <div id="ai-panel" role="dialog" aria-label="RAR Assistant">
   <div class="ai-head"><div><b>RAR Assistant</b><div class="ai-sub">Your business analyst. Reads your live numbers.</div></div><select id="ai-lang" title="Language"><option value="auto">Auto</option><option value="English">English</option><option value="Bangla (বাংলা)">বাংলা</option><option value="Chinese (中文)">中文</option><option value="Hindi (हिन्दी)">हिन्दी</option><option value="Arabic (العربية)">العربية</option><option value="Urdu (اردو)">اردو</option></select><button type="button" id="ai-clear" title="New chat"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button><button type="button" id="ai-close" title="Close"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -3756,9 +3799,21 @@
   }
 
   /* ================= SHARED DATA HELPERS ================= */
+  /* Bangladeshi digit grouping (12,34,567) and no floating-point noise */
   function fmtMoney(n){
-    n = Number(n) || 0;
-    return CFG.currency + n.toLocaleString('en-BD', {minimumFractionDigits:0, maximumFractionDigits:2});
+    n = Math.round((Number(n) || 0) * 100) / 100;
+    return (n < 0 ? '-' : '') + CFG.currency + Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:0, maximumFractionDigits:2});
+  }
+  function fmtBig(n){   /* whole taka, for totals on summary cards */
+    n = Math.round(Number(n) || 0);
+    return (n < 0 ? '-' : '') + CFG.currency + Math.abs(n).toLocaleString('en-IN');
+  }
+  function fmtCompact(n){   /* 2.32 Cr / 4.5 Lakh for the big dashboard cards */
+    n = Number(n) || 0; const a = Math.abs(n), sg = n < 0 ? '-' : '';
+    const t = x => (Math.round(x * 100) / 100).toString();
+    if(a >= 10000000) return sg + CFG.currency + t(a / 10000000) + ' Cr';
+    if(a >= 100000) return sg + CFG.currency + t(a / 100000) + ' Lakh';
+    return fmtBig(n);
   }
   function escapeHtml(str){
     return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
@@ -4337,7 +4392,7 @@
     }
 
     document.getElementById('production-summary-count').textContent = rows.length;
-    document.getElementById('production-summary-cost').textContent = fmtMoney(rows.reduce((s,b)=> s + (Number(b.totalMaterialCost)||0), 0));
+    document.getElementById('production-summary-cost').textContent = fmtBig(rows.reduce((s,b)=> s + (Number(b.totalMaterialCost)||0), 0));
 
     const tbody = document.getElementById('production-tbody');
     const emptyBlock = document.getElementById('production-empty');
@@ -4620,6 +4675,13 @@
     if(((document.getElementById('sale-search')||{}).value||'').trim()) return salesCache.slice();
     return salesCache.filter(x => inDateRange(x.date, f, t));
   }
+  function statusChip(total, due, isReturn){
+    total = Number(total) || 0; due = Number(due) || 0;
+    if(isReturn) return '<span class="st-chip st-ret">Return</span>';
+    if(due <= 0.005) return '<span class="st-chip st-paid">Paid</span>';
+    if(due >= total - 0.005) return '<span class="st-chip st-due">Due</span>';
+    return '<span class="st-chip st-part">Partial</span>';
+  }
   function renderPurchases(){
     try{ fillMonthSelect('purchase'); }catch(e){}
     const search = document.getElementById('purchase-search').value.trim().toLowerCase();
@@ -4640,9 +4702,9 @@
 
     let sumTotal = 0, sumPaid = 0, sumDue = 0;
     rows.forEach(p => { sumTotal += Number(p.total)||0; sumPaid += Number(p.paid)||0; sumDue += Number(p.due)||0; });
-    document.getElementById('purchase-summary-total').textContent = fmtMoney(sumTotal);
-    document.getElementById('purchase-summary-paid').textContent = fmtMoney(sumPaid);
-    document.getElementById('purchase-summary-due').textContent = fmtMoney(sumDue);
+    document.getElementById('purchase-summary-total').textContent = fmtBig(sumTotal);
+    document.getElementById('purchase-summary-paid').textContent = fmtBig(sumPaid);
+    document.getElementById('purchase-summary-due').textContent = fmtBig(sumDue);
 
     if(rows.length === 0){
       table.style.display = 'none';
@@ -4662,7 +4724,7 @@
         <td>${fmtMoney(p.rate)}</td>
         <td><b>${fmtMoney(p.total)}</b></td>
         <td>${fmtMoney(p.paid)}</td>
-        <td style="color:${Number(p.due)>0 ? 'var(--danger)' : 'var(--success)'};font-weight:700;">${fmtMoney(p.due)}</td>
+        <td style="color:${Number(p.due)>0 ? 'var(--danger)' : 'var(--success)'};font-weight:700;">${fmtMoney(p.due)} ${statusChip(p.total, p.due, Number(p.total) < 0)}</td>
         <td>
           ${(canEdit('purchases') || canDelete('purchases')) ? `<div class="row-actions">
             ${canEdit('purchases') ? `<button data-id="${p.id}" class="purchase-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>` : ''}
@@ -4831,6 +4893,10 @@
   /* ================= DASHBOARD ================= */
   async function refreshDashboard(){
     try{ fillMonthSelect('dash'); }catch(e){}
+    try{
+      const qa = (id, ok) => { const b = document.getElementById(id); if(b) b.style.display = ok ? '' : 'none'; };
+      qa('qa-sale', canEdit('sales')); qa('qa-pay', canEdit('payments')); qa('qa-buy', canEdit('purchases'));
+    }catch(e){}
     const dYr = document.getElementById('dash-year');
     if(dYr && dYr.getAttribute('data-auto')){ const nw = new Date(); dYr.value = String(nw.getFullYear()); document.getElementById('dash-month').value = String(nw.getMonth() + 1).padStart(2,'0'); applyYearMonth('dash'); }
     const dF = (document.getElementById('dash-from')||{}).value || '', dT = (document.getElementById('dash-to')||{}).value || '';
@@ -4853,11 +4919,12 @@
     const elS = document.getElementById('metric-total-sales');
     const elRec = document.getElementById('metric-receivable');
     const elProfit = document.getElementById('metric-total-profit');
-    if(elProfit) elProfit.textContent = fmtMoney(rngS.reduce((s,x)=> s + saleProfit(x), 0));
-    if(elP) elP.textContent = fmtMoney(totalPurchases);
-    if(elPay) elPay.textContent = fmtMoney(payable);
-    if(elS) elS.textContent = fmtMoney(totalSales);
-    if(elRec) elRec.textContent = fmtMoney(receivable);
+    const dashSet = (el, v) => { if(el){ el.textContent = fmtCompact(v); el.title = fmtBig(v); } };
+    dashSet(elProfit, rngS.reduce((s,x)=> s + saleProfit(x), 0));
+    dashSet(elP, totalPurchases);
+    dashSet(elPay, payable);
+    dashSet(elS, totalSales);
+    dashSet(elRec, receivable);
 
     const list = document.getElementById('recent-activity-list');
     if(list){
@@ -4898,6 +4965,7 @@
 
     refreshDashboardInsights(ledgerRows);
     try{ renderOnboarding(); }catch(e){}
+    document.body.classList.remove('is-loading');
   }
 
   /* Owner insights: today/month sales, who owes money (with overdue flag), top products, low stock */
@@ -5012,7 +5080,7 @@
   }
 
   /* ================= BUSINESS PROFILE ================= */
-  let profileCache = { name:CFG.brand, tagline:CFG.tagline, address:'', phone:'', email:'', bin:'' };
+  let profileCache = { name:CFG.brand, tagline:CFG.tagline, address:'', phone:'', email:'', bin:'', bank:'' };
 
   async function loadProfile(){
     const raw = await safeGet('company:profile', true);
@@ -5025,6 +5093,7 @@
     document.getElementById('profile-phone').value = profileCache.phone || '';
     document.getElementById('profile-email').value = profileCache.email || '';
     document.getElementById('profile-bin').value = profileCache.bin || '';
+    document.getElementById('profile-bank').value = profileCache.bank || '';
   }
 
   function initProfile(){
@@ -5036,7 +5105,8 @@
         address: document.getElementById('profile-address').value.trim(),
         phone: document.getElementById('profile-phone').value.trim(),
         email: document.getElementById('profile-email').value.trim(),
-        bin: document.getElementById('profile-bin').value.trim()
+        bin: document.getElementById('profile-bin').value.trim(),
+        bank: document.getElementById('profile-bank').value.trim()
       };
       await safeSet('company:profile', JSON.stringify(profileCache), true);
       const box = document.getElementById('profile-success');
@@ -5164,10 +5234,10 @@
       sumTotal += Number(s.total)||0; sumReceived += Number(s.received)||0; sumDue += Number(s.due)||0;
       sumProfit += saleProfit(s);
     });
-    document.getElementById('sale-summary-total').textContent = fmtMoney(sumTotal);
-    document.getElementById('sale-summary-received').textContent = fmtMoney(sumReceived);
-    document.getElementById('sale-summary-due').textContent = fmtMoney(sumDue);
-    document.getElementById('sale-summary-profit').textContent = fmtMoney(sumProfit);
+    document.getElementById('sale-summary-total').textContent = fmtBig(sumTotal);
+    document.getElementById('sale-summary-received').textContent = fmtBig(sumReceived);
+    document.getElementById('sale-summary-due').textContent = fmtBig(sumDue);
+    document.getElementById('sale-summary-profit').textContent = fmtBig(sumProfit);
 
     if(rows.length === 0){
       table.style.display = 'none';
@@ -5188,7 +5258,7 @@
         <td><b>${fmtMoney(s.total)}</b></td>
         <td style="color:${profit>=0 ? 'var(--success)' : 'var(--danger)'};font-weight:700;">${fmtMoney(profit)}</td>
         <td>${fmtMoney(s.received)}</td>
-        <td style="color:${Number(s.due)>0 ? 'var(--danger)' : 'var(--success)'};font-weight:700;">${fmtMoney(s.due)}</td>
+        <td style="color:${Number(s.due)>0 ? 'var(--danger)' : 'var(--success)'};font-weight:700;">${fmtMoney(s.due)} ${statusChip(s.total, s.due, isCN(s))}</td>
         <td>
           <div class="row-actions">
             <button data-id="${s.id}" class="sale-receipt-btn" aria-label="View receipt" title="View invoice"><i class="ti ti-receipt"></i></button>
@@ -5504,6 +5574,10 @@
     document.getElementById('sale-search').addEventListener('input', renderSales);
     document.getElementById('sale-company-filter').addEventListener('change', renderSales);
     wireMonthRange('sale', renderSales); wireDateRange('sale', renderSales);
+    (function(){
+      const w = (id, fn) => { const b = document.getElementById(id); if(b) b.addEventListener('click', fn); };
+      w('qa-sale', () => openSaleModal(null)); w('qa-pay', () => openPaymentModal(null)); w('qa-buy', () => openPurchaseModal(null));
+    })();
     wireMonthRange('dash', () => { try{ refreshDashboard(); }catch(e){} }, true); wireDateRange('dash', () => { try{ refreshDashboard(); }catch(e){} });
     document.getElementById('sale-received').addEventListener('input', recalcSaleTotals);
     document.getElementById('sale-company').addEventListener('change', () => { document.querySelectorAll('#sale-items-wrap .sale-item-row').forEach(row => { const r = row.querySelector('.sale-item-rate'), ps = row.querySelector('.sale-item-product'); if(ps.value && r.dataset.auto === '1'){ r.value = ''; ps.onchange && ps.onchange(); } }); });
@@ -5776,7 +5850,7 @@
 
     const openOrders = salesOrdersCache.filter(o => o.status === 'open');
     document.getElementById('order-summary-open').textContent = openOrders.length;
-    document.getElementById('order-summary-open-value').textContent = fmtMoney(openOrders.reduce((s,o)=>s+(Number(o.total)||0),0));
+    document.getElementById('order-summary-open-value').textContent = fmtBig(openOrders.reduce((s,o)=>s+(Number(o.total)||0),0));
     document.getElementById('order-summary-invoiced').textContent = salesOrdersCache.filter(o => o.status === 'invoiced').length;
 
     const tbody = document.getElementById('order-tbody');
@@ -6178,6 +6252,7 @@
       </div>
 
       ${isPaid ? '<p class="rc-thanks"><i class="ti ti-circle-check"></i> Paid in full — thank you</p>' : ''}
+      ${profileCache.bank ? `<div class="rc-notes"><b>Pay to:</b> ${escapeHtml(profileCache.bank)}</div>` : ''}
       ${sale.notes ? `<div class="rc-notes"><b>Notes:</b> ${escapeHtml(sale.notes)}</div>` : ''}
       <div class="rc-sig-spacer"></div>
       <div class="rc-sig-row">
@@ -6185,6 +6260,7 @@
         <div class="rc-sig-box"><div class="rc-sig-line"></div><div class="rc-sig-label">Accounts section</div></div>
         <div class="rc-sig-box"><div class="rc-sig-line"></div><div class="rc-sig-label">Authorised signature</div></div>
       </div>
+      <p class="rc-thanks" style="margin-top:14px;">Thank you for your business — ${escapeHtml(profileCache.name || CFG.brand)}</p>
     `;
   }
 
@@ -6482,9 +6558,9 @@
 
     let sumReceived = 0, sumPaid = 0;
     rows.forEach(p => { if(p.type==='received') sumReceived += Number(p.amount)||0; else sumPaid += Number(p.amount)||0; });
-    document.getElementById('payment-summary-received').textContent = fmtMoney(sumReceived);
-    document.getElementById('payment-summary-paid').textContent = fmtMoney(sumPaid);
-    document.getElementById('payment-summary-net').textContent = fmtMoney(sumReceived - sumPaid);
+    document.getElementById('payment-summary-received').textContent = fmtBig(sumReceived);
+    document.getElementById('payment-summary-paid').textContent = fmtBig(sumPaid);
+    document.getElementById('payment-summary-net').textContent = fmtBig(sumReceived - sumPaid);
 
     if(rows.length === 0){
       table.style.display = 'none';
@@ -6721,8 +6797,8 @@
     try{
       const bi = paymentBalanceInfo(payment);
       if(bi){
-        balLines = `<div class="rc-trow" style="margin-top:6px;"><span>Overall balance before this payment</span><span>${receiptBalanceText(bi.before, isReceived)}</span></div>
-        <div class="rc-trow"><b>Overall balance after this payment</b><b>${receiptBalanceText(bi.after, isReceived)}</b></div>`;
+        balLines = `<div class="rc-trow" style="margin-top:6px;gap:14px;"><span>Balance before this payment</span><span style="white-space:nowrap;text-align:right;">${receiptBalanceText(bi.before, isReceived)}</span></div>
+        <div class="rc-trow" style="gap:14px;"><b>Balance after this payment</b><b style="white-space:nowrap;text-align:right;">${receiptBalanceText(bi.after, isReceived)}</b></div>`;
       }
     }catch(e){}
 
@@ -6766,6 +6842,16 @@
         ${remainingDueLine}
         ${balLines}
       </div>
+      <div class="rc-words-box">
+        <div class="rc-label">Amount in words</div>
+        <div class="rc-words-value">${escapeHtml(amountInWordsTaka(payment.amount))}</div>
+      </div>
+      <div class="rc-sig-spacer"></div>
+      <div class="rc-sig-row">
+        <div class="rc-sig-box"><div class="rc-sig-line"></div><div class="rc-sig-label">${isReceived ? 'Paid by (sign)' : 'Received by (sign)'}</div></div>
+        <div class="rc-sig-box"><div class="rc-sig-line"></div><div class="rc-sig-label">Authorised signature</div></div>
+      </div>
+      <p class="rc-thanks" style="margin-top:14px;">Thank you — ${escapeHtml(profileCache.name || CFG.brand)}</p>
     `;
   }
 
@@ -7242,7 +7328,7 @@
     const allRows = computeInventory();
     const totalValue = allRows.reduce((s,r)=> s + r.stockValue, 0);
     const lowCount = allRows.filter(r => r.status === 'lowstock' || r.status === 'outstock').length;
-    document.getElementById('inventory-summary-value').textContent = fmtMoney(totalValue);
+    document.getElementById('inventory-summary-value').textContent = fmtBig(totalValue);
     document.getElementById('inventory-summary-skus').textContent = allRows.length;
     document.getElementById('inventory-summary-low').textContent = lowCount;
 
@@ -8284,9 +8370,9 @@
     rcvRows = all.filter(a => (!q || a.company.name.toLowerCase().includes(q)) && (!f || a.oldestDays > f))
       .sort((a, b) => (b.b90 - a.b90) || (b.balance - a.balance));
     const sum = k => all.reduce((s, a) => s + a[k], 0);
-    document.getElementById('rcv-total').textContent = fmtMoney(all.reduce((s, a) => s + a.balance, 0));
-    document.getElementById('rcv-over30').textContent = fmtMoney(sum('b31') + sum('b61') + sum('b90'));
-    document.getElementById('rcv-over90').textContent = fmtMoney(sum('b90'));
+    document.getElementById('rcv-total').textContent = fmtBig(all.reduce((s, a) => s + a.balance, 0));
+    document.getElementById('rcv-over30').textContent = fmtBig(sum('b31') + sum('b61') + sum('b90'));
+    document.getElementById('rcv-over90').textContent = fmtBig(sum('b90'));
     document.getElementById('rcv-count').textContent = all.length;
     const table = document.getElementById('rcv-table'), empty = document.getElementById('rcv-empty');
     if(!rcvRows.length){ table.style.display = 'none'; empty.style.display = 'flex'; tbody.innerHTML = ''; }
@@ -9520,6 +9606,42 @@
       m.querySelector('#csv-file-p').addEventListener('change', () => run('#csv-file-p', importProductsCsv, 'Products')); }
     m.querySelector('#csv-result').textContent = ''; m.classList.add('open');
   }
+
+  /* ---------- polish helpers: bottom bar, "/" to search, loading shimmer ---------- */
+  (function(){
+    document.body.classList.add('is-loading');
+    setTimeout(() => document.body.classList.remove('is-loading'), 9000);
+    const bar = document.getElementById('bottom-nav'); if(!bar) return;
+    function sync(){
+      const logged = document.getElementById('login-screen') && getComputedStyle(document.getElementById('login-screen')).display !== 'none';
+      document.body.classList.toggle('has-bottom-nav', !logged);
+      bar.style.visibility = logged ? 'hidden' : '';
+      const act = document.querySelector('.nav-item.active'); const cur = act ? act.getAttribute('data-page') : '';
+      bar.querySelectorAll('button[data-go]').forEach(b => {
+        const g = b.getAttribute('data-go');
+        b.classList.toggle('active', g === cur);
+        if(g !== '__more'){ const nav = document.querySelector('.nav-item[data-page="' + g + '"]'); b.style.display = (nav && getComputedStyle(nav).display === 'none') ? 'none' : ''; }
+      });
+    }
+    bar.addEventListener('click', e => {
+      const b = e.target.closest('button[data-go]'); if(!b) return;
+      const g = b.getAttribute('data-go');
+      if(g === '__more'){ const m = document.getElementById('mobile-menu-btn'); if(m) m.click(); return; }
+      const nav = document.querySelector('.nav-item[data-page="' + g + '"]'); if(nav) nav.click();
+      setTimeout(sync, 50);
+    });
+    document.addEventListener('click', () => setTimeout(sync, 80));
+    setInterval(sync, 1500); sync();
+    document.addEventListener('keydown', e => {
+      if(e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target, tag = (t && t.tagName || '').toLowerCase();
+      if(tag === 'input' || tag === 'textarea' || tag === 'select' || (t && t.isContentEditable)) return;
+      const pg = document.querySelector('.page.active');
+      let box = pg && pg.querySelector('.tb-search input');
+      if(!box || !box.offsetParent) box = document.getElementById('global-search-input');
+      if(box && box.offsetParent){ e.preventDefault(); box.focus(); box.select && box.select(); }
+    });
+  })();
   /* ================= HELP & MANUAL ================= */
   const MANUAL = {
     dashboard: { en: { what: 'Your business at a glance. Nothing to type here, just look.', steps: ['Top cards: total purchases, sales, profit, today\'s sales, this month vs last month.', '"Money to collect" lists the customers who owe you most. Call them first.', '"Low stock alerts" shows products that are running out.', '"Recent activity" and the 6-month chart show what happened lately.'], tips: ['Click the bell at the top for things that need attention today.', 'New company? A "Get started" box at the top lists the first steps (details, products, customers, supplier, first purchase and sale). Press Hide this to remove it.'] },
