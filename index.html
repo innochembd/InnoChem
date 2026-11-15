@@ -475,6 +475,7 @@ html.resuming #login-screen{display:none !important;}
     align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;
   }
   .modal-overlay.open{display:flex;}
+  #confirm-modal{z-index:260;}   /* confirm questions must sit above other open windows (e.g. device list) */
   .modal-box{
     background:var(--bg-card);border-radius:var(--radius-lg);width:100%;max-width:480px;
     box-shadow:var(--shadow-pop);padding:0;
@@ -1899,6 +1900,12 @@ html.resuming #login-screen{display:none !important;}
             <input type="file" id="photo-file" accept="image/*" style="display:none">
           </div>
           <div class="cell-sub" id="photo-msg" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="card card-pad" style="max-width:480px;margin-bottom:18px;" id="my-devices-card">
+          <div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg> My devices</div>
+          <p style="font-size:12.5px;color:var(--text-secondary);margin:-6px 0 12px;">Where your account is signed in. Log out any device you don't use or don't recognise.</p>
+          <div id="my-devices-list"></div>
         </div>
 
         <div class="card card-pad" style="max-width:480px;margin-bottom:18px;">
@@ -3668,6 +3675,7 @@ html.resuming #login-screen{display:none !important;}
     }
 
     document.documentElement.classList.remove('resuming');   // not signed in: show the login form
+    try{ const fm = localStorage.getItem('innochem_forced_msg'); if(fm){ localStorage.removeItem('innochem_forced_msg'); errText.textContent = fm; errBox.style.display = 'block'; } }catch(e){}
     form.addEventListener('submit', async function(e){
       e.preventDefault();
       errBox.style.display = 'none';
@@ -3700,6 +3708,110 @@ html.resuming #login-screen{display:none !important;}
     });
   }
 
+
+  /* ================= MY DEVICES (see where an account is logged in, log a device out) =================
+     Needs phase_k_devices.sql. Each login = one Supabase Auth session = one row in user_sessions.
+     This app pings every minute; if the row was revoked (by you or the owner) it signs itself out. */
+  (function(){
+    let off = false, timer = null;
+    function deviceName(){
+      const ua = navigator.userAgent || '';
+      const br = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+      const os = /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) ? 'iPhone/iPad' : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /CrOS/.test(ua) ? 'Chromebook' : /Linux/.test(ua) ? 'Linux' : 'Unknown';
+      const app = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ? ' (installed app)' : '';
+      return br + ' · ' + os + app;
+    }
+    function forceLogout(msg){
+      try{ localStorage.setItem('innochem_forced_msg', msg || 'You were logged out from this device.'); }catch(e){}
+      saveAuth(null);
+      try{ localStorage.removeItem('innochem_last_page'); }catch(e){}
+      try{ history.replaceState(null, '', location.pathname); }catch(e){}
+      try{ Object.keys(localStorage).filter(k => k.indexOf(CACHE_PREFIX) === 0).forEach(k => localStorage.removeItem(k)); }catch(e){}
+      location.reload();
+    }
+    async function ping(){
+      if(off || !authState || !currentUser || !navigator.onLine) return;
+      try{
+        const revoked = await sbRpc('device_ping', { p_device: deviceName(), p_ua: (navigator.userAgent || '').slice(0, 300) });
+        if(revoked === true) forceLogout('You were logged out from this device. Please sign in again.');
+      }catch(e){
+        if(e && (e.status === 404 || /PGRST202|device_ping/.test(String(e.message)))) off = true;   // SQL not installed yet: stay quiet
+      }
+    }
+    function start(){
+      if(timer) clearInterval(timer);
+      ping().then(() => { try{ renderMine(); }catch(e){} });
+      timer = setInterval(ping, 60 * 1000);
+    }
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) ping(); });
+    window.addEventListener('focus', () => ping());
+    window.__devStart = start;
+    window.__devEnd = async function(){ if(off || !authState) return; try{ await sbRpc('device_end', {}); }catch(e){} };
+
+    function ago(ts){
+      const sec = Math.max(0, (Date.now() - new Date(ts).getTime()) / 1000);
+      if(sec < 90) return 'Active now';
+      if(sec < 3600) return Math.round(sec / 60) + ' min ago';
+      if(sec < 86400) return Math.round(sec / 3600) + ' hr ago';
+      return Math.round(sec / 86400) + ' day' + (Math.round(sec / 86400) === 1 ? '' : 's') + ' ago';
+    }
+    function icon(d){ return /Android|iPhone/.test(d || '') ? 'ti-device-mobile' : 'ti-device-desktop'; }
+    function paintList(box, rows, userId, canRename, onChange){
+      if(!rows.length){ box.innerHTML = '<div class="cell-sub">No devices recorded yet. A device appears after its next login.</div>'; return; }
+      const mine = userId === (currentUser && currentUser.id);
+      box.innerHTML = rows.map(r => {
+        const live = (Date.now() - new Date(r.last_seen).getTime()) < 5 * 60 * 1000;
+        return '<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">' +
+          '<span style="color:var(--text-secondary);display:inline-flex;">' + (/Android|iPhone/.test(r.device || '') ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>' : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>') + '</span>' +
+          '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;">' + (r.label ? escapeHtml(r.label) + ' <span class="cell-sub" style="font-weight:400;">· ' + escapeHtml(r.device || '') + '</span>' : escapeHtml(r.device || 'Unknown device')) + (r.is_current ? ' <span class="badge staff-role" style="margin-left:4px;">This device</span>' : '') + '</div>' +
+          '<div class="cell-sub"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (live ? '#22a559' : '#b5bcb9') + ';margin-right:5px;"></span>' + ago(r.last_seen) + ' · signed in ' + new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short' }) + '</div></div>' +
+          (canRename ? '<button class="btn-secondary sm dv-ren" data-id="' + r.id + '" title="Give this device a name"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/></svg></button>' : '') +
+          '<button class="btn-secondary sm dv-out" data-id="' + r.id + '" data-cur="' + (r.is_current ? 1 : 0) + '" style="color:var(--danger);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M9 12h12l-3-3m3 3-3 3"/></svg> Log out</button></div>';
+      }).join('') + '<div style="margin-top:12px;"><button class="btn-secondary sm" id="dv-all" style="color:var(--danger);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M9 12h12l-3-3m3 3-3 3"/></svg> ' + (mine ? 'Log out all other devices' : 'Log out all devices') + '</button></div>';
+      box.querySelectorAll('.dv-out').forEach(b => b.onclick = () => {
+        const cur = b.getAttribute('data-cur') === '1';
+        openConfirm(cur ? 'Log out this device?' : 'Log out that device?', cur ? 'You will be signed out here.' : 'It will be signed out within about a minute.', async () => {
+          try{ await sbRpc('device_revoke', { p_id: b.getAttribute('data-id') }); showToast('Device logged out'); if(cur) forceLogout('You logged out.'); else onChange(); }catch(e){ showToast('Could not log out that device'); }
+        });
+      });
+      box.querySelectorAll('.dv-ren').forEach(b => b.onclick = async () => {
+        const row = rows.find(x => x.id === b.getAttribute('data-id'));
+        const name = prompt('Name this device (e.g. Office PC)', row && row.label || '');
+        if(name === null) return;
+        try{ await sbRpc('device_rename', { p_id: b.getAttribute('data-id'), p_label: name }); onChange(); }catch(e){ showToast('Could not rename'); }
+      });
+      const all = box.querySelector('#dv-all');
+      if(all) all.onclick = () => openConfirm(mine ? 'Log out all other devices?' : 'Log out all devices of this user?', mine ? 'This device stays signed in. Every other device is signed out.' : 'Every device of this user will be signed out and must log in again.', async () => {
+        try{ await sbRpc('device_revoke_all', { p_user: userId, p_keep_current: true }); showToast('Done'); onChange(); }catch(e){ showToast('Could not log out devices'); }
+      });
+    }
+    async function load(box, userId, canRename){
+      box.innerHTML = '<div class="cell-sub">Loading…</div>';
+      try{
+        const rows = await sbRpc('device_list', { p_user: userId });
+        paintList(box, rows || [], userId, canRename, () => load(box, userId, canRename));
+      }catch(e){
+        box.innerHTML = '<div class="cell-sub">' + (off || (e && e.status === 404) ? 'Not set up yet — run <b>phase_k_devices.sql</b> once in Supabase.' : 'Could not load devices.') + '</div>';
+      }
+    }
+    function renderMine(){ const b = document.getElementById('my-devices-list'); if(b && currentUser) load(b, currentUser.id, true); }
+    document.addEventListener('click', e => { const n = e.target.closest && e.target.closest('.nav-item[data-page="settings"]'); if(n) setTimeout(renderMine, 50); });
+    window.__openDevices = function(userId){
+      const u = usersCache.find(x => x.id === userId); if(!u) return;
+      let m = document.getElementById('dev-modal');
+      if(!m){
+        m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'dev-modal';
+        m.innerHTML = '<div class="modal-box" style="max-width:560px;"><div class="modal-head"><h3 id="dev-title">Devices</h3><button class="modal-close" id="dev-x"><i class="ti ti-x"></i></button></div><div class="modal-body" style="padding:6px 18px 16px;max-height:none;overflow:visible;"><div id="dev-body"></div></div></div>';
+        document.body.appendChild(m);
+        m.querySelector('#dev-x').onclick = () => m.classList.remove('open');
+        m.addEventListener('mousedown', ev => { if(ev.target === m) m.classList.remove('open'); });
+      }
+      m.querySelector('#dev-title').textContent = 'Devices — ' + u.username;
+      m.classList.add('open');
+      load(m.querySelector('#dev-body'), userId, true);
+    };
+  })();
+
   function enterApp(user){
     currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
@@ -3713,6 +3825,7 @@ html.resuming #login-screen{display:none !important;}
     try{ applyPhoto(); }catch(e){}
     try{ window.__showCostStockBtn && window.__showCostStockBtn(); }catch(e){}
     startDataLoad();
+    try{ window.__devStart && window.__devStart(); }catch(e){}
     restoreLastPage();
     const sp = document.getElementById('splash');
     if(sp){ sp.style.opacity = '0'; setTimeout(() => { document.documentElement.classList.remove('resuming'); sp.style.opacity = ''; }, 260); }
@@ -3919,6 +4032,7 @@ html.resuming #login-screen{display:none !important;}
 
   async function initLogout(){
     document.getElementById('logout-btn').addEventListener('click', async function(){
+      try{ await Promise.race([ window.__devEnd ? window.__devEnd() : null, new Promise(r => setTimeout(r, 1500)) ]); }catch(e){}
       await safeSet('session:current', JSON.stringify({loggedIn:false}), false);
       try{ if(authState) fetch(SUPABASE_URL + '/auth/v1/logout', { method:'POST', headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer ' + authState.access_token } }); }catch(e){}
       saveAuth(null);
@@ -8191,7 +8305,8 @@ html.resuming #login-screen{display:none !important;}
         <td>${escapeHtml(accessSummary)}</td>
         <td>
           <div class="row-actions">
-            ${canManageThisRow ? `<button data-id="${u.id}" class="user-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+            ${canManageThisRow ? `<button data-id="${u.id}" class="user-dev-btn" aria-label="Devices" title="Devices (where logged in)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>
+            <button data-id="${u.id}" class="user-edit-btn" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
             <button data-id="${u.id}" class="user-delete-btn danger" aria-label="Delete" title="Delete"><i class="ti ti-trash"></i></button>` : '<span class="cell-sub">—</span>'}
           </div>
         </td>
@@ -8199,6 +8314,7 @@ html.resuming #login-screen{display:none !important;}
     }).join('');
 
     tbody.querySelectorAll('.user-edit-btn').forEach(b => b.addEventListener('click', () => openUserModal(b.getAttribute('data-id'))));
+    tbody.querySelectorAll('.user-dev-btn').forEach(b => b.addEventListener('click', () => window.__openDevices && window.__openDevices(b.getAttribute('data-id'))));
     tbody.querySelectorAll('.user-delete-btn').forEach(b => b.addEventListener('click', () => {
       const id = b.getAttribute('data-id');
       const u = usersCache.find(x => x.id === id);
