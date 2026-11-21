@@ -676,6 +676,18 @@ html.resuming #login-screen{display:none !important;}
     .print-area{position:absolute;top:0;left:0;width:100%;border:none;border-radius:0;padding:14px;}
     .no-print{display:none !important;}
   }
+  /* Long statement: print it as normal flowing A4 pages (rows are never cut in half, the heading repeats on every page) */
+  @page{size:A4;margin:12mm;}
+  @media print{
+    body.print-stmt > *:not(#statement-modal){display:none !important;}
+    body.print-stmt #statement-modal{position:static !important;display:block !important;background:none !important;padding:0 !important;overflow:visible !important;}
+    body.print-stmt #statement-modal, body.print-stmt #statement-modal *{visibility:visible;}
+    body.print-stmt #statement-modal .modal-box{box-shadow:none !important;max-width:none !important;width:100% !important;}
+    body.print-stmt #statement-modal .modal-body{max-height:none !important;overflow:visible !important;padding:0 !important;}
+    body.print-stmt #statement-print-area{position:static !important;padding:0 !important;width:100% !important;overflow:visible !important;}
+    body.print-stmt .rc-table thead{display:table-header-group;}
+    body.print-stmt .rc-table tr, body.print-stmt .rc-totals{break-inside:avoid;page-break-inside:avoid;}
+  }
 </style>
 <style id="rar-theme">
 /* ===== RAR TECH theme: teal sidebar/login, light + dark mode ===== */
@@ -7382,6 +7394,34 @@ html.resuming #login-screen{display:none !important;}
     return { company, opening, rows, totals, closingBalance: running };
   }
 
+  /* Tally Book date range: balance brought forward (before the From date) + only the rows inside the period */
+  let ledgerFrom = '', ledgerTo = '';
+  function fmtDay(d){ if(!d) return ''; const x = new Date(d + 'T00:00:00'); return isNaN(x) ? d : x.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); }
+  function ledgerView(ledger){
+    const f = ledgerFrom, t = ledgerTo;
+    if(!f && !t) return Object.assign({}, ledger, { filtered:false, from:'', to:'' });
+    let opening = ledger.opening;
+    if(f){ for(const r of ledger.rows){ if((r.date || '') < f) opening = r.balance; else break; } }
+    const rows = ledger.rows.filter(r => inDateRange(r.date, f, t));
+    const totals = { sales:0, purchases:0, received:0, paid:0 };
+    rows.forEach(r => {
+      if(r.type === 'sale') totals.sales += r.debit - r.credit;
+      else if(r.type === 'purchase') totals.purchases += r.credit;
+      else if(r.type === 'payment'){ totals.received += r.credit; totals.paid += r.debit; }
+    });
+    return { company: ledger.company, opening, rows, totals, closingBalance: rows.length ? rows[rows.length - 1].balance : opening, filtered:true, from:f, to:t };
+  }
+  function ledgerOpeningLabel(l){ return l.filtered && l.from ? 'Balance brought forward (before ' + fmtDay(l.from) + ')' : 'Opening balance'; }
+  function ledgerPeriodText(l){ return (l.from ? fmtDay(l.from) : 'Start') + ' – ' + (l.to ? fmtDay(l.to) : 'Today'); }
+  function ledgerQuick(kind){
+    const n = new Date(), y = n.getFullYear();
+    if(kind === 'month'){ const r = thisMonthRange(); return r; }
+    if(kind === 'lastmonth'){ const d = new Date(y, n.getMonth() - 1, 1); return monthRange(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')); }
+    if(kind === 'year') return [y + '-01-01', ymd(n)];
+    if(kind === 'lastyear') return [(y - 1) + '-01-01', (y - 1) + '-12-31'];
+    return ['', ''];
+  }
+
   function balanceClass(v){ return v > 0 ? 'pos' : (v < 0 ? 'neg' : 'zero'); }
   function balanceLabel(v){
     if(v > 0) return 'Receivable — company owes you';
@@ -7435,14 +7475,16 @@ html.resuming #login-screen{display:none !important;}
         </div>`;
       return;
     }
-    const ledger = computeCompanyLedger(ledgerSelectedCompanyId);
-    if(!ledger){
+    const baseLedger = computeCompanyLedger(ledgerSelectedCompanyId);
+    if(!baseLedger){
       ledgerSelectedCompanyId = null;
       renderLedgerDetail();
       return;
     }
+    const ledger = ledgerView(baseLedger);
     const c = ledger.company;
-    const cls = balanceClass(ledger.closingBalance);
+    const cls = balanceClass(baseLedger.closingBalance);
+    const per = ledger.filtered ? ' <span style="font-weight:500;font-size:10.5px;">(this period)</span>' : '';
 
     detail.innerHTML = `
       <div class="ledger-head">
@@ -7457,22 +7499,31 @@ html.resuming #login-screen{display:none !important;}
         </div>
         <div class="ledger-balance-box">
           <div class="lb-label">Current balance</div>
-          <div class="lb-value ${cls}">${fmtMoney(Math.abs(ledger.closingBalance))}</div>
-          <div class="lb-sub ${cls}">${balanceLabel(ledger.closingBalance)}</div>
+          <div class="lb-value ${cls}">${fmtMoney(Math.abs(baseLedger.closingBalance))}</div>
+          <div class="lb-sub ${cls}">${balanceLabel(baseLedger.closingBalance)}</div>
         </div>
       </div>
+      ${ledger.filtered ? `<div class="card card-pad" style="margin-bottom:12px;padding:12px 16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:13px;">
+        <div><b>Period:</b> ${escapeHtml(ledgerPeriodText(ledger))}</div>
+        <div><b>Balance brought forward:</b> <span class="${balanceClass(ledger.opening)}">${fmtMoney(Math.abs(ledger.opening))} ${ledger.opening !== 0 ? (ledger.opening > 0 ? 'Dr' : 'Cr') : ''}</span></div>
+        <div><b>Closing at end of period:</b> <span class="${balanceClass(ledger.closingBalance)}">${fmtMoney(Math.abs(ledger.closingBalance))} ${ledger.closingBalance !== 0 ? (ledger.closingBalance > 0 ? 'Dr' : 'Cr') : ''}</span></div>
+      </div>` : ''}
 
       <div class="ledger-mini-grid">
-        <div class="ledger-mini-card"><div class="lm-label">Total sales</div><div class="lm-value">${fmtMoney(ledger.totals.sales)}</div></div>
-        <div class="ledger-mini-card"><div class="lm-label">Total purchases</div><div class="lm-value">${fmtMoney(ledger.totals.purchases)}</div></div>
-        <div class="ledger-mini-card"><div class="lm-label">Received</div><div class="lm-value">${fmtMoney(ledger.totals.received)}</div></div>
-        <div class="ledger-mini-card"><div class="lm-label">Paid</div><div class="lm-value">${fmtMoney(ledger.totals.paid)}</div></div>
-        <div class="ledger-mini-card"><div class="lm-label">Opening balance</div><div class="lm-value">${fmtMoney(ledger.opening)}</div></div>
+        <div class="ledger-mini-card"><div class="lm-label">Total sales${per}</div><div class="lm-value">${fmtMoney(ledger.totals.sales)}</div></div>
+        <div class="ledger-mini-card"><div class="lm-label">Total purchases${per}</div><div class="lm-value">${fmtMoney(ledger.totals.purchases)}</div></div>
+        <div class="ledger-mini-card"><div class="lm-label">Received${per}</div><div class="lm-value">${fmtMoney(ledger.totals.received)}</div></div>
+        <div class="ledger-mini-card"><div class="lm-label">Paid${per}</div><div class="lm-value">${fmtMoney(ledger.totals.paid)}</div></div>
+        <div class="ledger-mini-card"><div class="lm-label">${ledger.filtered && ledger.from ? 'Balance before ' + escapeHtml(fmtDay(ledger.from)) : 'Opening balance'}</div><div class="lm-value">${fmtMoney(ledger.opening)}</div></div>
       </div>
 
       <div class="ledger-toolbar">
         <div class="tb-search" style="max-width:280px;"><i class="ti ti-search"></i><input type="text" id="ledger-txn-search" placeholder="Search transactions..."></div>
         <div class="tb-filters">
+          <span class="date-range" style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
+            <select id="ledger-quick" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><option value="">Quick period…</option><option value="month">This month</option><option value="lastmonth">Last month</option><option value="year">This year</option><option value="lastyear">Last year</option></select>
+            From <input type="date" id="ledger-from" value="${ledgerFrom}" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"> To <input type="date" id="ledger-to" value="${ledgerTo}" style="height:36px;border:1px solid var(--border);border-radius:9px;padding:0 8px;background:var(--bg-card,#fff);color:inherit;"><button type="button" class="btn-secondary sm" id="ledger-dclear" title="Show all dates">✕</button>
+          </span>
           <button class="btn-secondary" id="ledger-export-btn"><i class="ti ti-download"></i> Export CSV</button>
           <button class="btn-primary sm" id="ledger-statement-btn"><i class="ti ti-file-invoice"></i> Statement</button>
         </div>
@@ -7494,6 +7545,11 @@ html.resuming #login-screen{display:none !important;}
     renderLedgerTransactions(ledger);
 
     document.getElementById('ledger-txn-search').addEventListener('input', () => renderLedgerTransactions(ledger));
+    const lf = document.getElementById('ledger-from'), lt = document.getElementById('ledger-to');
+    const lgo = () => { ledgerFrom = lf.value || ''; ledgerTo = lt.value || ''; if(ledgerFrom && ledgerTo && ledgerFrom > ledgerTo){ const x = ledgerFrom; ledgerFrom = ledgerTo; ledgerTo = x; } renderLedgerDetail(); };
+    lf.addEventListener('change', lgo); lt.addEventListener('change', lgo);
+    document.getElementById('ledger-dclear').addEventListener('click', () => { ledgerFrom = ''; ledgerTo = ''; renderLedgerDetail(); });
+    document.getElementById('ledger-quick').addEventListener('change', function(){ if(!this.value) return; const r = ledgerQuick(this.value); ledgerFrom = r[0]; ledgerTo = r[1]; renderLedgerDetail(); });
     document.getElementById('ledger-export-btn').addEventListener('click', () => exportLedgerCsv(ledger));
     document.getElementById('ledger-statement-btn').addEventListener('click', () => openStatementModal(ledger));
   }
@@ -7508,9 +7564,9 @@ html.resuming #login-screen{display:none !important;}
     const table = document.getElementById('ledger-txn-table');
     const emptyBlock = document.getElementById('ledger-txn-empty');
 
-    const displayRows = [{ isOpening:true, date:'', particulars:'Opening balance', debit:0, credit:0, balance: ledger.opening }].concat(rows);
+    const displayRows = [{ isOpening:true, date: (ledger.filtered && ledger.from) ? ledger.from : '', particulars: ledgerOpeningLabel(ledger), debit:0, credit:0, balance: ledger.opening }].concat(rows);
 
-    if(ledger.rows.length === 0){
+    if(ledger.rows.length === 0 && !ledger.filtered){
       table.style.display = 'none';
       emptyBlock.style.display = 'flex';
       tbody.innerHTML = '';
@@ -7521,7 +7577,7 @@ html.resuming #login-screen{display:none !important;}
 
     tbody.innerHTML = displayRows.map(r => `<tr>
         <td>${escapeHtml(r.date)}</td>
-        <td>${r.isOpening ? '<i>Opening balance</i>' : escapeHtml(r.particulars)}</td>
+        <td>${r.isOpening ? '<i>' + escapeHtml(r.particulars) + '</i>' : escapeHtml(r.particulars)}</td>
         <td class="stmt-debit">${r.debit ? fmtMoney(r.debit) : ''}</td>
         <td class="stmt-credit">${r.credit ? fmtMoney(r.credit) : ''}</td>
         <td style="font-weight:700;color:${r.balance > 0 ? 'var(--success)' : (r.balance < 0 ? 'var(--danger)' : 'var(--text-muted)')};">${fmtMoney(Math.abs(r.balance))} ${r.balance !== 0 ? (r.balance > 0 ? 'Dr' : 'Cr') : ''}</td>
@@ -7530,7 +7586,7 @@ html.resuming #login-screen{display:none !important;}
 
   function exportLedgerCsv(ledger){
     const rows = [['Date','Particulars','Debit','Credit','Balance']];
-    rows.push(['', 'Opening balance', '', '', ledger.opening]);
+    rows.push([ledger.filtered && ledger.from ? ledger.from : '', ledgerOpeningLabel(ledger), '', '', ledger.opening]);
     ledger.rows.forEach(r => rows.push([r.date, r.particulars, r.debit || '', r.credit || '', r.balance]));
     downloadCsv(`innochem-ledger-${(ledger.company.name||'company').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.csv`, rows);
     showToast('Statement exported');
@@ -7540,10 +7596,10 @@ html.resuming #login-screen{display:none !important;}
     const logoSrc = getAppLogoSrc();
     const c = ledger.company;
     const cls = balanceClass(ledger.closingBalance);
-    const rowsHtml = ([{ isOpening:true, date:'', particulars:'Opening balance', debit:0, credit:0, balance: ledger.opening }].concat(ledger.rows))
+    const rowsHtml = ([{ isOpening:true, date: (ledger.filtered && ledger.from) ? ledger.from : '', particulars: ledgerOpeningLabel(ledger), debit:0, credit:0, balance: ledger.opening }].concat(ledger.rows))
       .map(r => `<tr>
           <td>${escapeHtml(r.date)}</td>
-          <td>${r.isOpening ? 'Opening balance' : escapeHtml(r.particulars)}</td>
+          <td>${r.isOpening ? '<b>' + escapeHtml(r.particulars) + '</b>' : escapeHtml(r.particulars)}</td>
           <td class="rc-num">${r.debit ? fmtMoney(r.debit) : '—'}</td>
           <td class="rc-num">${r.credit ? fmtMoney(r.credit) : '—'}</td>
           <td class="rc-num"><b>${fmtMoney(Math.abs(r.balance))} ${r.balance !== 0 ? (r.balance > 0 ? 'Dr' : 'Cr') : ''}</b></td>
@@ -7563,7 +7619,7 @@ html.resuming #login-screen{display:none !important;}
         <div class="rc-meta">
           <div class="rc-label">Statement</div>
           <div class="rc-inv">${escapeHtml(c.name)}</div>
-          <div class="rc-date">As of ${escapeHtml(todayStr())}</div>
+          <div class="rc-date">${ledger.filtered ? 'Period: ' + escapeHtml(ledgerPeriodText(ledger)) : 'As of ' + escapeHtml(todayStr())}</div>
         </div>
       </div>
       <div class="rc-billto">
@@ -7579,15 +7635,15 @@ html.resuming #login-screen{display:none !important;}
         <thead><tr><th>Date</th><th>Particulars</th><th class="rc-num">Debit</th><th class="rc-num">Credit</th><th class="rc-num">Balance</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
-      ${(function(){ const ag = ledger.closingBalance > 0.5 ? computeAgeing(c.id) : null; if(!ag) return '';
+      ${(function(){ const ag = (!ledger.filtered && ledger.closingBalance > 0.5) ? computeAgeing(c.id) : null; if(!ag) return '';
         const cell = (t, v) => '<td style="padding:6px 10px;text-align:right;border:1px solid #dde3e8;"><div style="font-size:10px;color:#5d6b76;">' + t + '</div><b>' + (v > 0 ? fmtMoney(v) : '—') + '</b></td>';
         return '<div style="margin:16px 0 0;"><div style="font-size:11px;font-weight:800;text-transform:uppercase;color:#5d6b76;margin-bottom:4px;">Outstanding by age</div><table style="border-collapse:collapse;font-size:12px;"><tr>' +
           cell('0-30 days', ag.b0) + cell('31-60 days', ag.b31) + cell('61-90 days', ag.b61) + cell('Over 90 days', ag.b90) + '</tr></table></div>'; })()}
       <div class="rc-totals" style="width:280px;">
-        <div class="rc-trow"><span>Total sales</span><span>${fmtMoney(ledger.totals.sales)}</span></div>
-        <div class="rc-trow"><span>Total purchases</span><span>${fmtMoney(ledger.totals.purchases)}</span></div>
-        <div class="rc-trow"><span>Payments received</span><span>${fmtMoney(ledger.totals.received)}</span></div>
-        <div class="rc-trow"><span>Payments paid</span><span>${fmtMoney(ledger.totals.paid)}</span></div>
+        <div class="rc-trow"><span>Total sales${ledger.filtered ? ' (period)' : ''}</span><span>${fmtMoney(ledger.totals.sales)}</span></div>
+        <div class="rc-trow"><span>Total purchases${ledger.filtered ? ' (period)' : ''}</span><span>${fmtMoney(ledger.totals.purchases)}</span></div>
+        <div class="rc-trow"><span>Payments received${ledger.filtered ? ' (period)' : ''}</span><span>${fmtMoney(ledger.totals.received)}</span></div>
+        <div class="rc-trow"><span>Payments paid${ledger.filtered ? ' (period)' : ''}</span><span>${fmtMoney(ledger.totals.paid)}</span></div>
         <div class="rc-trow rc-grand ${cls}"><span>Closing balance</span><span>${fmtMoney(Math.abs(ledger.closingBalance))} ${ledger.closingBalance !== 0 ? (ledger.closingBalance > 0 ? 'Dr' : 'Cr') : ''}</span></div>
       </div>
     `;
@@ -7604,7 +7660,13 @@ html.resuming #login-screen{display:none !important;}
     document.getElementById('ledger-company-search').addEventListener('input', renderLedgerCompanyList);
     document.getElementById('statement-modal-close').addEventListener('click', closeStatementModal);
     document.getElementById('statement-modal').addEventListener('click', function(e){ if(e.target === this) closeStatementModal(); });
-    document.getElementById('statement-print-btn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('statement-print-btn').addEventListener('click', function(){
+      document.body.classList.add('print-stmt');
+      const done = () => { document.body.classList.remove('print-stmt'); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      setTimeout(() => window.print(), 60);
+      setTimeout(done, 60000);
+    });
     document.getElementById('statement-download-btn').addEventListener('click', async function(){
       const el = document.getElementById('statement-print-area');
       const companyName = (el.getAttribute('data-company') || 'statement').replace(/[^a-z0-9]+/gi,'-').toLowerCase();
@@ -7613,13 +7675,36 @@ html.resuming #login-screen{display:none !important;}
       btn.innerHTML = '<i class="ti ti-loader-2"></i> Generating...';
       btn.disabled = true;
       try{
-        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-        const imgData = canvas.toDataURL('image/png');
+        const SC = 2;
+        const canvas = await html2canvas(el, { scale: SC, backgroundColor: '#ffffff', useCORS: true });
         const { jsPDF } = window.jspdf;
-        const pdfWidth = 210;
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const pdfWidth = 210, pdfH = 297, margin = 8;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const mmPerPx = pdfWidth / canvas.width;
+        const pagePx = Math.floor((pdfH - margin * 2) / mmPerPx);
+        /* page breaks only between table rows (never through a row); keep the totals block together */
+        const top = el.getBoundingClientRect().top;
+        const cuts = [];
+        el.querySelectorAll('tbody tr').forEach(tr => cuts.push(Math.round((tr.getBoundingClientRect().bottom - top) * SC)));
+        el.querySelectorAll('.rc-totals').forEach(b => cuts.push(Math.round((b.getBoundingClientRect().top - top) * SC)));
+        cuts.sort((a, b) => a - b);
+        const pages = []; let start = 0;
+        while(start < canvas.height - 2){
+          let end = start + pagePx;
+          if(end >= canvas.height){ end = canvas.height; }
+          else { const ok = cuts.filter(c => c > start + 40 && c <= end); if(ok.length) end = ok[ok.length - 1]; }
+          pages.push([start, end]); start = end;
+        }
+        pages.forEach((pg, i) => {
+          const h = pg[1] - pg[0];
+          const sl = document.createElement('canvas'); sl.width = canvas.width; sl.height = h;
+          const cx = sl.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, sl.width, h);
+          cx.drawImage(canvas, 0, pg[0], canvas.width, h, 0, 0, canvas.width, h);
+          if(i > 0) pdf.addPage();
+          pdf.addImage(sl.toDataURL('image/jpeg', 0.88), 'JPEG', 0, margin, pdfWidth, h * mmPerPx);
+          pdf.setFontSize(8); pdf.setTextColor(120);
+          pdf.text('Page ' + (i + 1) + ' of ' + pages.length, pdfWidth - 10, pdfH - 4, { align:'right' });
+        });
         pdf.save('innochem-statement-' + companyName + '.pdf');
         showToast('Statement downloaded');
       }catch(err){
